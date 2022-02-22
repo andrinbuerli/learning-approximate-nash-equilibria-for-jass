@@ -1,0 +1,51 @@
+version: '3.8'
+services:
+    trainer:
+        build: .
+        volumes:
+            - .:/app
+        network_mode: host
+        command: >
+            bash -c "cd scripts && python train_alpha_zero.py
+            --enable_log 1
+            --port 8080
+            --wandb_projectname jass-alphazero,
+            --wandb_entity andrinbuerli,
+            --wandb_group AlphaZero-Experiment-X"
+        deploy:
+          resources:
+            reservations:
+              devices:
+                - driver: nvidia
+                  device_ids: ['0']
+                  capabilities: [gpu]
+
+    evaluate_agents:
+        build: .
+        volumes:
+            - .:/app
+        command: >
+            bash -c "cd scripts/evaluation && python evaluate_agents.py
+            --max_parallel_processes 8,
+            --skip_on_result_file True,
+            --use_python True,
+            --file imperfect_info_evaluate_agents.json"
+        deploy:
+          resources:
+            reservations:
+              devices:
+                - driver: nvidia
+                  device_ids: ['0']
+                  capabilities: [gpu]
+
+    test:
+        build:
+            context: .
+            args:
+                DEV: 1
+        entrypoint: []
+        volumes:
+            - .:/app
+        command: pytest --forked -n auto --timeout=120 /app/test
+
+

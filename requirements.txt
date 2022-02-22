@@ -1,0 +1,8 @@
+flask==2.0.1
+Flask-Classful==0.14.1
+wandb==0.12.4
+memory-profiler==0.58.0
+matplotlib==3.3.4
+tensorflow==2.7
+scipy==1.5.4
+tqdm

@@ -31,14 +31,11 @@ class ALPV_MCTS:
         """
         #
         self.n_search_threads = n_search_threads
-        self.K = virtual_loss
+        self.virtual_loss = virtual_loss
         self.stats = stats
         self.discount = discount
         self.mdp_value = mdp_value
         self.observation = observation
-
-        # initialize root node
-        # valid_actions = self.rule.get_valid_cards_from_state(self.state)
 
         # policies
         self.node_selection = node_selection
@@ -77,14 +74,15 @@ class ALPV_MCTS:
         """
 
         # select and possibly expand the tree using the tree policy
-        node = self.node_selection.tree_policy(self.root, self.K)
+        node = self.node_selection.tree_policy(self.root, self.virtual_loss)
 
         # evaluate the new node
         value = self.reward_calc.calculate_value(node)
 
         # back propagate the rewards from the last node
         while not node.is_root():
-            node.propagate(value, self.K)
+            with node.lock:
+                node.propagate(value, self.virtual_loss)
 
             if self.mdp_value:
                 value = self.discount * value + node.reward
@@ -94,7 +92,8 @@ class ALPV_MCTS:
 
             node = node.parent
 
-        node.propagate(value, self.K)
+        with node.lock:
+            node.propagate(value, self.virtual_loss)
 
     def get_result(self) -> (np.ndarray, np.ndarray):
         """
@@ -111,8 +110,8 @@ class ALPV_MCTS:
             reward[action] = node.rewards[node.player] / node.visits
         prob /= np.sum(prob)
         return prob, reward
-    
-    
+
+
     def __del__(self):
         self.pool.terminate()
 

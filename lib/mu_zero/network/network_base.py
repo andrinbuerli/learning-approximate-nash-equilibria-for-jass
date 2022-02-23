@@ -1,3 +1,4 @@
+import numpy as np
 import tensorflow as tf
 
 from abc import ABC, abstractmethod
@@ -16,8 +17,20 @@ class AbstractNetwork(ABC, tf.keras.Model):
     def recurrent_inference(self, encoded_state, action):
         pass
 
+    @abstractmethod
+    def summary(self):
+        pass
+
+    @abstractmethod
+    def save(self, path):
+        pass
+
+    @abstractmethod
+    def load(self, path):
+        pass
+
     def get_weight_list(self):
-        return [x.tolist() for x in self.model.get_weights()]
+        return [x.tolist() for x in self.get_weights()]
 
     def set_weights_from_list(self, weights):
-        self.self.load_state_dict(weights)
+        self.set_weights([np.array(x) for x in weights])

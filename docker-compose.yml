@@ -46,6 +46,6 @@ services:
         entrypoint: []
         volumes:
             - .:/app
-        command: pytest --forked -n auto --timeout=120 /app/test
+        command: pytest --forked -n auto --timeout=120 /app/test -v
 
 

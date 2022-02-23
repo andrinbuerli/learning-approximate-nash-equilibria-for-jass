@@ -1,4 +1,5 @@
 import numpy as np
+from multiprocessing.pool import ThreadPool
 
 import jasscpp
 
@@ -14,7 +15,9 @@ class ALPV_MCTS:
                  reward_calc: LatentValueCalculationPolicy,
                  stats: MinMaxStats,
                  mdp_value: bool = False,
-                 discount: float = 0.9):
+                 discount: float = 0.9,
+                 n_search_threads: int = 4,
+                 virtual_loss: int = 10):
         """
         Initialize the search tree.
         Args:
@@ -23,8 +26,12 @@ class ALPV_MCTS:
             reward_calc: the policy to calculate the reward from an expanded node
             mdp_value: True if the value calculation is n-step bootstrap, else value corresponds to game result estimation
             discount: Discount factor for n-step bootstrap value calculation
+            n_search_threads: Number of search threads for async simulations
+            virtual_loss: Virtual loss temporary added to nodes in search thread
         """
         #
+        self.n_search_threads = n_search_threads
+        self.K = virtual_loss
         self.stats = stats
         self.discount = discount
         self.mdp_value = mdp_value
@@ -43,16 +50,26 @@ class ALPV_MCTS:
 
         self.node_selection.init_node(self.root, observation)
 
-    def run_simulations(self, iterations: int) -> None:
+        self.pool = ThreadPool(processes=self.n_search_threads)
+
+    def run_simulations_sync(self, iterations: int) -> None:
         """
         Run a specified number of simulations.
         Args:
             iterations: the number of simulations to run.
         """
 
-        # TODO implement multithreading
         for _ in range(iterations):
             self.run_simulation()
+
+    def run_simulations_async(self, iterations: int) -> None:
+        """
+        Run a specified number of parallelized simulations.
+        Args:
+            iterations: the number of simulations to run.
+        """
+
+        self.pool.map(lambda _: self.run_simulation(), range(iterations))
 
     def run_simulation(self) -> None:
         """
@@ -60,14 +77,14 @@ class ALPV_MCTS:
         """
 
         # select and possibly expand the tree using the tree policy
-        node = self.node_selection.tree_policy(self.root)
+        node = self.node_selection.tree_policy(self.root, self.K)
 
         # evaluate the new node
         value = self.reward_calc.calculate_value(node)
 
         # back propagate the rewards from the last node
         while not node.is_root():
-            node.propagate(value)
+            node.propagate(value, self.K)
 
             if self.mdp_value:
                 value = self.discount * value + node.reward
@@ -77,7 +94,7 @@ class ALPV_MCTS:
 
             node = node.parent
 
-        node.propagate(value)
+        node.propagate(value, self.K)
 
     def get_result(self) -> (np.ndarray, np.ndarray):
         """
@@ -94,5 +111,9 @@ class ALPV_MCTS:
             reward[action] = node.rewards[node.player] / node.visits
         prob /= np.sum(prob)
         return prob, reward
+    
+    
+    def __del__(self):
+        self.pool.terminate()
 
 

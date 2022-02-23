@@ -26,7 +26,9 @@ class UCBLatentNodeSelectionPolicy:
             discount: float,
             dirichlet_eps: float = 0.25,
             dirichlet_alpha: float = 0.3,
+            synchronized: bool = False,
             debug: bool = False):
+        self.synchronized = synchronized
         self.discount = discount
         self.stats = stats
         self.c_2 = c_2
@@ -40,8 +42,11 @@ class UCBLatentNodeSelectionPolicy:
 
         self.nr_played_cards_in_selected_node = []
 
-    def tree_policy(self, node: Node) -> Node:
+    def tree_policy(self, node: Node, virtual_loss=0) -> Node:
         while True:
+
+            node.visits += virtual_loss
+
             valid_actions = node.valid_actions
 
             assert valid_actions.sum() > 0, 'Error in valid actions'
@@ -68,13 +73,20 @@ class UCBLatentNodeSelectionPolicy:
             for c in children:
                 c.avail += 1
 
+            if self.synchronized:
+                child.lock.acquire()
             not_expanded = child.prior is None
             if not_expanded:
+                child.visits += virtual_loss
                 child.value, child.reward, child.prior, child.hidden_state = \
                     self.network.recurrent_inference(node.hidden_state, np.array([[child.action]]))
                 self._convert_node(child)
-
+                if self.synchronized:
+                    child.lock.release()
                 break
+
+            if self.synchronized:
+                child.lock.release()
             node = child
 
         return child

@@ -138,11 +138,37 @@ def test_recurrent_inference_too_small_buffer():
         players=4
     )
 
-    testee = BufferingNetwork(network, buffer_size=2)
+    testee = BufferingNetwork(network, buffer_size=2, timeout=10)
 
     conn = testee.recurrent_inference(np.random.uniform(0, 1, (1, 4, 9, 256)), np.array([[1]]), return_connection=True)
 
     assert conn.poll(timeout=3.0) is False
+
+    conn.close()
+
+    del testee
+
+def test_recurrent_inference_too_small_buffer_timeout():
+    network = MuZeroResidualNetwork(
+        observation_shape=(4, 9, 43),
+        action_space_size=42,
+        num_blocks=2,
+        num_channels=256,
+        reduced_channels_reward=128,
+        reduced_channels_value=1,
+        reduced_channels_policy=128,
+        fc_reward_layers=[256],
+        fc_value_layers=[256],
+        fc_policy_layers=[256],
+        support_size=100,
+        players=4
+    )
+
+    testee = BufferingNetwork(network, buffer_size=2, timeout=0.1)
+
+    conn = testee.recurrent_inference(np.random.uniform(0, 1, (1, 4, 9, 256)), np.array([[1]]), return_connection=True)
+
+    assert conn.poll(timeout=3.0)
 
     conn.close()
 

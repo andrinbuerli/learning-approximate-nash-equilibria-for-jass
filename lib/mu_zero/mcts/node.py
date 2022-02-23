@@ -1,3 +1,5 @@
+from threading import Lock
+
 import numpy as np
 import math
 
@@ -57,6 +59,8 @@ class Node:
         # only not all ones for root node
         self.valid_actions = np.ones(action_space_size)
 
+        self.lock = Lock()
+
     def is_root(self):
         return self.parent is None
 
@@ -95,8 +99,8 @@ class Node:
         """
         return [node for action, node in self.children.items() if actions[action] == 1]
 
-    def propagate(self, value):
-        self.visits += 1
+    def propagate(self, value, virtual_loss):
+        self.visits += (1 - virtual_loss)
         self.value_sum += value
         self.exploitation_term = self.value_sum[self.player] / self.visits
 

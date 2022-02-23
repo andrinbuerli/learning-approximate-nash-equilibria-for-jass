@@ -7,7 +7,7 @@ from lib.jass.features.features_conv_cpp import FeaturesSetCppConv
 from lib.mu_zero.mcts.latent_value_calc_policy import LatentValueCalculationPolicy
 from lib.mu_zero.mcts.min_max_stats import MinMaxStats
 from lib.mu_zero.mcts.tree_search import ALPV_MCTS
-from lib.mu_zero.mcts.ucb_latent_node_selection_policy import UCBLatentNodeSelectionPolicy
+from lib.mu_zero.mcts.latent_node_selection_policy import LatentNodeSelectionPolicy
 from lib.mu_zero.network.buffering_network import BufferingNetwork
 from lib.mu_zero.network.resnet import MuZeroResidualNetwork
 
@@ -37,7 +37,7 @@ if __name__ == "__main__":
     times = []
     for _ in range(n):
         stats = MinMaxStats()
-        tree_policy = UCBLatentNodeSelectionPolicy(
+        tree_policy = LatentNodeSelectionPolicy(
             c_1=1,
             c_2=19652,
             feature_extractor=FeaturesSetCppConv(),
@@ -68,7 +68,7 @@ if __name__ == "__main__":
         times = []
         for _ in range(n):
             stats = MinMaxStats()
-            tree_policy = UCBLatentNodeSelectionPolicy(
+            tree_policy = LatentNodeSelectionPolicy(
                 c_1=1,
                 c_2=19652,
                 feature_extractor=FeaturesSetCppConv(),
@@ -106,7 +106,7 @@ if __name__ == "__main__":
             stats = MinMaxStats()
             buffered_network = BufferingNetwork(network, buffer_size=n_search_threads, timeout=0.1)
 
-            tree_policy = UCBLatentNodeSelectionPolicy(
+            tree_policy = LatentNodeSelectionPolicy(
                 c_1=1,
                 c_2=100,
                 feature_extractor=FeaturesSetCppConv(),

@@ -17,7 +17,7 @@ from lib.mu_zero.network.network_base import AbstractNetwork
 from lib.mu_zero.network.support_conversion import support_to_scalar
 
 
-class UCBLatentNodeSelectionPolicy:
+class LatentNodeSelectionPolicy:
 
     def __init__(
             self,

@@ -6,12 +6,12 @@ import jasscpp
 from lib.mu_zero.mcts.latent_value_calc_policy import LatentValueCalculationPolicy
 from lib.mu_zero.mcts.min_max_stats import MinMaxStats
 from lib.mu_zero.mcts.node import Node
-from lib.mu_zero.mcts.ucb_latent_node_selection_policy import UCBLatentNodeSelectionPolicy
+from lib.mu_zero.mcts.latent_node_selection_policy import LatentNodeSelectionPolicy
 
 
 class ALPV_MCTS:
     def __init__(self, observation: jasscpp.GameObservationCpp,
-                 node_selection: UCBLatentNodeSelectionPolicy,
+                 node_selection: LatentNodeSelectionPolicy,
                  reward_calc: LatentValueCalculationPolicy,
                  stats: MinMaxStats,
                  mdp_value: bool = False,
@@ -80,7 +80,7 @@ class ALPV_MCTS:
         value = self.reward_calc.calculate_value(node)
 
         # back propagate the rewards from the last node
-        while not node.is_root():
+        while True:
             with node.lock:
                 node.propagate(value, self.virtual_loss)
 
@@ -90,10 +90,10 @@ class ALPV_MCTS:
             else:
                 self.stats.update(node.exploitation_term)
 
-            node = node.parent
+            if node.is_root():
+                break
 
-        with node.lock:
-            node.propagate(value, self.virtual_loss)
+            node = node.parent
 
     def get_result(self) -> (np.ndarray, np.ndarray):
         """
@@ -102,14 +102,16 @@ class ALPV_MCTS:
             The probability of each action and the associated, estimated reward.
         """
         prob = np.zeros(43)
-        reward = np.zeros(43)
-        # there are different strategies here to select the best child
-        # the current implementation is the most secure child :-)
+        q_value = np.zeros(43)
+
         for action, node in self.root.children.items():
             prob[action] = node.visits
-            reward[action] = node.rewards[node.player] / node.visits
+            if self.mdp_value:
+                q_value[action] = node.exploitation_term * self.discount + node.reward[node.player]
+            else:
+                q_value[action] = node.exploitation_term
         prob /= np.sum(prob)
-        return prob, reward
+        return prob, q_value
 
 
     def __del__(self):

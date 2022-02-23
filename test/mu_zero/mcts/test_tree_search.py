@@ -7,7 +7,7 @@ from lib.mu_zero.mcts.latent_value_calc_policy import LatentValueCalculationPoli
 from lib.mu_zero.mcts.min_max_stats import MinMaxStats
 from lib.mu_zero.mcts.node import Node
 from lib.mu_zero.mcts.tree_search import ALPV_MCTS
-from lib.mu_zero.mcts.ucb_latent_node_selection_policy import UCBLatentNodeSelectionPolicy
+from lib.mu_zero.mcts.latent_node_selection_policy import LatentNodeSelectionPolicy
 from lib.mu_zero.network.buffering_network import BufferingNetwork
 from lib.mu_zero.network.resnet import MuZeroResidualNetwork
 
@@ -30,7 +30,7 @@ def test_single_simulation():
 
     stats = MinMaxStats()
 
-    tree_policy = UCBLatentNodeSelectionPolicy(
+    tree_policy = LatentNodeSelectionPolicy(
             c_1=1,
             c_2=100,
             feature_extractor=FeaturesSetCppConv(),
@@ -74,7 +74,7 @@ def test_multiple_simulations():
 
     stats = MinMaxStats()
 
-    tree_policy = UCBLatentNodeSelectionPolicy(
+    tree_policy = LatentNodeSelectionPolicy(
             c_1=1,
             c_2=100,
             feature_extractor=FeaturesSetCppConv(),
@@ -118,7 +118,7 @@ def test_multiple_simulations_async_single_thread():
 
     stats = MinMaxStats()
 
-    tree_policy = UCBLatentNodeSelectionPolicy(
+    tree_policy = LatentNodeSelectionPolicy(
             c_1=1,
             c_2=100,
             feature_extractor=FeaturesSetCppConv(),
@@ -166,7 +166,7 @@ def test_multiple_simulations_async_multi_thread():
     n_search_threads = 4
     buffered_network = BufferingNetwork(network, buffer_size=n_search_threads, timeout=0.1)
 
-    tree_policy = UCBLatentNodeSelectionPolicy(
+    tree_policy = LatentNodeSelectionPolicy(
             c_1=1,
             c_2=100,
             feature_extractor=FeaturesSetCppConv(),
@@ -215,7 +215,7 @@ def test_multiple_simulations_async_multi_thread_concurrency_check():
     stats = MinMaxStats()
 
     n_search_threads = 4
-    tree_policy = UCBLatentNodeSelectionPolicy(
+    tree_policy = LatentNodeSelectionPolicy(
             c_1=1,
             c_2=100,
             feature_extractor=FeaturesSetCppConv(),
@@ -243,3 +243,53 @@ def test_multiple_simulations_async_multi_thread_concurrency_check():
     assert testee.root.visits == 1000
 
     del testee
+
+
+def test_get_rewards():
+    network = MuZeroResidualNetwork(
+        observation_shape=(4, 9, 45),
+        action_space_size=43,
+        num_blocks=2,
+        num_channels=256,
+        reduced_channels_reward=128,
+        reduced_channels_value=1,
+        reduced_channels_policy=128,
+        fc_reward_layers=[256],
+        fc_value_layers=[256],
+        fc_policy_layers=[256],
+        support_size=100,
+        players=4
+    )
+
+    stats = MinMaxStats()
+
+    n_search_threads = 4
+    tree_policy = LatentNodeSelectionPolicy(
+            c_1=1,
+            c_2=100,
+            feature_extractor=FeaturesSetCppConv(),
+            network=network,
+            dirichlet_eps=0.25,
+            dirichlet_alpha=0.3,
+            stats=stats,
+            discount=1)
+
+    obs = jasscpp.GameObservationCpp()
+    obs.player = 1
+    testee = ALPV_MCTS(
+        observation=obs,
+        node_selection=tree_policy,
+        reward_calc=LatentValueCalculationPolicy(),
+        mdp_value=False,
+        stats=stats,
+        discount=1,
+        virtual_loss=0, # provoke concurrency issues
+        n_search_threads=n_search_threads
+    )
+
+    testee.run_simulations_async(1000)
+
+    prob, q_value = testee.get_result()
+
+    assert prob.shape == (43,)
+    assert q_value.shape == (43,)

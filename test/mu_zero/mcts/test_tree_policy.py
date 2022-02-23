@@ -3,7 +3,7 @@ import jasscpp
 from lib.jass.features.features_conv_cpp import FeaturesSetCppConv
 from lib.mu_zero.mcts.min_max_stats import MinMaxStats
 from lib.mu_zero.mcts.node import Node
-from lib.mu_zero.mcts.ucb_latent_node_selection_policy import UCBLatentNodeSelectionPolicy
+from lib.mu_zero.mcts.latent_node_selection_policy import LatentNodeSelectionPolicy
 from lib.mu_zero.network.resnet import MuZeroResidualNetwork
 
 
@@ -23,7 +23,7 @@ def test_init():
         players=4
     )
 
-    testee = UCBLatentNodeSelectionPolicy(
+    testee = LatentNodeSelectionPolicy(
             c_1=1,
             c_2=100,
             feature_extractor=FeaturesSetCppConv(),
@@ -59,7 +59,7 @@ def test_select():
         players=4
     )
 
-    testee = UCBLatentNodeSelectionPolicy(
+    testee = LatentNodeSelectionPolicy(
             c_1=1,
             c_2=100,
             feature_extractor=FeaturesSetCppConv(),

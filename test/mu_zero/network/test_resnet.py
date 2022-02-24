@@ -7,8 +7,8 @@ from lib.mu_zero.network.resnet import MuZeroResidualNetwork
 
 def test_shapes():
     testee = MuZeroResidualNetwork(
-        observation_shape=(4, 9, 43),
-        action_space_size=42,
+        observation_shape=(4, 9, 45),
+        action_space_size=43,
         num_blocks=2,
         num_channels=256,
         reduced_channels_reward=128,
@@ -21,7 +21,7 @@ def test_shapes():
         players=4
     )
 
-    encoded_state = testee.representation(np.random.uniform(0, 1, (1, 4, 9, 43)))
+    encoded_state = testee.representation(np.random.uniform(0, 1, (1, 4, 9, 45)))
     assert encoded_state.shape == (1, 4, 9, 256)
 
     encoded_next_state, reward = testee.dynamics(encoded_state, action=np.array([[1]]))
@@ -29,7 +29,7 @@ def test_shapes():
     assert reward.shape == (1, 4, 201)
 
     policy, value = testee.prediction(encoded_next_state)
-    assert policy.shape == (1, 42)
+    assert policy.shape == (1, 43)
     assert value.shape == (1, 4, 101)
 
 

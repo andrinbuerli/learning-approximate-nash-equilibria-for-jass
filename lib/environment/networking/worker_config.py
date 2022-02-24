@@ -3,6 +3,9 @@ import os
 from pathlib import Path
 from typing import Union
 
+from lib.jass.features.features_set_cpp import FeaturesSetCpp
+
+
 class BaseConfig:
     def __repr__(self):
         return str(self.__dict__, )
@@ -29,7 +32,7 @@ class BaseConfig:
 
 
 class NetworkConfig(BaseConfig):
-    def __init__(self):
+    def __init__(self, features: FeaturesSetCpp):
         self.type="resnet"
         self.observation_shape = (4, 9, 45)
         self.action_space_size = 43
@@ -43,6 +46,7 @@ class NetworkConfig(BaseConfig):
         self.fc_policy_layers = [256]
         self.support_size = 100
         self.players = 4
+        self.feature_extractor = features
 
 
 class AgentConfig(BaseConfig):
@@ -61,8 +65,8 @@ class AgentConfig(BaseConfig):
 
 
 class WorkerConfig(BaseConfig):
-    def __init__(self):
-        self.network = NetworkConfig()
+    def __init__(self, features: FeaturesSetCpp = None):
+        self.network = NetworkConfig(features)
         self.agent = AgentConfig()
 
     def __repr__(self):

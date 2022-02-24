@@ -37,7 +37,6 @@ def test_single_simulation():
             network=network,
             dirichlet_eps=0.25,
             dirichlet_alpha=0.3,
-            stats=stats,
             discount=1)
 
     obs = jasscpp.GameObservationCpp()
@@ -81,7 +80,6 @@ def test_multiple_simulations():
             network=network,
             dirichlet_eps=0.25,
             dirichlet_alpha=0.3,
-            stats=stats,
             discount=1)
 
     obs = jasscpp.GameObservationCpp()
@@ -125,7 +123,6 @@ def test_multiple_simulations_async_single_thread():
             network=network,
             dirichlet_eps=0.25,
             dirichlet_alpha=0.3,
-            stats=stats,
             discount=1)
 
     obs = jasscpp.GameObservationCpp()
@@ -173,7 +170,6 @@ def test_multiple_simulations_async_multi_thread():
             network=buffered_network,
             dirichlet_eps=0.25,
             dirichlet_alpha=0.3,
-            stats=stats,
             discount=1)
 
     obs = jasscpp.GameObservationCpp()
@@ -222,7 +218,6 @@ def test_multiple_simulations_async_multi_thread_concurrency_check():
             network=network,
             dirichlet_eps=0.25,
             dirichlet_alpha=0.3,
-            stats=stats,
             discount=1)
 
     obs = jasscpp.GameObservationCpp()
@@ -271,7 +266,6 @@ def test_get_rewards():
             network=network,
             dirichlet_eps=0.25,
             dirichlet_alpha=0.3,
-            stats=stats,
             discount=1)
 
     obs = jasscpp.GameObservationCpp()

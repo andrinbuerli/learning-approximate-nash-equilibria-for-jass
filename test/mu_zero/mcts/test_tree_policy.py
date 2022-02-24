@@ -30,7 +30,6 @@ def test_init():
             network=network,
             dirichlet_eps=0.25,
             dirichlet_alpha=0.3,
-            stats=MinMaxStats(),
             discount=1)
 
     node = Node(parent=None, action=None, player=None, next_player=1)
@@ -66,13 +65,12 @@ def test_select():
             network=network,
             dirichlet_eps=0.25,
             dirichlet_alpha=0.3,
-            stats=MinMaxStats(),
             discount=1)
 
     node = Node(parent=None, action=None, player=1, next_player=1)
     testee.init_node(node, jasscpp.GameObservationCpp())
 
-    child = testee.tree_policy(node)
+    child = testee.tree_policy(node, stats=MinMaxStats())
 
     assert child.parent is node
     assert child.valid_actions.sum() == child.valid_actions.shape[0]

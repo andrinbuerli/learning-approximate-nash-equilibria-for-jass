@@ -74,7 +74,7 @@ class ALPV_MCTS:
         """
 
         # select and possibly expand the tree using the tree policy
-        node = self.node_selection.tree_policy(self.root, self.virtual_loss)
+        node = self.node_selection.tree_policy(self.root, virtual_loss=self.virtual_loss, stats=self.stats)
 
         # evaluate the new node
         value = self.reward_calc.calculate_value(node)

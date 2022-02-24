@@ -25,7 +25,6 @@ class LatentNodeSelectionPolicy:
             c_2: float,
             feature_extractor: FeaturesSetCpp,
             network: AbstractNetwork,
-            stats: MinMaxStats,
             discount: float,
             dirichlet_eps: float = 0.25,
             dirichlet_alpha: float = 0.3,
@@ -33,7 +32,6 @@ class LatentNodeSelectionPolicy:
             debug: bool = False):
         self.synchronized = synchronized
         self.discount = discount
-        self.stats = stats
         self.c_2 = c_2
         self.c_1 = c_1
         self.network = network
@@ -45,7 +43,9 @@ class LatentNodeSelectionPolicy:
 
         self.nr_played_cards_in_selected_node = []
 
-    def tree_policy(self, node: Node, virtual_loss=0) -> Node:
+        self.stats = None
+
+    def tree_policy(self, node: Node, stats: MinMaxStats, virtual_loss=0) -> Node:
         while True:
             with node.lock:  # ensures that node and parent is not currently locked, i.e. being expanded
                 node.visits += virtual_loss
@@ -58,7 +58,7 @@ class LatentNodeSelectionPolicy:
 
             assert len(children) > 0, f'Error no children for valid actions {valid_actions}, {vars(node)}'
 
-            child = max(children, key=self._puct)
+            child = max(children, key=lambda x: self._puct(x, stats))
 
             for c in children:
                 c.avail += 1
@@ -91,7 +91,7 @@ class LatentNodeSelectionPolicy:
             node.prior[valid_idxs] = (1 - self.dirichlet_eps) * node.prior[valid_idxs] + self.dirichlet_eps * eta
 
 
-    def _puct(self, child: Node):
+    def _puct(self, child: Node, stats: MinMaxStats):
         P_s_a = child.parent.prior[child.action]
         prior_weight = (np.sqrt(child.avail) / (1 + child.visits)) * (
                     self.c_1 + np.log((child.avail + self.c_1 + 1) / self.c_1))
@@ -99,7 +99,7 @@ class LatentNodeSelectionPolicy:
 
         if child.visits > 0:
             assert len(child.reward.shape) == 1, f'shape: {child.reward.shape}'
-            exploitation_term = self.stats.normalize(
+            exploitation_term = stats.normalize(
                 child.reward[child.player] + self.discount * child.exploitation_term)
         else:
             exploitation_term = 0

@@ -153,7 +153,7 @@ TOTAL: {sum([representation_params, dynamics_params, prediction_params]):,} trai
         return encoded_state_normalized
 
     def _warmup(self):
-        encoded_state = self.representation(np.random.uniform(0, 1, (1,) + self.observation_shape))
+        encoded_state = self.representation(np.random.uniform(0, 1, (1,) + self.observation_shape).reshape(1, -1))
         assert encoded_state.shape == (1, self.observation_shape[0], self.observation_shape[1], self.num_channels)
         encoded_next_state, reward = self.dynamics(encoded_state, action=np.array([[1]]))
         assert encoded_next_state.shape == (1, self.observation_shape[0], self.observation_shape[1], self.num_channels)

@@ -1,4 +1,4 @@
-from lib.agent_factory import get_agent
+from lib.factory import get_agent
 from lib.environment.networking.worker_config import WorkerConfig
 
 

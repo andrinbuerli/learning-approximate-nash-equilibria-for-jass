@@ -11,7 +11,7 @@ import numpy as np
 from jass.game.const import TRUMP_FULL_OFFSET, TRUMP_FULL_P
 from jasscpp import RuleSchieberCpp
 
-from lib.agent_factory import get_agent, get_network
+from lib.factory import get_agent, get_network
 from lib.environment.networking.worker_config import WorkerConfig
 from lib.jass.arena.arena import Arena
 

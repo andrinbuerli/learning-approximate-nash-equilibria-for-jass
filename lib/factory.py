@@ -1,14 +1,13 @@
+from pathlib import Path
+
 import numpy as np
 
 from lib.environment.networking.worker_config import WorkerConfig
 from lib.jass.agent.agent import CppAgent
-from lib.mu_zero.mcts.agent_mu_zero_mcts import AgentMuZeroMCTS
-from lib.mu_zero.network.network_base import AbstractNetwork
-from lib.mu_zero.network.resnet import MuZeroResidualNetwork
 
-
-def get_agent(config: WorkerConfig, network: AbstractNetwork, greedy=False) -> CppAgent:
+def get_agent(config: WorkerConfig, network, greedy=False) -> CppAgent:
     if config.agent.type == "mu-zero-mcts":
+        from lib.mu_zero.mcts.agent_mu_zero_mcts import AgentMuZeroMCTS
         return AgentMuZeroMCTS(
             network=network,
             feature_extractor=config.network.feature_extractor,
@@ -27,8 +26,9 @@ def get_agent(config: WorkerConfig, network: AbstractNetwork, greedy=False) -> C
     raise NotImplementedError(f"Agent type {config.agent.type} is not implemented.")
 
 
-def get_network(config: WorkerConfig) -> AbstractNetwork:
+def get_network(config: WorkerConfig):
     if config.network.type == "resnet":
+        from lib.mu_zero.network.resnet import MuZeroResidualNetwork
         return MuZeroResidualNetwork(
             observation_shape=config.network.observation_shape,
             action_space_size=config.network.action_space_size,
@@ -47,14 +47,28 @@ def get_network(config: WorkerConfig) -> AbstractNetwork:
     raise NotImplementedError(f"Network type {config.network.type} is not implemented.")
 
 
-def get_opponent(config: WorkerConfig, name: str):
-    if name.__contains__("mcts"):
-        from lib.jass.agents.agent_cheating_mcts_trump_n_play_cpp import AgentCheatingMCTSTrumpAndPlayCpp
-        return AgentCheatingMCTSTrumpAndPlayCpp(
-            nr_simulations=config.nr_simulations,
-            exploration=np.sqrt(2))
-    elif name.__contains__("random"):
-        from lib.jass.agents.agent_random_trump_n_play import AgentRandomTrumpAndPlay
-        return AgentRandomTrumpAndPlay()
-    else:
-        raise AssertionError(f"Agent {name} is not supported.")
+def get_opponent(type: str, config: WorkerConfig) -> CppAgent:
+    if type == "dmcts":
+        import jassmlcpp
+
+        return jassmlcpp.agent.JassAgentDMCTSFullCpp(
+            hand_distribution_policy=jassmlcpp.mcts.RandomHandDistributionPolicyCpp(),
+            node_selection_policy=jassmlcpp.mcts.UCTPolicyFullCpp(exploration=np.sqrt(2)),
+            reward_calculation_policy=jassmlcpp.mcts.RandomRolloutPolicyFullCpp(),
+            nr_determinizations=1,
+            nr_iterations=config.agent.iterations,
+            threads_to_use=1
+        )
+    elif type == "random":
+        import jassmlcpp
+
+        return jassmlcpp.agent.JassAgentRandomCpp()
+    elif type == "dpolicy":
+        from lib.jass.agent.agent_determinized_policy_cpp import AgentDeterminizedPolicyCpp
+        return AgentDeterminizedPolicyCpp(
+            model_path= str(Path(__file__).parent.parent / "resources" / "az-model-from-supervised-data.pd"),
+            determinizations=25
+        )
+    raise NotImplementedError(f"Opponent type {type} is not implemented.")
+
+

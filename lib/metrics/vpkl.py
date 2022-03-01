@@ -11,7 +11,7 @@ from lib.mu_zero.network.network_base import AbstractNetwork
 from lib.mu_zero.network.support_conversion import support_to_scalar
 
 
-def _calculate_batched_save_(network: AbstractNetwork, iterator, n_steps_ahead, f_shape, l_shape):
+def _calculate_batched_vpkl_(network: AbstractNetwork, iterator, n_steps_ahead, f_shape, l_shape):
     x, y = next(iterator)
 
     x = tf.reshape(x, (-1,) + f_shape)
@@ -22,20 +22,8 @@ def _calculate_batched_save_(network: AbstractNetwork, iterator, n_steps_ahead, 
     position = np.random.choice(range(trajectory_length))
     positions = np.array(list(zip(range(batch_size), np.repeat(position, batch_size))))
 
-    initial_positions = tf.gather_nd(x, positions)
-    value, reward, policy_estimate, encoded_states = network.initial_inference(initial_positions)
-
-    reshaped = tf.reshape(initial_positions, (-1,) + FeaturesSetConvFull.FEATURE_SHAPE)
-    current_player = tf.reduce_max(reshaped[:, :, :, FeaturesSetConvFull.CH_PLAYER:FeaturesSetConvFull.CH_PLAYER + 4], axis=(1,2))
-    current_team = tf.argmax(current_player, axis=-1) % 2
-    outcomes = tf.cast(tf.gather_nd(y, positions)[:, 43:45] * 157, tf.int32)
-
-    current_teams = 1 - tf.cast((
-            tf.tile([[0, 1, 0, 1]], [batch_size, 1]) == tf.cast(tf.reshape(tf.repeat(current_team, 4), [-1, 4]), tf.int32)),
-        tf.int32)
-    outcomes = tf.gather_nd(outcomes, tf.stack((tf.reshape(tf.repeat(tf.range(batch_size), 4), [-1, 4]), current_teams), axis=-1))
-
-    assert all(tf.reduce_sum(outcomes, axis=-1) == 157 * 2)
+    initial_states = tf.gather_nd(x, positions)
+    value, reward, policy_estimate, encoded_states = network.initial_inference(initial_states)
 
     min_tensor = tf.stack((tf.range(batch_size), tf.repeat(trajectory_length - 1, batch_size)), axis=1)
     zeros = tf.zeros(batch_size, dtype=tf.int32)
@@ -48,19 +36,31 @@ def _calculate_batched_save_(network: AbstractNetwork, iterator, n_steps_ahead, 
         value, reward, policy_estimate, encoded_states =  network.recurrent_inference(encoded_states, actions)
 
         current_positions = tf.minimum(positions + [0, (i + 1)], min_tensor)  # repeat last action at end
-
         supervised_policy = tf.gather_nd(y, current_positions)[:, :43]
         # solve if trajectory hans only length of 37
         current_positions = current_positions - tf.stack((zeros, tf.cast(tf.reduce_sum(supervised_policy, axis=-1) == 0, tf.int32)), axis=1)
 
-    value_pred = tf.reshape(support_to_scalar(tf.reshape(value, (-1, value.shape[-1])), min_value=0), (-1, 4))
+    current_states = tf.reshape(tf.gather_nd(x, current_positions), (-1,) + FeaturesSetConvFull.FEATURE_SHAPE)
 
-    mae = tf.reduce_mean(tf.abs(value_pred - tf.cast(outcomes, tf.float32)))
+    valid_cards = tf.reshape(current_states[:, :, :, FeaturesSetConvFull.CH_CARDS_VALID], [-1, 36])
+    trump_valid = tf.tile(tf.reshape(tf.reduce_max(current_states[:, :, :, FeaturesSetConvFull.CH_TRUMP_VALID], axis=(1, 2)), [-1, 1]), [1, 6])
+    push_valid = tf.reshape(tf.reduce_max(current_states[:, :, :, FeaturesSetConvFull.CH_PUSH_VALID], axis=(1, 2)), [-1, 1])
 
-    return float(mae)
+    valid_actions = tf.concat([
+        valid_cards,
+        trump_valid,
+        push_valid
+    ], axis=-1)
+
+    policy_estimate = tf.clip_by_value(policy_estimate, 1e-7, 1. - 1e-7)
+    valid_actions = tf.clip_by_value(valid_actions, 1e-7, 1. - 1e-7)
+    kl = tf.reduce_mean(
+        tf.reduce_sum(valid_actions * tf.math.log(valid_actions / policy_estimate), axis=1)).numpy()
+
+    return float(kl)
 
 
-class SAVE(BaseAsyncMetric):
+class VPKL(BaseAsyncMetric):
 
     def get_params(self, thread_nr: int, network: AbstractNetwork, init_vars=None) -> []:
         iterator = init_vars
@@ -102,7 +102,7 @@ class SAVE(BaseAsyncMetric):
         self.trajectory_label_shape = (self.trajectory_length, label_length)
 
         super().__init__(worker_config, network_path, parallel_threads=1,
-                         metric_method=_calculate_batched_save_, init_method=self.init_dataset)
+                         metric_method=_calculate_batched_vpkl_, init_method=self.init_dataset)
 
     def get_name(self):
-        return f"save"
+        return f"vpkl"

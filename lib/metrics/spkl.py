@@ -27,18 +27,19 @@ def _calculate_batched_spkl_(network: AbstractNetwork, iterator, n_steps_ahead, 
 
     min_tensor = tf.stack((tf.range(batch_size), tf.repeat(trajectory_length - 1, batch_size)), axis=1)
     zeros = tf.zeros(batch_size, dtype=tf.int32)
+    current_positions = positions
     for i in range(n_steps_ahead):
-        current_positions = tf.minimum(positions + [0, i], min_tensor)  # repeat last action at end
-
-        supervised_policy = tf.gather_nd(y, current_positions)[:, :43]
-        # solve if trajectory hans only length of 37
-        current_positions = current_positions - tf.stack((zeros, tf.cast(tf.reduce_sum(supervised_policy, axis=-1) == 0, tf.int32)), axis=1)
-
         supervised_policy = tf.gather_nd(y, current_positions)[:, :43]
         assert all(tf.reduce_max(supervised_policy, axis=-1) == 1)
 
         actions = tf.reshape(tf.argmax(supervised_policy, axis=-1), [-1, 1])
         value, reward, policy_estimate, encoded_states =  network.recurrent_inference(encoded_states, actions)
+
+        current_positions = tf.minimum(positions + [0, (i + 1)], min_tensor)  # repeat last action at end
+
+        supervised_policy = tf.gather_nd(y, current_positions)[:, :43]
+        # solve if trajectory hans only length of 37
+        current_positions = current_positions - tf.stack((zeros, tf.cast(tf.reduce_sum(supervised_policy, axis=-1) == 0, tf.int32)), axis=1)
 
     policy_estimate = tf.clip_by_value(policy_estimate, 1e-7, 1. - 1e-7)
     supervised_policy = tf.clip_by_value(supervised_policy, 1e-7, 1. - 1e-7)

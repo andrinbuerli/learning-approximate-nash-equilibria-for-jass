@@ -38,6 +38,18 @@ services:
                   device_ids: ['0']
                   capabilities: [gpu]
 
+    baselines:
+        build: .
+        ports:
+          - 9898:9898
+          - 9897:9897
+          - 9896:9896
+        volumes:
+            - .:/app
+        command: bash -c "
+                  cd scripts
+                  && python host_agents.py --files dmcts.json dpolicy.json random.json"
+
     test:
         build:
             context: .
@@ -46,8 +58,6 @@ services:
         entrypoint: []
         volumes:
             - .:/app
-        command: bash -c "
-                  pytest --forked -n auto --timeout=120 /app/test/cpp -v
-                  && pytest --forked -n auto --timeout=120 /app/test/python -v"
+        command: pytest --forked -n auto --timeout=120 /app/test -v
 
 

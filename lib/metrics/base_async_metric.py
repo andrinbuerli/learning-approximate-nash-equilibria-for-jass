@@ -2,13 +2,16 @@ import abc
 import logging
 import os
 import time
+import multiprocessing as mp
+mp.set_start_method('spawn', force=True)
+
 from multiprocessing import Queue, Process
 from multiprocessing.pool import ThreadPool
 
 import numpy as np
 
 from lib.environment.networking.worker_config import WorkerConfig
-from lib.factory import get_agent, get_network
+from lib.factory import get_network
 from lib.mu_zero.network.network_base import AbstractNetwork
 
 

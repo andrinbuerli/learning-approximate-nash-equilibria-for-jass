@@ -1,20 +1,18 @@
 import time
-from multiprocessing import Queue, Pipe
-from multiprocessing.connection import Connection
+from multiprocessing import Queue
 from pathlib import Path
 
-from lib.environment.networking.worker_config import WorkerConfig
 from lib.environment.parallel_jass_environment import ParallelJassEnvironment
-from lib.jass.features.features_conv_cpp import FeaturesSetCppConv
+from test.util import get_test_config
 
 
 def test_collect_data():
-    config = WorkerConfig(features=FeaturesSetCppConv())
+    config = get_test_config()
 
     config.agent.iterations = 10
     config.agent.n_search_threads = 4
 
-    path = Path(__file__).parent.parent.parent / "resources" / "resnet_random.pd"
+    path = Path(__file__).parent.parent / "resources" / "resnet_random.pd"
     testee = ParallelJassEnvironment(
         max_parallel_processes=1,
         max_parallel_threads=1,
@@ -28,12 +26,12 @@ def test_collect_data():
 
 
 def test_collect_data_parallel_processes():
-    config = WorkerConfig(features=FeaturesSetCppConv())
+    config = get_test_config()
 
     config.agent.iterations = 10
     config.agent.n_search_threads = 4
 
-    path = Path(__file__).parent.parent.parent / "resources" / "resnet_random.pd"
+    path = Path(__file__).parent.parent / "resources" / "resnet_random.pd"
     testee = ParallelJassEnvironment(
         max_parallel_processes=2,
         max_parallel_threads=1,
@@ -50,12 +48,12 @@ def test_collect_data_parallel_processes():
 
 
 def test_collect_data_parallel_threads():
-    config = WorkerConfig(features=FeaturesSetCppConv())
+    config = get_test_config()
 
     config.agent.iterations = 10
     config.agent.n_search_threads = 4
 
-    path = Path(__file__).parent.parent.parent / "resources" / "resnet_random.pd"
+    path = Path(__file__).parent.parent / "resources" / "resnet_random.pd"
     testee = ParallelJassEnvironment(
         max_parallel_processes=1,
         max_parallel_threads=2,
@@ -72,12 +70,12 @@ def test_collect_data_parallel_threads():
 
 
 def test_collect_more_data_parallel_processes():
-    config = WorkerConfig(features=FeaturesSetCppConv())
+    config = get_test_config()
 
     config.agent.iterations = 10
     config.agent.n_search_threads = 4
 
-    path = Path(__file__).parent.parent.parent / "resources" / "resnet_random.pd"
+    path = Path(__file__).parent.parent / "resources" / "resnet_random.pd"
     testee = ParallelJassEnvironment(
         max_parallel_processes=2,
         max_parallel_threads=1,
@@ -94,12 +92,12 @@ def test_collect_more_data_parallel_processes():
 
 
 def test_collect_more_data_parallel_threads():
-    config = WorkerConfig(features=FeaturesSetCppConv())
+    config = get_test_config()
 
     config.agent.iterations = 10
     config.agent.n_search_threads = 4
 
-    path = Path(__file__).parent.parent.parent / "resources" / "resnet_random.pd"
+    path = Path(__file__).parent.parent / "resources" / "resnet_random.pd"
     testee = ParallelJassEnvironment(
         max_parallel_processes=1,
         max_parallel_threads=2,
@@ -116,12 +114,12 @@ def test_collect_more_data_parallel_threads():
 
 
 def test_collect_more_data_parallel_processes_and_threads():
-    config = WorkerConfig(features=FeaturesSetCppConv())
+    config = get_test_config()
 
     config.agent.iterations = 10
     config.agent.n_search_threads = 4
 
-    path = Path(__file__).parent.parent.parent / "resources" / "resnet_random.pd"
+    path = Path(__file__).parent.parent / "resources" / "resnet_random.pd"
     testee = ParallelJassEnvironment(
         max_parallel_processes=2,
         max_parallel_threads=2,
@@ -138,12 +136,12 @@ def test_collect_more_data_parallel_processes_and_threads():
 
 
 def test_collect_data_continuous():
-    config = WorkerConfig(features=FeaturesSetCppConv())
+    config = get_test_config()
 
     config.agent.iterations = 10
     config.agent.n_search_threads = 4
 
-    path = Path(__file__).parent.parent.parent / "resources" / "resnet_random.pd"
+    path = Path(__file__).parent.parent / "resources" / "resnet_random.pd"
     testee = ParallelJassEnvironment(
         max_parallel_processes=2,
         max_parallel_threads=2,

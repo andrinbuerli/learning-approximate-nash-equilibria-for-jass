@@ -33,7 +33,7 @@ class BaseConfig:
 
 class NetworkConfig(BaseConfig):
     def __init__(self, features: FeaturesSetCpp):
-        self.type="resnet"
+        self.type=""
         self.observation_shape = (4, 9, 45)
         self.action_space_size = 43
         self.num_blocks = 2
@@ -47,10 +47,13 @@ class NetworkConfig(BaseConfig):
         self.support_size = 100
         self.players = 4
         self.feature_extractor = features
+        self.path = None
 
 
 class AgentConfig(BaseConfig):
     def __init__(self):
+        self.port = 9999
+
         self.type = "mu-zero-mcts"
         self.iterations=100
         self.c_1 = 1
@@ -62,6 +65,10 @@ class AgentConfig(BaseConfig):
         self.mdp_value = False
         self.virtual_loss = 10
         self.n_search_threads = 4
+
+        # dmcts
+        self.nr_determinizations = 25
+        self.threads_to_use = 4
 
 
 class WorkerConfig(BaseConfig):
@@ -79,5 +86,7 @@ class WorkerConfig(BaseConfig):
 
     def load(self, representation: str):
         loaded = json.loads(representation)
-        self.network.__dict__ = {**(self.network.__dict__), **loaded['network']}
-        self.agent.__dict__ = {**(self.agent.__dict__), **loaded['agent']}
+        if 'network' in loaded:
+            self.network.__dict__ = {**(self.network.__dict__), **loaded['network']}
+        if 'agent' in loaded:
+            self.agent.__dict__ = {**(self.agent.__dict__), **loaded['agent']}

@@ -4,6 +4,8 @@ import numpy as np
 
 from lib.environment.networking.worker_config import WorkerConfig
 from lib.jass.agent.agent import CppAgent
+from lib.jass.agent.agent_by_network_cpp import AgentByNetworkCpp
+
 
 def get_agent(config: WorkerConfig, network, greedy=False) -> CppAgent:
     if config.agent.type == "mu-zero-mcts":
@@ -22,14 +24,33 @@ def get_agent(config: WorkerConfig, network, greedy=False) -> CppAgent:
             virtual_loss=config.agent.virtual_loss,
             n_search_threads=config.agent.n_search_threads,
         )
+    if config.agent.type == "dmcts":
+        import jassmlcpp
+        return jassmlcpp.agent.JassAgentDMCTSFullCpp(
+            hand_distribution_policy=jassmlcpp.mcts.RandomHandDistributionPolicyCpp(),
+            node_selection_policy=jassmlcpp.mcts.UCTPolicyFullCpp(exploration=np.sqrt(2)),
+            reward_calculation_policy=jassmlcpp.mcts.RandomRolloutPolicyFullCpp(),
+            nr_determinizations=config.agent.nr_determinizations,
+            nr_iterations=config.agent.iterations,
+            threads_to_use=config.agent.threads_to_use
+        )
+    elif config.agent.type == "random":
+        import jassmlcpp
+        return jassmlcpp.agent.JassAgentRandomCpp()
+    elif config.agent.type == "dpolicy":
+        from lib.jass.agent.agent_determinized_policy_cpp import AgentDeterminizedPolicyCpp
+        return AgentDeterminizedPolicyCpp(
+            model_path= str(Path(__file__).parent.parent / "resources" / "az-model-from-supervised-data.pd"),
+            determinizations=25
+        )
 
     raise NotImplementedError(f"Agent type {config.agent.type} is not implemented.")
 
 
-def get_network(config: WorkerConfig):
+def get_network(config: WorkerConfig, network_path: str = None):
     if config.network.type == "resnet":
         from lib.mu_zero.network.resnet import MuZeroResidualNetwork
-        return MuZeroResidualNetwork(
+        network = MuZeroResidualNetwork(
             observation_shape=config.network.observation_shape,
             action_space_size=config.network.action_space_size,
             num_blocks=config.network.num_blocks,
@@ -44,31 +65,21 @@ def get_network(config: WorkerConfig):
             players=config.network.players
         )
 
+        if config.network.path is not None:
+            network.load(network_path)
+
+        return network
+
     raise NotImplementedError(f"Network type {config.network.type} is not implemented.")
 
 
-def get_opponent(type: str, config: WorkerConfig) -> CppAgent:
+def get_opponent(type: str) -> CppAgent:
     if type == "dmcts":
-        import jassmlcpp
-
-        return jassmlcpp.agent.JassAgentDMCTSFullCpp(
-            hand_distribution_policy=jassmlcpp.mcts.RandomHandDistributionPolicyCpp(),
-            node_selection_policy=jassmlcpp.mcts.UCTPolicyFullCpp(exploration=np.sqrt(2)),
-            reward_calculation_policy=jassmlcpp.mcts.RandomRolloutPolicyFullCpp(),
-            nr_determinizations=1,
-            nr_iterations=config.agent.iterations,
-            threads_to_use=1
-        )
+        return AgentByNetworkCpp(url="http://baselines:9898/dmcts")
     elif type == "random":
-        import jassmlcpp
-
-        return jassmlcpp.agent.JassAgentRandomCpp()
+        return AgentByNetworkCpp(url="http://baselines:9896/random")
     elif type == "dpolicy":
-        from lib.jass.agent.agent_determinized_policy_cpp import AgentDeterminizedPolicyCpp
-        return AgentDeterminizedPolicyCpp(
-            model_path= str(Path(__file__).parent.parent / "resources" / "az-model-from-supervised-data.pd"),
-            determinizations=25
-        )
+        return AgentByNetworkCpp(url="http://baselines:9897/dpolicy")
     raise NotImplementedError(f"Opponent type {type} is not implemented.")
 
 

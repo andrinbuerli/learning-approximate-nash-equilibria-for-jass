@@ -15,14 +15,15 @@ def _play_single_game_(i, agent: CppAgent, opponent: CppAgent):
 
     return points
 
+
 class APAO(BaseAsyncMetric):
 
     def get_params(self, thread_nr: int, network: AbstractNetwork) -> []:
-        return thread_nr, get_agent(self.worker_config, network), get_opponent(self.opponent_name, network)
+        return thread_nr, get_agent(self.worker_config, network), get_opponent(self.opponent_name)
 
     def __init__(self, opponent_name: str, worker_config: WorkerConfig, network_path: str, parallel_threads: int):
-        super().__init__(worker_config, network_path, parallel_threads, _play_single_game_)
         self.opponent_name = opponent_name
+        super().__init__(worker_config, network_path, parallel_threads, _play_single_game_)
 
     def get_name(self):
-        return "mock"
+        return f"apa_{self.opponent_name}"

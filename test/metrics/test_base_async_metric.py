@@ -22,9 +22,12 @@ class MetricMock(BaseAsyncMetric):
 
 
 def test_get_result():
+    config = WorkerConfig()
+    config.network.type = "resnet"
+
     testee = MetricMock(
-        WorkerConfig(),
-        network_path = str(Path(__file__).parent.parent.parent / "resources" / "resnet_random.pd"),
+        config,
+        network_path = str(Path(__file__).parent.parent / "resources" / "resnet_random.pd"),
         parallel_threads=1
     )
 
@@ -36,9 +39,12 @@ def test_get_result():
 
 
 def test_get_result_multi_threaded():
+    config = WorkerConfig()
+    config.network.type = "resnet"
+
     testee = MetricMock(
-        WorkerConfig(),
-        network_path = str(Path(__file__).parent.parent.parent / "resources" / "resnet_random.pd"),
+        config,
+        network_path = str(Path(__file__).parent.parent / "resources" / "resnet_random.pd"),
         parallel_threads=10
     )
 

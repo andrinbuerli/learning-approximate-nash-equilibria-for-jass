@@ -34,9 +34,7 @@ class FeaturesSetCppConv(FeaturesSetCpp):
     CH_DECLARE_TRUMP   = 24
     CH_PLAYER          = 28
     CH_TRUMP           = 32            # 6 possibilities
-    CH_FOREHAND        = 38
-    # CH_NR_TRICKS       = 41
-    # CH_NR_CARDS_PLAYED = 42
+    CH_FOREHAND        = 38            # store forehand as one hot encoded for 3 values with -1, 0, 1
     CH_POINTS_OWN      = 41
     CH_POINTS_OPP      = 42
     CH_TRUMP_VALID     = 43
@@ -63,7 +61,8 @@ class FeaturesSetCppConv(FeaturesSetCpp):
         cards_played_in_trick_number = np.zeros([36, 9], dtype=np.float32)
         cards_played_in_position = np.zeros([36, 4], dtype=np.float32)
 
-        for trick_id in range(obs.current_trick):
+        # we go through the one more than the number of tricks to include the current trick
+        for trick_id in range(obs.current_trick + 1):
             player = obs.trick_first_player[trick_id]
             for i in range(4):
                 card = obs.tricks[trick_id, i]

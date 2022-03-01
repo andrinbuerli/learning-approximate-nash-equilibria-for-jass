@@ -11,6 +11,28 @@ from lib.mu_zero.network.network_base import AbstractNetwork
 from lib.mu_zero.network.support_conversion import support_to_scalar
 
 
+
+
+def _calculate_vpkl_(current_positions, policy_estimate, x):
+    current_states = tf.reshape(tf.gather_nd(x, current_positions), (-1,) + FeaturesSetConvFull.FEATURE_SHAPE)
+    valid_cards = tf.reshape(current_states[:, :, :, FeaturesSetConvFull.CH_CARDS_VALID], [-1, 36])
+    trump_valid = tf.tile(
+        tf.reshape(tf.reduce_max(current_states[:, :, :, FeaturesSetConvFull.CH_TRUMP_VALID], axis=(1, 2)), [-1, 1]),
+        [1, 6])
+    push_valid = tf.reshape(tf.reduce_max(current_states[:, :, :, FeaturesSetConvFull.CH_PUSH_VALID], axis=(1, 2)),
+                            [-1, 1])
+    valid_actions = tf.concat([
+        valid_cards,
+        trump_valid,
+        push_valid
+    ], axis=-1)
+    policy_estimate = tf.clip_by_value(policy_estimate, 1e-7, 1. - 1e-7)
+    valid_actions = tf.clip_by_value(valid_actions, 1e-7, 1. - 1e-7)
+    kl = tf.reduce_mean(
+        tf.reduce_sum(valid_actions * tf.math.log(valid_actions / policy_estimate), axis=1)).numpy()
+    return kl
+
+
 def _calculate_batched_vpkl_(network: AbstractNetwork, iterator, n_steps_ahead, f_shape, l_shape):
     x, y = next(iterator)
 
@@ -28,6 +50,11 @@ def _calculate_batched_vpkl_(network: AbstractNetwork, iterator, n_steps_ahead, 
     min_tensor = tf.stack((tf.range(batch_size), tf.repeat(trajectory_length - 1, batch_size)), axis=1)
     zeros = tf.zeros(batch_size, dtype=tf.int32)
     current_positions = positions
+
+    kls = []
+    kl = _calculate_vpkl_(current_positions, policy_estimate, x)
+    kls.append(float(kl))
+
     for i in range(n_steps_ahead):
         supervised_policy = tf.gather_nd(y, current_positions)[:, :43]
         assert all(tf.reduce_max(supervised_policy, axis=-1) == 1)
@@ -40,24 +67,12 @@ def _calculate_batched_vpkl_(network: AbstractNetwork, iterator, n_steps_ahead, 
         # solve if trajectory hans only length of 37
         current_positions = current_positions - tf.stack((zeros, tf.cast(tf.reduce_sum(supervised_policy, axis=-1) == 0, tf.int32)), axis=1)
 
-    current_states = tf.reshape(tf.gather_nd(x, current_positions), (-1,) + FeaturesSetConvFull.FEATURE_SHAPE)
+        kl = _calculate_vpkl_(current_positions, policy_estimate, x)
+        kls.append(float(kl))
 
-    valid_cards = tf.reshape(current_states[:, :, :, FeaturesSetConvFull.CH_CARDS_VALID], [-1, 36])
-    trump_valid = tf.tile(tf.reshape(tf.reduce_max(current_states[:, :, :, FeaturesSetConvFull.CH_TRUMP_VALID], axis=(1, 2)), [-1, 1]), [1, 6])
-    push_valid = tf.reshape(tf.reduce_max(current_states[:, :, :, FeaturesSetConvFull.CH_PUSH_VALID], axis=(1, 2)), [-1, 1])
-
-    valid_actions = tf.concat([
-        valid_cards,
-        trump_valid,
-        push_valid
-    ], axis=-1)
-
-    policy_estimate = tf.clip_by_value(policy_estimate, 1e-7, 1. - 1e-7)
-    valid_actions = tf.clip_by_value(valid_actions, 1e-7, 1. - 1e-7)
-    kl = tf.reduce_mean(
-        tf.reduce_sum(valid_actions * tf.math.log(valid_actions / policy_estimate), axis=1)).numpy()
-
-    return float(kl)
+    return {
+        f"vpkl_{i}_steps_ahead": x for i, x in enumerate(kls)
+    }
 
 
 class VPKL(BaseAsyncMetric):
@@ -104,5 +119,5 @@ class VPKL(BaseAsyncMetric):
         super().__init__(worker_config, network_path, parallel_threads=1,
                          metric_method=_calculate_batched_vpkl_, init_method=self.init_dataset)
 
-    def get_name(self):
-        return f"vpkl"
+    def get_name(self, i: int):
+        return f"vpkl_{i}_steps_ahead"

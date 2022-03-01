@@ -24,7 +24,7 @@ def test_save_0_step():
 
     result = testee.get_latest_result()
 
-    assert result is not None
+    assert len(result) == 1
 
     del testee
 
@@ -46,7 +46,7 @@ def test_save_1_step():
 
     result = testee.get_latest_result()
 
-    assert result is not None
+    assert len(result) == 2
 
     del testee
 
@@ -68,6 +68,6 @@ def test_save_more_steps_larger_batch():
 
     result = testee.get_latest_result()
 
-    assert result is not None
+    assert len(result) == 17
 
     del testee

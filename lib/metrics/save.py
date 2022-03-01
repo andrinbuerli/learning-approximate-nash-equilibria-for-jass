@@ -11,6 +11,12 @@ from lib.mu_zero.network.network_base import AbstractNetwork
 from lib.mu_zero.network.support_conversion import support_to_scalar
 
 
+
+def _calculate_mae_(outcomes, value):
+    value_pred = tf.reshape(support_to_scalar(tf.reshape(value, (-1, value.shape[-1])), min_value=0), (-1, 4))
+    mae = tf.reduce_mean(tf.abs(value_pred - tf.cast(outcomes, tf.float32)))
+    return mae
+
 def _calculate_batched_save_(network: AbstractNetwork, iterator, n_steps_ahead, f_shape, l_shape):
     x, y = next(iterator)
 
@@ -40,6 +46,9 @@ def _calculate_batched_save_(network: AbstractNetwork, iterator, n_steps_ahead, 
     min_tensor = tf.stack((tf.range(batch_size), tf.repeat(trajectory_length - 1, batch_size)), axis=1)
     zeros = tf.zeros(batch_size, dtype=tf.int32)
     current_positions = positions
+    maes = []
+    mae = _calculate_mae_(outcomes, value)
+    maes.append(float(mae))
     for i in range(n_steps_ahead):
         supervised_policy = tf.gather_nd(y, current_positions)[:, :43]
         assert all(tf.reduce_max(supervised_policy, axis=-1) == 1)
@@ -53,11 +62,12 @@ def _calculate_batched_save_(network: AbstractNetwork, iterator, n_steps_ahead, 
         # solve if trajectory hans only length of 37
         current_positions = current_positions - tf.stack((zeros, tf.cast(tf.reduce_sum(supervised_policy, axis=-1) == 0, tf.int32)), axis=1)
 
-    value_pred = tf.reshape(support_to_scalar(tf.reshape(value, (-1, value.shape[-1])), min_value=0), (-1, 4))
+        mae = _calculate_mae_(outcomes, value)
+        maes.append(float(mae))
 
-    mae = tf.reduce_mean(tf.abs(value_pred - tf.cast(outcomes, tf.float32)))
-
-    return float(mae)
+    return {
+        f"save_{i}_steps_ahead": x for i, x in enumerate(maes)
+    }
 
 
 class SAVE(BaseAsyncMetric):

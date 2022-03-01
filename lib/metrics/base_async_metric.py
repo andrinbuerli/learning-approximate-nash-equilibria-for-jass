@@ -58,7 +58,11 @@ class BaseAsyncMetric:
 
                 results = pool.starmap(self.metric_method, params)
 
-                self.result_queue.put(float(np.mean(results)))
+                if len(results) == 1 and type(results[0]) is dict:
+                    self.result_queue.put(results[0])
+                else:
+                    self.result_queue.put(float(np.mean(results)))
+
             except Exception as e:
                 logging.error(f"Encountered error {e}, continuing anyways")
                 raise e
@@ -67,7 +71,7 @@ class BaseAsyncMetric:
     def get_params(self, thread_nr: int, network: AbstractNetwork, init_vars=None) -> []:
         pass
 
-    def get_latest_result(self):
+    def get_latest_result(self) -> dict:
         while self.result_queue.qsize() > 0:
             self._latest_result = self.result_queue.get()
 

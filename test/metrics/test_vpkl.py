@@ -24,7 +24,7 @@ def test_vpkl_0_step():
 
     result = testee.get_latest_result()
 
-    assert result is not None
+    assert len(result) == 1
 
     del testee
 
@@ -45,7 +45,7 @@ def test_vpkl_1_step():
 
     result = testee.get_latest_result()
 
-    assert result is not None
+    assert len(result) == 2
 
     del testee
 
@@ -67,7 +67,7 @@ def test_vpkl_30_step():
 
     result = testee.get_latest_result()
 
-    assert result is not None
+    assert len(result) == 31
 
     del testee
 
@@ -89,6 +89,6 @@ def test_vpkl_larger_batch():
 
     result = testee.get_latest_result()
 
-    assert result is not None
+    assert len(result) == 17
 
     del testee

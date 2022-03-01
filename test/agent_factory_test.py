@@ -1,6 +1,6 @@
 import jasscpp
 import numpy as np
-from jass.game.const import SOUTH
+from jass.game.const import SOUTH, PUSH
 from jass.game.game_util import deal_random_hand
 
 from lib.environment.networking.worker_config import WorkerConfig
@@ -39,5 +39,6 @@ def test_get_opponent_random():
     game = jasscpp.GameSimCpp()
     obs = jasscpp.observation_from_state(game.state, 0)
 
-    assert 0 <= agent.action_trump(obs) <= 6
+    action = agent.action_trump(obs)
+    assert 0 <= action <= 5 or action == PUSH
 

@@ -22,7 +22,9 @@ class BaseAsyncMetric:
             worker_config: WorkerConfig,
             network_path: str,
             parallel_threads: int,
-            metric_method):
+            metric_method,
+            init_method=None):
+        self.init_method = init_method
         self.metric_method = metric_method
         self.worker_config = worker_config
         self.parallel_threads = parallel_threads
@@ -42,20 +44,27 @@ class BaseAsyncMetric:
 
         network = get_network(self.worker_config)
 
+        if self.init_method is not None:
+            init_vars = self.init_method()
+
         while True:
             try:
                 network.load(self.network_path)
 
-                params = [self.get_params(i, network) for i in range(self.parallel_threads)]
+                if self.init_method is None:
+                    params = [self.get_params(i, network) for i in range(self.parallel_threads)]
+                else:
+                    params = [self.get_params(i, network, init_vars) for i in range(self.parallel_threads)]
 
                 results = pool.starmap(self.metric_method, params)
 
                 self.result_queue.put(float(np.mean(results)))
             except Exception as e:
                 logging.error(f"Encountered error {e}, continuing anyways")
+                raise e
 
     @abc.abstractmethod
-    def get_params(self, thread_nr: int, network: AbstractNetwork) -> []:
+    def get_params(self, thread_nr: int, network: AbstractNetwork, init_vars=None) -> []:
         pass
 
     def get_latest_result(self):

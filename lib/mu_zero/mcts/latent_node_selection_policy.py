@@ -110,8 +110,8 @@ class LatentNodeSelectionPolicy:
         node.value, node.reward, node.prior = \
             [x.numpy().squeeze() for x in [node.value, node.reward, node.prior]]
 
-        node.value = support_to_scalar(distribution=node.value, min_value=0)
-        node.reward = support_to_scalar(distribution=node.reward, min_value=-(node.reward.shape[1] // 2))
+        node.value = support_to_scalar(distribution=node.value, min_value=0).numpy()
+        node.reward = support_to_scalar(distribution=node.reward, min_value=-(node.reward.shape[1] // 2)).numpy()
 
         # add edges for all children
         for action in node.missing_actions(node.valid_actions):

@@ -3,13 +3,15 @@ from pathlib import Path
 import numpy as np
 import tensorflow as tf
 from jass.features.feature_example_buffer import parse_feature_example
+from jass.features.features_conv_full import FeaturesSetConvFull
 
 from lib.environment.networking.worker_config import WorkerConfig
 from lib.metrics.base_async_metric import BaseAsyncMetric
 from lib.mu_zero.network.network_base import AbstractNetwork
+from lib.mu_zero.network.support_conversion import support_to_scalar
 
 
-def _calculate_batched_spkl_(network: AbstractNetwork, iterator, n_steps_ahead, f_shape, l_shape):
+def _calculate_batched_save_(network: AbstractNetwork, iterator, n_steps_ahead, f_shape, l_shape):
     x, y = next(iterator)
 
     x = tf.reshape(x, (-1,) + f_shape)
@@ -20,10 +22,20 @@ def _calculate_batched_spkl_(network: AbstractNetwork, iterator, n_steps_ahead, 
     position = np.random.choice(range(trajectory_length))
     positions = np.array(list(zip(range(batch_size), np.repeat(position, batch_size))))
 
-    value, reward, policy_estimate, encoded_states = network.initial_inference(tf.gather_nd(x, positions))
+    initial_positions = tf.gather_nd(x, positions)
+    value, reward, policy_estimate, encoded_states = network.initial_inference(initial_positions)
 
-    supervised_policy = tf.gather_nd(y, positions)[:, :43]
-    assert all(tf.reduce_max(supervised_policy, axis=-1) == 1)
+    reshaped = tf.reshape(initial_positions, (-1,) + FeaturesSetConvFull.FEATURE_SHAPE)
+    current_player = tf.reduce_max(reshaped[:, :, :, FeaturesSetConvFull.CH_PLAYER:FeaturesSetConvFull.CH_PLAYER + 4], axis=(1,2))
+    current_team = tf.argmax(current_player, axis=-1) % 2
+    outcomes = tf.cast(tf.gather_nd(y, positions)[:, 43:45] * 157, tf.int32)
+
+    current_teams = 1 - tf.cast((
+            tf.tile([[0, 1, 0, 1]], [batch_size, 1]) == tf.cast(tf.reshape(tf.repeat(current_team, 4), [-1, 4]), tf.int32)),
+        tf.int32)
+    outcomes = tf.gather_nd(outcomes, tf.stack((tf.reshape(tf.repeat(tf.range(batch_size), 4), [-1, 4]), current_teams), axis=-1))
+
+    assert all(tf.reduce_sum(outcomes, axis=-1) == 157 * 2)
 
     min_tensor = tf.stack((tf.range(batch_size), tf.repeat(trajectory_length - 1, batch_size)), axis=1)
     zeros = tf.zeros(batch_size, dtype=tf.int32)
@@ -40,14 +52,14 @@ def _calculate_batched_spkl_(network: AbstractNetwork, iterator, n_steps_ahead, 
         actions = tf.reshape(tf.argmax(supervised_policy, axis=-1), [-1, 1])
         value, reward, policy_estimate, encoded_states =  network.recurrent_inference(encoded_states, actions)
 
-    policy_estimate = tf.clip_by_value(policy_estimate, 1e-7, 1. - 1e-7)
-    supervised_policy = tf.clip_by_value(supervised_policy, 1e-7, 1. - 1e-7)
-    kl = tf.reduce_mean(tf.reduce_sum(supervised_policy * tf.math.log(supervised_policy / policy_estimate), axis=1)).numpy()
+    value_pred = tf.reshape(support_to_scalar(tf.reshape(value, (-1, value.shape[-1])), min_value=0), (-1, 4))
 
-    return float(kl)
+    mae = tf.reduce_mean(tf.abs(value_pred - tf.cast(outcomes, tf.float32)))
+
+    return float(mae)
 
 
-class SPKL(BaseAsyncMetric):
+class SAVE(BaseAsyncMetric):
 
     def get_params(self, thread_nr: int, network: AbstractNetwork, init_vars=None) -> []:
         iterator = init_vars
@@ -89,7 +101,7 @@ class SPKL(BaseAsyncMetric):
         self.trajectory_label_shape = (self.trajectory_length, label_length)
 
         super().__init__(worker_config, network_path, parallel_threads=1,
-                         metric_method=_calculate_batched_spkl_, init_method=self.init_dataset)
+                         metric_method=_calculate_batched_save_, init_method=self.init_dataset)
 
     def get_name(self):
-        return f"spkl"
+        return f"save"

@@ -41,7 +41,7 @@ def test_scalar_to_support():
 
     distribution = scalar_to_support(scalar, min_value=0, support_size=2)
 
-    assert all(distribution == [0, 1])
+    assert (distribution == [0, 1]).numpy().all()
 
 
 def test_scalar_to_support_non_integer_error():

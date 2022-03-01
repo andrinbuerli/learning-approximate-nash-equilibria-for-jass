@@ -1,13 +1,10 @@
-import time
-
 import jasscpp
 
 from lib.jass.features.features_conv_cpp import FeaturesSetCppConv
+from lib.mu_zero.mcts.latent_node_selection_policy import LatentNodeSelectionPolicy
 from lib.mu_zero.mcts.latent_value_calc_policy import LatentValueCalculationPolicy
 from lib.mu_zero.mcts.min_max_stats import MinMaxStats
-from lib.mu_zero.mcts.node import Node
 from lib.mu_zero.mcts.tree_search import ALPV_MCTS
-from lib.mu_zero.mcts.latent_node_selection_policy import LatentNodeSelectionPolicy
 from lib.mu_zero.network.buffering_network import BufferingNetwork
 from lib.mu_zero.network.resnet import MuZeroResidualNetwork
 

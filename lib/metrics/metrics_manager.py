@@ -6,6 +6,8 @@ class MetricsManager:
         self.metrics = metrics
 
     def get_latest_metric_state(self) -> dict:
+        results = [x.get_latest_result() for x in self.metrics]
+
         return {
-            x.get_name(): x.get_latest_result() for x in self.metrics
+            k: v for x in results for (k, v) in x.items()
         }

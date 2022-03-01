@@ -75,7 +75,12 @@ class BaseAsyncMetric:
         while self.result_queue.qsize() > 0:
             self._latest_result = self.result_queue.get()
 
-        return self._latest_result
+        if type(self._latest_result) is dict:
+            return self._latest_result
+        else:
+            return {
+                self.get_name(): self._latest_result
+            }
 
     def poll_till_next_result_available(self, timeout=.1):
         while self.result_queue.qsize() == 0:

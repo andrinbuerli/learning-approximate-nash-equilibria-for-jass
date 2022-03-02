@@ -72,6 +72,9 @@ WORKDIR /app
 COPY .wandbkey .wandbkey
 
 # add user
+
+RUN chown -hR 1000 /repos
+
 RUN adduser user --uid 1000
 RUN adduser user sudo
 USER user

@@ -51,16 +51,16 @@ COPY requirements-dev.txt requirements-dev.txt
 # install latex for plots and dev requirements
 RUN if [[ -z "$DEV" ]];\
     then echo "No DEV mode";\
-    else pip install -r requirements-dev.txt; fi
-
-RUN if [[ -z "$DEV" ]];\
-    then echo "No DEV mode";\
     else ln -snf /usr/share/zoneinfo/Etc/UTC /etc/localtime \
     && echo "Etc/UTC" > /etc/timezone \
     && apt-get update \
     && apt-get upgrade -y \
     && apt-get install texlive-full -y \
     && rm -rf /var/lib/apt/lists/*; fi
+
+RUN if [[ -z "$DEV" ]];\
+    then echo "No DEV mode";\
+    else pip install -r requirements-dev.txt; fi
 
 RUN pip install -r requirements.txt
 
@@ -70,5 +70,10 @@ RUN chmod +x /entrypoint.sh
 WORKDIR /app
 
 COPY .wandbkey .wandbkey
+
+# add user
+RUN adduser user --uid 1000
+RUN adduser user sudo
+USER user
 
 ENTRYPOINT ["sh", "/entrypoint.sh"]

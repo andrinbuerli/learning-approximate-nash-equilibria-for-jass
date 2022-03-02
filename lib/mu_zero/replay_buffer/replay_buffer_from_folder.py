@@ -55,7 +55,7 @@ class ReplayBufferFromFolder:
                 trajectory = self._sample_trajectory(episode)
 
                 states.append(trajectory[0]), actions.append(trajectory[1]), rewards.append(trajectory[2])
-                probs.append(trajectory[3]), outcomes.append(trajectory[3])
+                probs.append(trajectory[3]), outcomes.append(trajectory[4])
 
             batches.append((
                 np.stack(states, axis=0),

@@ -44,7 +44,7 @@ class NetworkConfig(BaseConfig):
         self.fc_reward_layers = [256]
         self.fc_value_layers = [256]
         self.fc_policy_layers = [256]
-        self.support_size = 100
+        self.support_size = 157
         self.players = 4
         self.feature_extractor = features
         self.path = None

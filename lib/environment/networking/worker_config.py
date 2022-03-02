@@ -1,5 +1,6 @@
 import json
 import os
+import time
 from pathlib import Path
 from typing import Union
 
@@ -27,8 +28,10 @@ class BaseConfig:
     def load(self, representation: str):
         loaded = json.loads(representation)
         # this works, as we only have basic attributes
-        self.__dict__ = loaded.copy()
+        self.load_dict(loaded)
 
+    def load_dict(self, loaded):
+        self.__dict__ = loaded.copy()
 
 
 class NetworkConfig(BaseConfig):
@@ -49,6 +52,21 @@ class NetworkConfig(BaseConfig):
         self.feature_extractor = features
         self.path = None
 
+class OptimizationConfig(BaseConfig):
+    def __init__(self):
+        self.port = 8080
+        self.learning_rate = 1e-4
+        self.weight_decay = 1e-4
+        self.adam_beta1 = 0.9
+        self.adam_beta2 = 0.999
+        self.adam_epsilon = 1e-7
+        self.updates_per_step = 2
+        self.store_model_weights_after = 1
+        self.max_buffer_size = 1024
+        self.min_buffer_size = 1024
+        self.batch_size = 128
+        self.trajectory_length = 5
+        self.data_folder = ""
 
 class AgentConfig(BaseConfig):
     def __init__(self):
@@ -75,12 +93,15 @@ class WorkerConfig(BaseConfig):
     def __init__(self, features: FeaturesSetCpp = None):
         self.network = NetworkConfig(features)
         self.agent = AgentConfig()
+        self.optimization = OptimizationConfig()
+        self.timestamp = int(time.time())
 
     def __repr__(self):
         _base_dict = super().__repr__()
         _dict = {
             'network': self.network.__repr__(),
-            'agent': self.agent.__repr__()
+            'agent': self.agent.__repr__(),
+            'optimization': self.optimization.__repr__()
         }
         return str(_dict)
 
@@ -90,3 +111,5 @@ class WorkerConfig(BaseConfig):
             self.network.__dict__ = {**(self.network.__dict__), **loaded['network']}
         if 'agent' in loaded:
             self.agent.__dict__ = {**(self.agent.__dict__), **loaded['agent']}
+        if 'optimization' in loaded:
+            self.optimization.__dict__ = {**(self.optimization.__dict__), **loaded['optimization']}

@@ -1,0 +1,60 @@
+{
+ "agent": {
+  "c_1": 1,
+  "c_2": 19652,
+  "dirichlet_alpha": 0.3,
+  "dirichlet_eps": 0.25,
+  "discount": 1,
+  "iterations": 100,
+  "mdp_value": false,
+  "n_search_threads": 4,
+  "nr_determinizations": 25,
+  "port": 9999,
+  "temperature": 1.0,
+  "threads_to_use": 4,
+  "type": "mu-zero-mcts",
+  "virtual_loss": 10
+ },
+ "optimization": {
+  "adam_beta1": 0.9,
+  "adam_beta2": 0.999,
+  "adam_epsilon": 1e-07,
+  "batch_size": 128,
+  "data_folder": "../results",
+  "learning_rate": 0.0001,
+  "max_buffer_size": 1024,
+  "min_buffer_size": 1024,
+  "port": 8080,
+  "store_model_weights_after": 1,
+  "trajectory_length": 5,
+  "updates_per_step": 2,
+  "weight_decay": 0.0001
+ },
+ "network": {
+  "action_space_size": 43,
+  "fc_policy_layers": [
+   256
+  ],
+  "fc_reward_layers": [
+   256
+  ],
+  "fc_value_layers": [
+   256
+  ],
+  "feature_extractor": "cnn-full",
+  "num_blocks": 2,
+  "num_channels": 256,
+  "observation_shape": [
+   4,
+   9,
+   45
+  ],
+  "path": null,
+  "players": 4,
+  "reduced_channels_policy": 128,
+  "reduced_channels_reward": 128,
+  "reduced_channels_value": 1,
+  "support_size": 157,
+  "type": "resnet"
+ }
+}

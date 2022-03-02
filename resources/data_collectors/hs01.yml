@@ -1,0 +1,19 @@
+version: '2.3'
+services:
+    data_collector0:
+        build: ../
+        volumes:
+            - ../:/app
+        network_mode: host
+        command: >
+            bash -c "cd scripts && python collect_n_send_game_data.py
+            --host http://10.180.39.13
+            --port 8080
+            --new_games_per_step 45
+            --max_parallel_processes 9
+            --max_parallel_threads 5
+            --n_buffer_executors 9
+            --model_execution_buffer_timeout 0.001
+            --min_model_buffer_size 4
+            --visible_gpu_index 0"
+

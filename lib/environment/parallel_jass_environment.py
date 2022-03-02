@@ -6,6 +6,7 @@ import signal
 import time
 from multiprocessing import Queue
 from multiprocessing.connection import Connection
+from pathlib import Path
 
 import numpy as np
 from jass.game.const import TRUMP_FULL_OFFSET, TRUMP_FULL_P
@@ -107,7 +108,7 @@ def _play_games_multi_threaded_(n_games, continuous):
 
 def _init_process_worker_(function, network_path: str, worker_config: WorkerConfig, check_move_validity: bool,
                           max_parallel_threads: int, queue: Queue, cancel_con: Connection):
-    while network_path is not None and not os.path.exists(network_path):
+    while network_path is not None and not os.path.exists(Path(network_path) / "representation.pd" / "assets"):
         logging.info(f"waiting for model to be saved at {network_path}")
         time.sleep(1)
     function.pool = mp.pool.ThreadPool(

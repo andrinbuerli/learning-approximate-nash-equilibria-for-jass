@@ -29,7 +29,6 @@ def host_agent(config: WorkerConfig):
     except NotImplementedError:
         network = None
 
-    print("KD:SJFLKDJSLFJDLKFSJF:", config.agent.type)
     agent = get_agent(config, network)
     agent = AgentFromCpp(agent=agent)
     app = PlayerServiceApp("jass_agents")

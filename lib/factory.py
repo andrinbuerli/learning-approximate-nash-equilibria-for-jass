@@ -5,6 +5,8 @@ import numpy as np
 from lib.environment.networking.worker_config import WorkerConfig
 from lib.jass.agent.agent import CppAgent
 from lib.jass.agent.agent_by_network_cpp import AgentByNetworkCpp
+from lib.jass.features.features_conv_cpp import FeaturesSetCppConv
+from lib.jass.features.features_set_cpp import FeaturesSetCpp
 
 
 def get_agent(config: WorkerConfig, network, greedy=False) -> CppAgent:
@@ -80,6 +82,13 @@ def get_opponent(type: str) -> CppAgent:
         return AgentByNetworkCpp(url="http://baselines:9896/random")
     elif type == "dpolicy":
         return AgentByNetworkCpp(url="http://baselines:9897/dpolicy")
+    raise NotImplementedError(f"Opponent type {type} is not implemented.")
+
+
+
+def get_features(type: str) -> FeaturesSetCpp:
+    if type == "cnn-full":
+        return FeaturesSetCppConv()
     raise NotImplementedError(f"Opponent type {type} is not implemented.")
 
 

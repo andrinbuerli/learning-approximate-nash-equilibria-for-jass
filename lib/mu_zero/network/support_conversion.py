@@ -9,7 +9,7 @@ def support_to_scalar(distribution, min_value):
 
     assert len(distribution.shape) == 2, "distribution must be batched"
 
-    assert all(tf.abs(tf.reduce_sum(distribution, axis=1) - 1) < 1e-5), "probabilities do not sum up to 1"
+    tf.assert_less(tf.abs(tf.reduce_sum(distribution, axis=1) - 1), 1e-5)
 
     support_size = distribution.shape[1]
     indices = tf.range(start=min_value, limit=min_value + support_size, delta=1, dtype=tf.float32)

@@ -1,3 +1,4 @@
+import pickle
 from pathlib import Path
 
 import numpy as np
@@ -120,6 +121,9 @@ class MuZeroResidualNetwork(AbstractNetwork):
         self.dynamics_network.save(path / "dynamics.pd")
         self.prediction_network.save(path / "prediction.pd")
 
+        with open(path / "weights.pkl", "wb") as f:
+            pickle.dump(self.get_weight_list(), f)
+
     def load(self, path):
         path = Path(path)
         assert path.exists()
@@ -153,7 +157,7 @@ TOTAL: {sum([representation_params, dynamics_params, prediction_params]):,} trai
         return encoded_state_normalized
 
     def _warmup(self):
-        encoded_state = self.representation(np.random.uniform(0, 1, (1,) + self.observation_shape).reshape(1, -1))
+        encoded_state = self.representation(np.random.uniform(0, 1, (1,) + tuple(self.observation_shape)).reshape(1, -1))
         assert encoded_state.shape == (1, self.observation_shape[0], self.observation_shape[1], self.num_channels)
         encoded_next_state, reward = self.dynamics(encoded_state, action=np.array([[1]]))
         assert encoded_next_state.shape == (1, self.observation_shape[0], self.observation_shape[1], self.num_channels)

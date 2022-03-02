@@ -1,6 +1,6 @@
 import io
 import logging
-from multiprocessing import JoinableQueue, Process, Semaphore
+from multiprocessing import Process
 from pathlib import Path
 
 from flask import Flask, request, send_file
@@ -30,6 +30,15 @@ class _ConnectorView_(FlaskView):
                 mimetype='application'
             )
 
+    @route('/get_latest_weights', methods=['GET'])
+    def get_latest_weights(self):
+        with open(_ConnectorView_.model_weights_path, 'rb') as bites:
+            return send_file(
+                io.BytesIO(bites.read()),
+                attachment_filename='weights.pkl',
+                mimetype='application'
+            )
+
     @route('/game_data', methods=['POST'])
     def receive_game_data(self):
         logging.info("receiving game data, writing to file system..")
@@ -41,7 +50,6 @@ class _ConnectorView_(FlaskView):
         logging.info(f"Received new data from {request.remote_addr}, wrote to {path}")
 
         with open(_ConnectorView_.model_weights_path, 'rb') as bites:
-            _ConnectorView_.nr_registered_clients += 1
             return send_file(
                 io.BytesIO(bites.read()),
                 attachment_filename='weights.pkl',
@@ -62,19 +70,13 @@ class WorkerConnector(FlaskView):
             self,
             model_weights_path: Path,
             worker_config_path: Path,
-            local_game_data_path: Path,
-            queue: JoinableQueue,
-            lock: Semaphore,
-            queue_max_size: int = 10):
+            local_game_data_path: Path):
         self.local_game_data_path = local_game_data_path
         self.local_game_data_path.mkdir(parents=True, exist_ok=True)
-        self.queue_max_size = queue_max_size
-        self.queue = queue
         self.model_weights_path = model_weights_path
         self.worker_config_path = worker_config_path
         self.hosting_process: Process = None
         self.app: Flask = None
-        self.lock = lock
 
     def run(self, host="0.0.0.0", port=1001):
         logging.info(f"Starting WorkerConnector at {host}:{port}")

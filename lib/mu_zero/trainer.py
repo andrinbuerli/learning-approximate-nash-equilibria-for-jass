@@ -114,13 +114,32 @@ class MuZeroTrainer:
     def train(self, batches):
         training_infos = list()
         for states, actions, rewards, probs, outcomes in batches:
-            info = self.train_step(
+            info, absolute_reward_errors, absolute_value_errors, policy_kls, policy_ces = self.train_step(
                 tf.convert_to_tensor(states),
                 tf.convert_to_tensor(actions),
                 tf.convert_to_tensor(rewards),
                 tf.convert_to_tensor(probs),
                 tf.convert_to_tensor(outcomes))
-            training_infos.append(info)
+
+            reward_error = {
+                f"absolute_reward_error/{i}_steps_ahead": x for i, x in enumerate(absolute_reward_errors)
+            }
+
+            value_error = {
+                f"absolute_value_error/{i}_steps_ahead": x for i, x in enumerate(absolute_value_errors)
+            }
+
+            policy_kls = {
+                f"policy_kl/{i}_steps_ahead": x for i, x in enumerate(policy_kls)
+            }
+
+            policy_ces = {
+                f"policy_ce/{i}_steps_ahead": x for i, x in enumerate(policy_ces)
+            }
+
+            training_infos.append({
+                **info, **reward_error, **value_error, **policy_kls, **policy_ces
+            })
 
         return training_infos
 
@@ -129,16 +148,14 @@ class MuZeroTrainer:
         logging.info(f'Saving latest model for iteration {it} at {network_path}')
         self.network.save(network_path)
 
-        with open(network_path / "weights.pkl", "wb") as f:
-            pickle.dump(self.network.get_weight_list(), f)
-
     @tf.function
     def train_step(self, states, next_actions, rewards_target, policies_target, outcomes_target):
         trajectory_length = tf.shape(states)[1]
 
-        policy_kls, policy_ces = [], []
-        absolute_value_errors = []
-        absolute_reward_errors = []
+        policy_kls = tf.TensorArray(tf.float32, size=0, dynamic_size=True, clear_after_read=True)
+        policy_ces = tf.TensorArray(tf.float32, size=0, dynamic_size=True, clear_after_read=True)
+        absolute_value_errors = tf.TensorArray(tf.float32, size=0, dynamic_size=True, clear_after_read=True)
+        absolute_reward_errors = tf.TensorArray(tf.float32, size=0, dynamic_size=True, clear_after_read=True)
 
         rewards_target = tf.tile(rewards_target, [1, 1, 2])
         outcomes_target = tf.tile(outcomes_target, [1, 1, 2])
@@ -163,13 +180,13 @@ class MuZeroTrainer:
             policy_target = tf.cast(self.clip_probability_dist(policies_target[:, 0]), tf.float32)
             policy_kl_divergence_per_sample = tf.reduce_sum(
                 policy_target * tf.math.log(policy_target / self.clip_probability_dist(policy_estimate)), axis=1)
-            policy_kls.append(tf.reduce_mean(policy_kl_divergence_per_sample))
-            policy_ces.append(tf.reduce_mean(policy_loss))
+            policy_kls.write(0, tf.reduce_mean(policy_kl_divergence_per_sample, name="kl_mean"))
+            policy_ces.write(0, tf.reduce_mean(policy_loss, name="p_loss"))
 
             expected_value = support_to_scalar_per_player(value, min_value=0, nr_players=4)
-            absolute_value_errors.append(tf.reduce_mean(tf.abs(expected_value - tf.cast(outcomes_target[:, 0], tf.float32))))
+            absolute_value_errors.write(0, tf.reduce_mean(tf.abs(expected_value - tf.cast(outcomes_target[:, 0], tf.float32)), name="val_mae"))
             expected_reward = support_to_scalar_per_player(reward, min_value=min_reward, nr_players=4)
-            absolute_reward_errors.append(tf.reduce_mean(tf.abs(expected_reward - tf.cast(rewards_target[:, 0], tf.float32))))
+            absolute_reward_errors.write(0, tf.reduce_mean(tf.abs(expected_reward - tf.cast(rewards_target[:, 0], tf.float32)), name="reward_mae"))
             # ---------------Logging --------------- #
 
 
@@ -192,19 +209,19 @@ class MuZeroTrainer:
                 policy_target = tf.cast(self.clip_probability_dist(policies_target[:, 0]), tf.float32)
                 policy_kl_divergence_per_sample = tf.reduce_sum(
                     policy_target * tf.math.log(policy_target / self.clip_probability_dist(policy_estimate)), axis=1)
-                policy_kls.append(tf.reduce_mean(policy_kl_divergence_per_sample))
-                policy_ces.append(tf.reduce_mean(policy_ce))
+                policy_kls.write(i+1, tf.reduce_mean(policy_kl_divergence_per_sample, name="kl_mean"))
+                policy_ces.write(i+1, tf.reduce_mean(policy_ce, name="ce_mean"))
 
                 expected_value = support_to_scalar_per_player(value, min_value=0, nr_players=4)
-                absolute_value_errors.append(tf.reduce_mean(tf.abs(expected_value - tf.cast(outcomes_target[:, i+1], tf.float32))))
+                absolute_value_errors.write(i+1, tf.reduce_mean(tf.abs(expected_value - tf.cast(outcomes_target[:, i+1], tf.float32)), name="val_mae"))
                 expected_reward = support_to_scalar_per_player(reward, min_value=min_reward, nr_players=4)
-                absolute_reward_errors.append(tf.reduce_mean(tf.abs(expected_reward - tf.cast(rewards_target[:, i+1], tf.float32))))
+                absolute_reward_errors.write(i+1, tf.reduce_mean(tf.abs(expected_reward - tf.cast(rewards_target[:, i+1], tf.float32)), name="reard_mae"))
                 # ---------------Logging --------------- #
 
             loss = tf.reduce_mean(
-                self.reward_loss_weight * tf.reduce_mean(reward_loss, axis=-1) +
-                self.value_loss_weight * tf.reduce_mean(value_loss, axis=-1) +
-                self.policy_loss_weight * policy_loss)
+                self.reward_loss_weight * tf.reduce_mean(reward_loss, axis=-1, name="rewards_loss") +
+                self.value_loss_weight * tf.reduce_mean(value_loss, axis=-1, name="value_loss") +
+                self.policy_loss_weight * policy_loss, name="loss_mean")
 
         gradients = tape.gradient(loss, self.network.trainable_variables)
 
@@ -216,33 +233,14 @@ class MuZeroTrainer:
         # inspired by https://www.tensorflow.org/api_docs/python/tf/nn/l2_loss
         squared_weights_sum = tf.reduce_sum([tf.reduce_sum(x ** 2) for x in self.network.trainable_weights])
 
-        reward_error = {
-            f"absolute_reward_error/{i}_steps_ahead": x for i, x in enumerate(absolute_reward_errors)
-        }
-        value_error = {
-            f"absolute_value_error/{i}_steps_ahead": x for i, x in enumerate(absolute_value_errors)
-        }
-
-        policy_kls = {
-            f"policy_kl/{i}_steps_ahead": x for i, x in enumerate(policy_kls)
-        }
-
-        policy_ces = {
-            f"policy_ce/{i}_steps_ahead": x for i, x in enumerate(policy_ces)
-        }
-
         return {
             "training/reward_loss": tf.reduce_mean(reward_loss),
             "training/value_loss": tf.reduce_mean(value_loss),
             "training/policy_loss": tf.reduce_mean(policy_loss),
             "training/squared_weights_sum": squared_weights_sum,
             "training/loss": loss,
-            **reward_error,
-            **value_error,
-            **policy_kls,
-            **policy_ces,
             **gradient_hists
-        }
+        }, absolute_reward_errors.stack(), absolute_value_errors.stack(), policy_kls.stack(), policy_ces.stack()
 
 
     def cross_entropy(self, target, estimate):

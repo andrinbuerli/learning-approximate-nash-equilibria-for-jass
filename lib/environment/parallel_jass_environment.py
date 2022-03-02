@@ -19,28 +19,23 @@ from lib.jass.arena.arena import Arena
 def _play_single_game_(i, agent):
     state_features, check_move_validity = _play_single_game_.feature_extractor, _play_single_game_.check_move_validity
 
-    states, probs, z = [], [], []
     arena = Arena(
         nr_games_to_play=1, cheating_mode=False, check_move_validity=check_move_validity,
-        store_trajectory=True, feature_extractor=state_features, store_trajectory_inc_raw_game_state=True)
+        store_trajectory=True, feature_extractor=state_features, store_trajectory_inc_raw_game_state=False)
     arena.set_players(agent, agent, agent, agent)  # self-play setting!
     arena.play_game(dealer=i % 4)
 
     # store triplets for card play phase
     trump_probs, card_probs = agent.get_stored_probs()
-    final_game_state = arena._game.state
 
-    raw_game_states, game_states, outcomes, actions, teams = arena.get_trajectory()
+    states, actions, rewards, outcomes = arena.get_trajectory()
 
-
+    probs = []
     probs.extend(trump_probs), probs.extend(card_probs)
-    states.extend(game_states), z.extend(outcomes)
 
-    if len(probs) != len(states):
-        raise AssertionError("Inconsistent game states and actions")
+    assert len(probs) == len(states), "Inconsistent game states and actions"
 
-    if np.array(probs[0]).argmax() < TRUMP_FULL_OFFSET:
-        raise AssertionError("Fist action of game must be trump selection or PUSH")
+    assert np.array(probs[0]).argmax() >= TRUMP_FULL_OFFSET, "Fist action of game must be trump selection or PUSH"
 
     if np.array(probs[0]).argmax() == TRUMP_FULL_P and np.array(probs[1]).argmax() < TRUMP_FULL_OFFSET:
         logging.warning("WARNING: Action after PUSH must be a trump selection"
@@ -48,37 +43,16 @@ def _play_single_game_(i, agent):
 
     # validate outcomes w.r.t teams
     for s in range(outcomes.shape[0] - 1):
-        if teams[s] == teams[s + 1]:
-            if outcomes[s] != outcomes[s + 1]:
-                raise AssertionError("Outcomes of same teams must match")
-
-        else:
-            if outcomes[s] == outcomes[s + 1]:
-                logging.warning(
-                    "Outcomes of distinct teams must not match")  # raise AssertionError("Outcomes of distinct teams must not match")
-
-    # validate teams
-    trump_offset = 1 if len(states) == 37 else 2
-    for trick in range(9):
-        if (not (final_game_state.declared_trump_player % 2 == teams[:trump_offset]).all()  # trump actions team
-                or final_game_state.trick_first_player[trick] % 2 != teams[
-                    4 * trick + trump_offset]  # trick first team
-                or final_game_state.trick_first_player[trick] % 2 != teams[
-                    4 * trick + trump_offset + 2]  # trick second team
-                or (final_game_state.trick_first_player[trick] + 1) % 2 != teams[
-                    4 * trick + trump_offset + 1]  # trick third team
-                or (final_game_state.trick_first_player[trick] + 1) % 2 != teams[
-                    4 * trick + trump_offset + 3]):  # trick fourth team
-            raise AssertionError("Extracted teams do not match the final game state")
+        assert all(outcomes[s] == outcomes[s + 1]), "Outcomes of do not match"
 
     agent.reset()
 
     logging.info(f"finished single game {i}, cached positions: {len(states)}")
 
-    del arena, raw_game_states
+    del arena
     gc.collect()
 
-    return states, probs, z
+    return states, actions, rewards, probs, outcomes
 
 
 def _init_thread_worker_(function, feature_extractor, check_move_validity):
@@ -109,20 +83,21 @@ def _play_games_multi_threaded_(n_games, continuous):
         first_call = False
         results = pool.starmap(_play_single_game_, zip(list(range(n_games)), agents))
 
-        states = [s for ss, _, __ in results for s in ss]
-        probs = [p for _, pp, __ in results for p in pp]
-        z = [z for _, __, zz in results for z in zz]
+        states = [y for x in results for y in x[0]]
+        actions = [y for x in results for y in x[1]]
+        rewards = [y for x in results for y in x[2]]
+        probs = [y for x in results for y in x[3]]
+        outcomes = [y for x in results for y in x[4]]
 
         logging.info(f"finished {n_games} games")
 
         if continuous:
-            queue.put((np.stack(states), np.stack(probs),
-                       np.stack(z)))
+            queue.put((np.stack(states), np.stack(actions), np.stack(rewards), np.stack(probs), np.stack(outcomes)))
 
-            del states, probs, z
+            del states, actions, rewards, probs, outcomes
             gc.collect()
         else:
-            return states, probs, z
+            return states, actions, rewards, probs, outcomes
 
 
 def _init_process_worker_(function, network_path: str, worker_config: WorkerConfig, check_move_validity: bool,
@@ -206,13 +181,15 @@ class ParallelJassEnvironment:
             results = self.pool.starmap(_play_games_multi_threaded_,
                                         zip(n_games_per_worker, [False for _ in range(len(n_games_per_worker))]))
 
-            states = np.concatenate([s for s, _, _ in results])
-            probs = np.concatenate([p for _, p, _ in results])
-            z = np.concatenate([z for _, _, z in results])
+            states = [y for x in results for y in x[0]]
+            actions = [y for x in results for y in x[1]]
+            rewards = [y for x in results for y in x[2]]
+            probs = [y for x in results for y in x[3]]
+            outcomes = [y for x in results for y in x[4]]
 
             logging.info(f"finished {n_games}.")
 
-            return np.stack(states), np.stack(probs), np.stack(z)
+            return np.stack(states), np.stack(actions), np.stack(rewards), np.stack(probs), np.stack(outcomes)
 
     def __del__(self):
         if self.collecting_process is not None:

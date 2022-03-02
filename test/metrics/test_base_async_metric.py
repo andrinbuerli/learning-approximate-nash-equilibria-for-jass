@@ -35,7 +35,7 @@ def test_get_result():
 
     result = testee.get_latest_result()
 
-    assert result == 0
+    assert result["mock"] == 0
 
 
 def test_get_result_multi_threaded():
@@ -52,4 +52,4 @@ def test_get_result_multi_threaded():
 
     result = testee.get_latest_result()
 
-    assert result == 4.5
+    assert result["mock"] == 4.5

@@ -99,7 +99,7 @@ class Arena:
             self.get_agent_observation = lambda: jasscpp.observation_from_state(self._game.state, -1)
 
         if self.store_trajectory:
-            self.game_states, self.outcomes, self.actions, self.teams = [], [], [], []
+            self.game_states, self.actions, self.rewards, self.outcomes, self.teams = [], [], [], [], []
             if self.store_trajectory_inc_raw_game_state:
                 self.raw_game_states = []
 
@@ -173,9 +173,9 @@ class Arena:
 
         if self.store_trajectory_inc_raw_game_state:
             return np.stack(self.raw_game_states),\
-                   np.stack(self.game_states), np.stack(self.outcomes), np.stack(self.actions), np.stack(self.teams)
+                   np.stack(self.game_states), np.stack(self.actions), np.stack(self.rewards), np.stack(self.outcomes)
         else:
-            return np.stack(self.game_states), np.stack(self.outcomes), np.stack(self.actions), np.stack(self.teams)
+            return np.stack(self.game_states), np.stack(self.actions), np.stack(self.rewards), np.stack(self.outcomes)
 
     def set_players(self, north: Union[Agent, CppAgent], east: Union[Agent, CppAgent],
                     south: Union[Agent, CppAgent], west: Union[Agent, CppAgent],
@@ -229,8 +229,8 @@ class Arena:
             if trump_action < DIAMONDS or trump_action > MAX_TRUMP:
                 self._logger.error('Illegal trump (' + str(trump_action) + ') selected')
                 raise RuntimeError('Illegal trump (' + str(trump_action) + ') selected')
-            self.store_state(observation, trump_action)
             self._game.perform_action_trump(trump_action)
+            self.store_state(observation, trump_action)
 
         # play cards
         for cards in range(36):
@@ -241,8 +241,8 @@ class Arena:
                     assert card_action in np.flatnonzero(self._rule.get_valid_cards_from_state(observation))
                 else:
                     assert card_action in np.flatnonzero(self._rule.get_valid_cards_from_obs(observation))
-            self.store_state(observation, card_action)
             self._game.perform_action_play_card(card_action)
+            self.store_state(observation, card_action)
 
         # update results
         self._points_team_0[self._nr_games_played] = self._game.state.points[0]
@@ -252,15 +252,15 @@ class Arena:
         self._nr_games_played += 1
 
         if self.store_trajectory:
-            for team in self.teams:
-                self.outcomes.append(self._game.state.points[team])
+            for _ in self.game_states:
+                self.outcomes.append(self._game.state.points)
 
     def store_state(self, observation: jasscpp.GameStateCpp, trump_action):
         if self.store_trajectory:
             state_feature = self.feature_extractor.convert_to_features(observation, self._rule)
             self.game_states.append(state_feature)
+            self.rewards.append(np.array(self._game.state.points) - np.array(observation.points))
             self.actions.append(trump_action)
-            self.teams.append(observation.player % 2)
             if self.store_trajectory_inc_raw_game_state:
                 copy = observation
                 self.raw_game_states.append(copy)

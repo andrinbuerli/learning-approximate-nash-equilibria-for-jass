@@ -47,5 +47,5 @@ def test_scalar_to_support():
 def test_scalar_to_support_non_integer_error():
     scalar = np.array([[1.1]])
 
-    with pytest.raises(AssertionError):
+    with pytest.raises(TypeError):
         scalar_to_support(scalar, min_value=0, support_size=2)

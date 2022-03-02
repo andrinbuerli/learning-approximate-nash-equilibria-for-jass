@@ -25,13 +25,18 @@ def _play_single_game_(i, agent):
     arena.set_players(agent, agent, agent, agent)  # self-play setting!
     arena.play_game(dealer=i % 4)
 
-    # store triplets for card play phase
     trump_probs, card_probs = agent.get_stored_probs()
 
     states, actions, rewards, outcomes = arena.get_trajectory()
 
-    probs = []
-    probs.extend(trump_probs), probs.extend(card_probs)
+    probs = np.stack(trump_probs + card_probs)
+
+    if len(states) == 37:  # pad if no push
+        states = np.concatenate((states, np.zeros_like(states[-1])[None]), axis=0)
+        actions = np.concatenate((actions, np.zeros_like(actions[-1])[None]), axis=0)
+        rewards = np.concatenate((rewards, np.zeros_like(rewards[-1])[None]), axis=0)
+        probs = np.concatenate((probs, np.zeros_like(probs[-1])[None]), axis=0)
+        outcomes = np.concatenate((outcomes, np.zeros_like(outcomes[-1])[None]), axis=0)
 
     assert len(probs) == len(states), "Inconsistent game states and actions"
 
@@ -41,9 +46,9 @@ def _play_single_game_(i, agent):
         logging.warning("WARNING: Action after PUSH must be a trump selection"
                         "!!!!! THIS IS AN ERROR IF SAMPLING STRATEGY IS SUPPOSED TO BE GREEDY !!!!")
 
-    # validate outcomes w.r.t teams
+    # validate outcomes
     for s in range(outcomes.shape[0] - 1):
-        assert all(outcomes[s] == outcomes[s + 1]), "Outcomes of do not match"
+        assert all(outcomes[s] == outcomes[s + 1]) or outcomes[s + 1].sum() == 0, "Outcomes of do not match"
 
     agent.reset()
 

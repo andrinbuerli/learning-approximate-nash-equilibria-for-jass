@@ -7,6 +7,8 @@ def support_to_scalar(distribution, min_value):
     Calculate expectation over possible values
     """
 
+    distribution = tf.convert_to_tensor(distribution, dtype=tf.float32)
+
     assert len(distribution.shape) == 2, "distribution must be batched"
 
     tf.assert_less(tf.abs(tf.reduce_sum(distribution, axis=1) - 1), 1e-5)

@@ -1,5 +1,6 @@
 import numpy as np
 import pytest
+from tensorflow.python.framework.errors_impl import InvalidArgumentError
 
 from lib.mu_zero.network.support_conversion import support_to_scalar, scalar_to_support
 
@@ -21,7 +22,7 @@ def test_support_to_scalar_min_value():
 def test_support_to_scalar_distribution_non_1_error():
     distribution = np.array([[0.0, 0.9]])
 
-    with pytest.raises(AssertionError):
+    with pytest.raises(InvalidArgumentError):
         support_to_scalar(distribution, min_value=-1)
 
 

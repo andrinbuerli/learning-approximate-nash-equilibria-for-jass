@@ -1,3 +1,4 @@
+import shutil
 from pathlib import Path
 
 import numpy as np
@@ -54,3 +55,7 @@ def test_fit():
     weights_after = network.get_weight_list()
 
     assert (np.array(weights_prev[0][0][0]) == np.array(weights_after[0][0][0])).all()
+
+    shutil.rmtree(path)
+
+    del testee

@@ -83,11 +83,11 @@ def _play_games_multi_threaded_(n_games, continuous):
         first_call = False
         results = pool.starmap(_play_single_game_, zip(list(range(n_games)), agents))
 
-        states = [y for x in results for y in x[0]]
-        actions = [y for x in results for y in x[1]]
-        rewards = [y for x in results for y in x[2]]
-        probs = [y for x in results for y in x[3]]
-        outcomes = [y for x in results for y in x[4]]
+        states = [x[0] for x in results]
+        actions = [x[1] for x in results]
+        rewards = [x[2] for x in results]
+        probs = [x[3] for x in results]
+        outcomes = [x[4] for x in results]
 
         logging.info(f"finished {n_games} games")
 

@@ -22,8 +22,10 @@ def test_collect_data():
     states, actions, rewards, probs, outcomes = testee.collect_game_data(n_games=1)
 
     assert states.shape[0] == actions.shape[0] == rewards.shape[0] == probs.shape[0] == outcomes.shape[0]
+    assert states.shape[1] == actions.shape[1] == rewards.shape[1] == probs.shape[1] == outcomes.shape[1]
     assert rewards.sum() == 157
-    assert 37 <= states.shape[0] <= 38
+    assert states.shape[0] == 1
+    assert 37 <= states.shape[1] <= 38
 
 
 def test_collect_data_parallel_processes():
@@ -46,8 +48,10 @@ def test_collect_data_parallel_processes():
     print(f"took: {time.time() - start}s")
 
     assert states.shape[0] == actions.shape[0] == rewards.shape[0] == probs.shape[0] == outcomes.shape[0]
+    assert states.shape[1] == actions.shape[1] == rewards.shape[1] == probs.shape[1] == outcomes.shape[1]
     assert rewards.sum() == 2*157
-    assert 2*37 <= states.shape[0] <= 2*38
+    assert states.shape[0] == 2
+    assert 37 <= states.shape[1] <= 38
 
 
 def test_collect_data_parallel_threads():
@@ -69,8 +73,10 @@ def test_collect_data_parallel_threads():
     states, actions, rewards, probs, outcomes = testee.collect_game_data(n_games=2)
 
     assert states.shape[0] == actions.shape[0] == rewards.shape[0] == probs.shape[0] == outcomes.shape[0]
+    assert states.shape[1] == actions.shape[1] == rewards.shape[1] == probs.shape[1] == outcomes.shape[1]
     assert rewards.sum() == 2*157
-    assert 2*37 <= states.shape[0] <= 2*38
+    assert states.shape[0] == 2
+    assert 37 <= states.shape[1] <= 38
 
 
 def test_collect_more_data_parallel_processes():
@@ -93,8 +99,10 @@ def test_collect_more_data_parallel_processes():
     print(f"took: {time.time() - start}s")
 
     assert states.shape[0] == actions.shape[0] == rewards.shape[0] == probs.shape[0] == outcomes.shape[0]
+    assert states.shape[1] == actions.shape[1] == rewards.shape[1] == probs.shape[1] == outcomes.shape[1]
     assert rewards.sum() == 4*157
-    assert 4*37 <= states.shape[0] <= 4*38
+    assert states.shape[0] == 4
+    assert 37 <= states.shape[1] <= 38
 
 
 def test_collect_more_data_parallel_threads():
@@ -116,8 +124,10 @@ def test_collect_more_data_parallel_threads():
     print(f"took: {time.time() - start}s")
 
     assert states.shape[0] == actions.shape[0] == rewards.shape[0] == probs.shape[0] == outcomes.shape[0]
+    assert states.shape[1] == actions.shape[1] == rewards.shape[1] == probs.shape[1] == outcomes.shape[1]
     assert rewards.sum() == 4*157
-    assert 4*37 <= states.shape[0] <= 4*38
+    assert states.shape[0] == 4
+    assert 37 <= states.shape[1] <= 38
 
 
 def test_collect_more_data_parallel_processes_and_threads():
@@ -139,8 +149,10 @@ def test_collect_more_data_parallel_processes_and_threads():
     print(f"took: {time.time() - start}s")
 
     assert states.shape[0] == actions.shape[0] == rewards.shape[0] == probs.shape[0] == outcomes.shape[0]
+    assert states.shape[1] == actions.shape[1] == rewards.shape[1] == probs.shape[1] == outcomes.shape[1]
     assert rewards.sum() == 4*157
-    assert 4*37 <= states.shape[0] <= 4*38
+    assert states.shape[0] == 4
+    assert 37 <= states.shape[1] <= 38
 
 
 def test_collect_data_continuous():
@@ -166,7 +178,9 @@ def test_collect_data_continuous():
         print(f"took: {time.time() - start}s")
 
         assert states.shape[0] == actions.shape[0] == rewards.shape[0] == probs.shape[0] == outcomes.shape[0]
+        assert states.shape[1] == actions.shape[1] == rewards.shape[1] == probs.shape[1] == outcomes.shape[1]
         assert rewards.sum() == 2*157
-        assert 2*37 <= states.shape[0] <= 2*38
+        assert states.shape[0] == 2
+        assert 37 <= states.shape[1] <= 38
 
     del testee

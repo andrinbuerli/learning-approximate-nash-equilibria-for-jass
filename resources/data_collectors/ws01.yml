@@ -1,9 +1,9 @@
 version: '3.8'
 services:
     data_collector0:
-        build: ../
+        build: ../../
         volumes:
-            - ../:/app
+            - ../../:/app
         network_mode: host
         command: >
             bash -c "cd scripts && python collect_n_send_game_data.py
@@ -20,9 +20,9 @@ services:
 
 
     data_collector1:
-        build: ../
+        build: ../../
         volumes:
-            - ../:/app
+            - ../../:/app
         network_mode: host
         command: >
             bash -c "cd scripts && python collect_n_send_game_data.py

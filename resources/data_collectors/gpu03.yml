@@ -5,7 +5,7 @@ services:
         environment:
             - NVIDIA_VISIBLE_DEVICES=0
         volumes:
-            - ../:/app
+            - ../../:/app
         network_mode: host
         command: >
             bash -c "cd scripts && python collect_n_send_game_data.py
@@ -16,11 +16,11 @@ services:
 
 
     data_collector1:
-        build: ../
+        build: ../../
         environment:
             - NVIDIA_VISIBLE_DEVICES=1
         volumes:
-            - ../:/app
+            - ../../:/app
         network_mode: host
         command: >
             bash -c "cd scripts && python collect_n_send_game_data.py

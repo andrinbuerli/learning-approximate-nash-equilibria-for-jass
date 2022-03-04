@@ -1,11 +1,16 @@
 import argparse
 import logging
-import pickle
 import sys
 from pathlib import Path
 
+from jass.features.labels_action_full import LabelSetActionFull
+
 sys.path.append("../")
 
+from lib.log.wandb_logger import WandbLogger
+from lib.metrics.save import SAVE
+from lib.metrics.spkl import SPKL
+from lib.metrics.vpkl import VPKL
 from lib.environment.networking.worker_config import WorkerConfig
 from lib.environment.networking.worker_connector import WorkerConnector
 from lib.factory import get_network, get_features
@@ -27,6 +32,7 @@ logging.basicConfig(
 if __name__=="__main__":
     parser = argparse.ArgumentParser(prog="Start MuZero Training for Jass")
     parser.add_argument(f'--settings', default="settings.json")
+    parser.add_argument(f'--log', default=False, action="store_true")
     args = parser.parse_args()
 
     worker_config = WorkerConfig()
@@ -50,14 +56,57 @@ if __name__=="__main__":
         clean_up_files=True)
 
     manager = MetricsManager(
-        APAO("dmcts", worker_config, str(network_path), parallel_threads=4)
+        APAO("dmcts", worker_config, str(network_path), parallel_threads=4),
+        APAO("dpolicy", worker_config, str(network_path), parallel_threads=4),
+        APAO("random", worker_config, str(network_path), parallel_threads=4),
+        SAVE(
+            samples_per_calculation=3,
+            feature_length=worker_config.network.feature_extractor.FEATURE_LENGTH,
+            feature_shape=worker_config.network.feature_extractor.FEATURE_SHAPE,
+            label_length=LabelSetActionFull.LABEL_LENGTH,
+            worker_config=worker_config,
+            network_path=str(network_path),
+            n_steps_ahead=3
+        ),
+        SPKL(
+            samples_per_calculation=3,
+            feature_length=worker_config.network.feature_extractor.FEATURE_LENGTH,
+            feature_shape=worker_config.network.feature_extractor.FEATURE_SHAPE,
+            label_length=LabelSetActionFull.LABEL_LENGTH,
+            worker_config=worker_config,
+            network_path=str(network_path),
+            n_steps_ahead=3
+        ),
+        VPKL(
+            samples_per_calculation=3,
+            feature_length=worker_config.network.feature_extractor.FEATURE_LENGTH,
+            feature_shape=worker_config.network.feature_extractor.FEATURE_SHAPE,
+            label_length=LabelSetActionFull.LABEL_LENGTH,
+            worker_config=worker_config,
+            network_path=str(network_path),
+            n_steps_ahead=3
+        )
     )
+
+    if args.log:
+        with open("../.wandbkey", "r") as f:
+            api_key = f.read()
+        logger = WandbLogger(
+            wandb_project_name=worker_config.log.projectname,
+            group_name=worker_config.log.group,
+            api_key=api_key,
+            entity=worker_config.log.entity,
+            run_name=f"{worker_config.log.group}-{worker_config.agent.type}-{worker_config.timestamp}",
+            config=worker_config.to_json()
+        )
+    else:
+        logger = ConsoleLogger({})
 
     trainer = MuZeroTrainer(
         network=network,
         replay_buffer=replay_bufer,
         metrics_manager=manager,
-        logger=ConsoleLogger({}),
+        logger=logger,
         learning_rate=worker_config.optimization.learning_rate,
         weight_decay=worker_config.optimization.weight_decay,
         adam_beta1=worker_config.optimization.adam_beta1,
@@ -75,5 +124,5 @@ if __name__=="__main__":
     )
     connector.run(port=worker_config.optimization.port)
 
-    trainer.fit(1, Path(network_path))
+    trainer.fit(worker_config.optimization.iterations, Path(network_path))
 

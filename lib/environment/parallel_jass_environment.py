@@ -55,9 +55,6 @@ def _play_single_game_(i, agent):
 
     logging.info(f"finished single game {i}, cached positions: {len(states)}")
 
-    del arena
-    gc.collect()
-
     return states, actions, rewards, probs, outcomes
 
 
@@ -74,14 +71,13 @@ def _play_games_multi_threaded_(n_games, continuous):
     worker_config = _play_games_multi_threaded_.worker_config
     network_path = _play_games_multi_threaded_.network_path
 
-    network = get_network(worker_config)
-
     first_call = True
     while continuous or first_call:
         if cancel_con is not None and cancel_con.poll(0.01):
             logging.warning(f"Received cancel signal, stopping data collection.")
             os.kill(os.getpid(), signal.SIGKILL)
 
+        network = get_network(worker_config)
         network.load(network_path)
 
         agents = [get_agent(worker_config, network=network, greedy=False) for _ in range(n_games)]
@@ -108,9 +104,10 @@ def _play_games_multi_threaded_(n_games, continuous):
 
 def _init_process_worker_(function, network_path: str, worker_config: WorkerConfig, check_move_validity: bool,
                           max_parallel_threads: int, queue: Queue, cancel_con: Connection):
-    while network_path is not None and not os.path.exists(Path(network_path) / "representation.pd" / "assets"):
+    while network_path is not None and not os.path.exists(Path(network_path) / "prediction.pd" / "assets"):
         logging.info(f"waiting for model to be saved at {network_path}")
         time.sleep(1)
+
     function.pool = mp.pool.ThreadPool(
         processes=max_parallel_threads,
         initializer=_init_thread_worker_,

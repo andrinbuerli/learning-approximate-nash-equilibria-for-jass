@@ -42,13 +42,12 @@ class BaseAsyncMetric:
 
         pool = ThreadPool(processes=self.parallel_threads)
 
-        network = get_network(self.worker_config)
-
         if self.init_method is not None:
             init_vars = self.init_method()
 
         while True:
             try:
+                network = get_network(self.worker_config)
                 network.load(self.network_path)
 
                 if self.init_method is None:

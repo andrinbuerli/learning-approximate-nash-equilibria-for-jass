@@ -115,6 +115,7 @@ class ALPV_MCTS:
 
 
     def __del__(self):
-        self.pool.terminate()
+        if hasattr(self, "pool"):
+            self.pool.terminate()
 
 

@@ -1,7 +1,7 @@
 {
  "log": {
   "projectname": "jass-muzero",
-  "entity": "andrinbuerli",
+  "entity": "andrinburli",
   "group": "AlphaZero-Experiment-0"
  },
  "agent": {
@@ -10,7 +10,7 @@
   "dirichlet_alpha": 0.3,
   "dirichlet_eps": 0.25,
   "discount": 1,
-  "iterations": 20,
+  "iterations": 1,
   "mdp_value": false,
   "n_search_threads": 4,
   "port": 9999,
@@ -23,13 +23,13 @@
   "adam_beta1": 0.9,
   "adam_beta2": 0.999,
   "adam_epsilon": 1e-07,
-  "batch_size": 128,
+  "batch_size": 2,
   "data_folder": "../results",
   "learning_rate": 0.0001,
   "max_buffer_size": 1024,
-  "min_buffer_size": 10,
+  "min_buffer_size": 4,
   "port": 8080,
-  "store_model_weights_after": 1,
+  "store_model_weights_after": 5,
   "trajectory_length": 5,
   "updates_per_step": 2,
   "iterations": 1000000,

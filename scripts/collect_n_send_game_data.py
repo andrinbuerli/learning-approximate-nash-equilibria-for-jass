@@ -1,5 +1,4 @@
 import argparse
-import json
 import logging
 import multiprocessing
 import os
@@ -12,11 +11,11 @@ from pathlib import Path
 import psutil
 import requests
 
+sys.path.append('../')
+
 from lib.environment.networking.worker_config import WorkerConfig
 from lib.environment.parallel_jass_environment import ParallelJassEnvironment
 from lib.factory import get_network, get_features
-
-sys.path.append('../')
 
 
 logging.basicConfig(
@@ -49,7 +48,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if args.min_states_to_send == -1:
-        args.min_states_to_send = 38*8 # approx 8 games
+        args.min_states_to_send = 38*2 # approx 8 games
 
     base_url = f"{args.host}:{args.port}"
 
@@ -107,10 +106,13 @@ if __name__ == "__main__":
                 break
 
         for states, actions, rewards, probs, outcomes in iter(data_collecting_queue.get, None):
-            all_states.extend(states), all_actions.extend(actions), all_rewards.extend(rewards)
-            all_probs.extend(probs), all_outcomes.extend(outcomes)
+            all_states.extend(states)
+            all_actions.extend(actions)
+            all_rewards.extend(rewards)
+            all_probs.extend(probs)
+            all_outcomes.extend(outcomes)
 
-        if len(all_states) > args.min_states_to_send:
+        if len(all_states) > int(args.min_states_to_send):
             logging.info(f"Sending {len(all_states)} game states..")
             try:
                 response = requests.post(

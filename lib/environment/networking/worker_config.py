@@ -16,6 +16,9 @@ class BaseConfig:
         with open(file_path, 'w') as f:
             f.write(representation)
 
+    def to_json(self):
+        return json.loads(json.dumps(self.__dict__, default=lambda o: o.__dict__))
+
     def load_from_json(self, file_path: Union[str, Path]):
         if not os.path.exists(file_path):
             print("Settings file '{}' does not exist!".format(file_path))
@@ -66,7 +69,14 @@ class OptimizationConfig(BaseConfig):
         self.min_buffer_size = 1024
         self.batch_size = 128
         self.trajectory_length = 5
+        self.iterations = 5
         self.data_folder = ""
+
+class LogConfig(BaseConfig):
+    def __init__(self):
+        self.projectname = ""
+        self.entity = ""
+        self.group = ""
 
 class AgentConfig(BaseConfig):
     def __init__(self):
@@ -91,6 +101,7 @@ class AgentConfig(BaseConfig):
 
 class WorkerConfig(BaseConfig):
     def __init__(self, features: FeaturesSetCpp = None):
+        self.log = LogConfig()
         self.network = NetworkConfig(features)
         self.agent = AgentConfig()
         self.optimization = OptimizationConfig()
@@ -99,6 +110,7 @@ class WorkerConfig(BaseConfig):
     def __repr__(self):
         _base_dict = super().__repr__()
         _dict = {
+            'log': self.log.__repr__(),
             'network': self.network.__repr__(),
             'agent': self.agent.__repr__(),
             'optimization': self.optimization.__repr__()
@@ -107,6 +119,8 @@ class WorkerConfig(BaseConfig):
 
     def load(self, representation: str):
         loaded = json.loads(representation)
+        if 'log' in loaded:
+            self.log.__dict__ = {**(self.log.__dict__), **loaded['log']}
         if 'network' in loaded:
             self.network.__dict__ = {**(self.network.__dict__), **loaded['network']}
         if 'agent' in loaded:

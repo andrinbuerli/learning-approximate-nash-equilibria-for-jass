@@ -1,7 +1,7 @@
 version: '2.3'
 services:
     data_collector0:
-        build: ../
+        build: ../../
         environment:
             - NVIDIA_VISIBLE_DEVICES=0
         volumes:

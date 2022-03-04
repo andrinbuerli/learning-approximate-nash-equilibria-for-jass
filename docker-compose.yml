@@ -4,21 +4,11 @@ services:
         build: .
         volumes:
             - .:/app
-        network_mode: host
+        ports:
+          - 8080:8080
         command: >
-            bash -c "cd scripts && python train_alpha_zero.py
-            --enable_log 1
-            --port 8080
-            --wandb_projectname jass-alphazero,
-            --wandb_entity andrinbuerli,
-            --wandb_group AlphaZero-Experiment-X"
-        deploy:
-          resources:
-            reservations:
-              devices:
-                - driver: nvidia
-                  device_ids: ['0']
-                  capabilities: [gpu]
+            bash -c "cd scripts && python train_mu_zero.py
+            --log"
 
     evaluate_agents:
         build: .
@@ -55,6 +45,8 @@ services:
             context: .
             args:
                 DEV: 1
+        ports:
+          - 8080:8080
         entrypoint: []
         volumes:
             - .:/app

@@ -9,6 +9,13 @@ services:
         command: >
             bash -c "cd scripts && python train_mu_zero.py
             --log"
+        deploy:
+          resources:
+            reservations:
+              devices:
+                - driver: nvidia
+                  device_ids: ['0']
+                  capabilities: [gpu]
 
     evaluate_agents:
         build: .

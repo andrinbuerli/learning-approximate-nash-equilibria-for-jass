@@ -108,7 +108,7 @@ class ReplayBufferFromFolder:
             except:
                 logging.warning(f"failed reading file {file}.")
 
-        logging.info(f"update done, added {self.size_of_last_update} game states")
+        logging.info(f"update done, added {self.size_of_last_update} episodes ")
 
     def _sample_trajectory(self, episode):
         states, actions, rewards, probs, outcomes = episode

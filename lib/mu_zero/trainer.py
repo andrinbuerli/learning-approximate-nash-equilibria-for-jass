@@ -1,3 +1,4 @@
+import gc
 import logging
 import pickle
 import time
@@ -107,6 +108,15 @@ class MuZeroTrainer:
 
                 self.logger.log(data)
                 logging.debug(data)
+
+                del train_infos
+                del grad_infos
+                del data
+
+            del training_infos
+            del batches
+            del custom_metrics
+            gc.collect()
 
             logging.info(f"Iteration {it} done, took: {time.time() - start}s")
 

@@ -60,7 +60,7 @@ def _calculate_batched_vpkl_(network: AbstractNetwork, iterator, n_steps_ahead, 
 
     for i in range(n_steps_ahead):
         supervised_policy = tf.gather_nd(y, current_positions)[:, :43]
-        assert all(tf.reduce_max(supervised_policy, axis=-1) == 1)
+        assert all(tf.reduce_max(supervised_policy, axis=-1) == 1), f"{tf.reduce_max(supervised_policy, axis=-1)} should match 1"
 
         actions = tf.reshape(tf.argmax(supervised_policy, axis=-1), [-1, 1])
         value, reward, policy_estimate, encoded_states =  network.recurrent_inference(encoded_states, actions)

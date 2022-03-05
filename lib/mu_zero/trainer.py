@@ -74,9 +74,8 @@ class MuZeroTrainer:
 
             training_infos = self.train(batches)
 
-            logging.info(f'Saving checkpoint for iteration {it} at {network_path}')
-
-            if it % self.store_model_weights_after == 0:
+            if (it % self.store_model_weights_after) == 0:
+                logging.info(f'Saving checkpoint for iteration {it} at {network_path}')
                 self.save_latest_network(it, network_path)
 
             custom_metrics = self.metrics_manager.get_latest_metrics_state()

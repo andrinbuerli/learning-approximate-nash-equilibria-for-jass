@@ -41,7 +41,7 @@ def _calculate_batched_save_(network: AbstractNetwork, iterator, n_steps_ahead, 
         tf.int32)
     outcomes = tf.gather_nd(outcomes, tf.stack((tf.reshape(tf.repeat(tf.range(batch_size), 4), [-1, 4]), current_teams), axis=-1))
 
-    assert all(tf.reduce_sum(outcomes, axis=-1) == 157 * 2)
+    assert all(tf.reduce_sum(outcomes, axis=-1) == 157 * 2), f"{tf.reduce_sum(outcomes, axis=-1)}, should match 157 * 2"
 
     min_tensor = tf.stack((tf.range(batch_size), tf.repeat(trajectory_length - 1, batch_size)), axis=1)
     zeros = tf.zeros(batch_size, dtype=tf.int32)

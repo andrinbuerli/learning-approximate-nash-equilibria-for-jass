@@ -3,6 +3,7 @@ import logging
 import os
 import time
 import multiprocessing as mp
+import tensorflow as tf
 mp.set_start_method('spawn', force=True)
 
 from multiprocessing import Queue, Process
@@ -36,7 +37,7 @@ class BaseAsyncMetric:
         self.collecting_process.start()
 
     def _calculate_continuously(self):
-        os.environ["NVIDIA_VISIBLE_DEVICES"] = "-1"
+        tf.config.set_visible_devices(tf.config.list_physical_devices('CPU'))
 
         while not os.path.exists(self.network_path):
             logging.info(f"waiting for model to be saved at {self.network_path}")

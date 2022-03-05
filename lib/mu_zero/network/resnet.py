@@ -94,7 +94,6 @@ class MuZeroResidualNetwork(AbstractNetwork):
         next_encoded_state_normalized = self._scale_encoded_state(next_encoded_state)
         return next_encoded_state_normalized, reward
 
-    @tf.function
     def initial_inference(self, observation):
         encoded_state = self.representation(observation)
         policy, value = self.prediction(encoded_state)
@@ -108,7 +107,6 @@ class MuZeroResidualNetwork(AbstractNetwork):
             encoded_state,
         )
 
-    @tf.function
     def recurrent_inference(self, encoded_state, action):
         next_encoded_state, reward = self.dynamics(encoded_state, action)
         policy, value = self.prediction(next_encoded_state)

@@ -113,7 +113,7 @@ if __name__ == "__main__":
             all_outcomes.extend(outcomes)
 
         if len(all_states) > int(args.min_states_to_send):
-            logging.info(f"Sending {len(all_states)} game states..")
+            logging.info(f"Sending {len(all_states)} episodes..")
             try:
                 response = requests.post(
                     url=base_url + "/game_data",
@@ -124,7 +124,7 @@ if __name__ == "__main__":
                 )
                 could_not_reach = 0
 
-                logging.info(f"Sending {len(all_states)} game states successful")
+                logging.info(f"Sending {len(all_states)} episodes successful")
 
                 weights = pickle.loads(response.content)
 

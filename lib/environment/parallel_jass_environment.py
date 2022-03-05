@@ -71,6 +71,9 @@ def _play_games_multi_threaded_(n_games, continuous):
     worker_config = _play_games_multi_threaded_.worker_config
     network_path = _play_games_multi_threaded_.network_path
 
+    from lib.util import set_allow_gpu_memory_growth
+    set_allow_gpu_memory_growth(True)
+
     first_call = True
     while continuous or first_call:
         if cancel_con is not None and cancel_con.poll(0.01):

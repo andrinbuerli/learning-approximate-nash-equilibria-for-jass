@@ -66,7 +66,7 @@ def _calculate_batched_save_(network: AbstractNetwork, iterator, n_steps_ahead, 
         maes.append(float(mae))
 
     return {
-        f"save_{i}_steps_ahead": x for i, x in enumerate(maes)
+        f"SAVE/save_{i}_steps_ahead": x for i, x in enumerate(maes)
     }
 
 

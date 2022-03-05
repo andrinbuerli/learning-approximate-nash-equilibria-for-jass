@@ -49,7 +49,7 @@ def _calculate_batched_spkl_(network: AbstractNetwork, iterator, n_steps_ahead, 
         kls.append(float(kl))
 
     return {
-        f"spkl_{i}_steps_ahead": x for i, x in enumerate(kls)
+        f"SPKL/spkl_{i}_steps_ahead": x for i, x in enumerate(kls)
     }
 
 

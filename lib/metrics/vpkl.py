@@ -74,7 +74,7 @@ def _calculate_batched_vpkl_(network: AbstractNetwork, iterator, n_steps_ahead, 
         kls.append(float(kl))
 
     return {
-        f"vpkl_{i}_steps_ahead": x for i, x in enumerate(kls)
+        f"VPKL/vpkl_{i}_steps_ahead": x for i, x in enumerate(kls)
     }
 
 

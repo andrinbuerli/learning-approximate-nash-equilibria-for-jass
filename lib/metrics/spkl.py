@@ -16,7 +16,7 @@ def _calculate_batched_spkl_(network: AbstractNetwork, iterator, n_steps_ahead, 
     y = tf.reshape(y, (-1,) + l_shape)
 
     batch_size = x.shape[0]
-    trajectory_length = x.shape[1]
+    trajectory_length = 37
     position = np.random.choice(range(trajectory_length))
     positions = np.array(list(zip(range(batch_size), np.repeat(position, batch_size))))
 

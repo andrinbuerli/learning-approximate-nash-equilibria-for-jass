@@ -47,7 +47,8 @@ class LatentNodeSelectionPolicy:
 
     def tree_policy(self, node: Node, stats: MinMaxStats, virtual_loss=0) -> Node:
         while True:
-            node.visits += virtual_loss
+            with node.lock: # ensures that node and children not currently locked, i.e. being expanded
+                node.visits += virtual_loss
 
             valid_actions = node.valid_actions
 

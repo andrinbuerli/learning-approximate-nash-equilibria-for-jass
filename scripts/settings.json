@@ -27,7 +27,7 @@
   "data_folder": "../results",
   "learning_rate": 0.0001,
   "max_buffer_size": 2048,
-  "min_buffer_size": 128,
+  "min_buffer_size": 12,
   "port": 8080,
   "store_model_weights_after": 10,
   "trajectory_length": 5,

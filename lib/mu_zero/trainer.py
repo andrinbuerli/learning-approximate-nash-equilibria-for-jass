@@ -131,19 +131,19 @@ class MuZeroTrainer:
                 tf.convert_to_tensor(outcomes))
 
             reward_error = {
-                f"ARE/absolute_reward_error_{i}_steps_ahead": x for i, x in enumerate(absolute_reward_errors)
+                f"absolute_reward_error_{i}_steps_ahead": x for i, x in enumerate(absolute_reward_errors)
             }
 
             value_error = {
-                f"AVE/absolute_value_error_{i}_steps_ahead": x for i, x in enumerate(absolute_value_errors)
+                f"absolute_value_error_{i}_steps_ahead": x for i, x in enumerate(absolute_value_errors)
             }
 
             policy_kls = {
-                f"PKL/policy_kl_{i}_steps_ahead": x for i, x in enumerate(policy_kls)
+                f"policy_kl_{i}_steps_ahead": x for i, x in enumerate(policy_kls)
             }
 
             policy_ces = {
-                f"PCE/policy_ce_{i}_steps_ahead": x for i, x in enumerate(policy_ces)
+                f"policy_ce_{i}_steps_ahead": x for i, x in enumerate(policy_ces)
             }
 
             training_infos.append({

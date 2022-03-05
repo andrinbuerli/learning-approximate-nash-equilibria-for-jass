@@ -90,7 +90,7 @@ if __name__=="__main__":
 
     if args.log:
         with open("../.wandbkey", "r") as f:
-            api_key = f.read()
+            api_key = f.read().rstrip()
         logger = WandbLogger(
             wandb_project_name=worker_config.log.projectname,
             group_name=worker_config.log.group,

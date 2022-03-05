@@ -131,24 +131,26 @@ class MuZeroTrainer:
                 tf.convert_to_tensor(outcomes))
 
             reward_error = {
-                f"absolute_reward_error/{i}_steps_ahead": x for i, x in enumerate(absolute_reward_errors)
+                f"ARE/absolute_reward_error_{i}_steps_ahead": x for i, x in enumerate(absolute_reward_errors)
             }
 
             value_error = {
-                f"absolute_value_error/{i}_steps_ahead": x for i, x in enumerate(absolute_value_errors)
+                f"AVE/absolute_value_error_{i}_steps_ahead": x for i, x in enumerate(absolute_value_errors)
             }
 
             policy_kls = {
-                f"policy_kl/{i}_steps_ahead": x for i, x in enumerate(policy_kls)
+                f"PKL/policy_kl_{i}_steps_ahead": x for i, x in enumerate(policy_kls)
             }
 
             policy_ces = {
-                f"policy_ce/{i}_steps_ahead": x for i, x in enumerate(policy_ces)
+                f"PCE/policy_ce_{i}_steps_ahead": x for i, x in enumerate(policy_ces)
             }
 
             training_infos.append({
                 **info, **reward_error, **value_error, **policy_kls, **policy_ces
             })
+
+            del info, absolute_reward_errors, absolute_value_errors, policy_kls, policy_ces
 
         return training_infos
 
@@ -242,6 +244,14 @@ class MuZeroTrainer:
         # inspired by https://www.tensorflow.org/api_docs/python/tf/nn/l2_loss
         squared_weights_sum = tf.reduce_sum([tf.reduce_sum(x ** 2) for x in self.network.trainable_weights])
 
+        abs_reward_errors = absolute_reward_errors.stack()
+        abs_value_errors = absolute_value_errors.stack()
+        pl_kls = policy_kls.stack()
+        pl_ces = policy_ces.stack()
+
+        absolute_reward_errors.close(), absolute_value_errors.close()
+        policy_kls.close(), policy_ces.close()
+
         return {
             "training/reward_loss": tf.reduce_mean(reward_loss),
             "training/value_loss": tf.reduce_mean(value_loss),
@@ -249,7 +259,7 @@ class MuZeroTrainer:
             "training/squared_weights_sum": squared_weights_sum,
             "training/loss": loss,
             **gradient_hists
-        }, absolute_reward_errors.stack(), absolute_value_errors.stack(), policy_kls.stack(), policy_ces.stack()
+        }, abs_reward_errors, abs_value_errors, pl_kls, pl_ces
 
 
     def cross_entropy(self, target, estimate):

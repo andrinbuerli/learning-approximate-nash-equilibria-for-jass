@@ -65,6 +65,8 @@ class ReplayBufferFromFolder:
                 np.stack(outcomes, axis=0),
             ))
 
+            del states, actions, rewards, probs, outcomes
+
         logging.info("sampling from replay buffer successful")
         return batches
 

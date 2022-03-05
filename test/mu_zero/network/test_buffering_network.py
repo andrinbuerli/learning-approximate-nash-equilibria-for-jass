@@ -168,7 +168,7 @@ def test_recurrent_inference_too_small_buffer_timeout():
 
     conn = testee.recurrent_inference(np.random.uniform(0, 1, (1, 4, 9, 256)), np.array([[1]]), return_connection=True)
 
-    assert conn.poll(timeout=3.0)
+    assert conn.poll(timeout=5.0)
 
     conn.close()
 

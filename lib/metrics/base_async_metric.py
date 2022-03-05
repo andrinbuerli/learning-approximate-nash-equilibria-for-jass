@@ -36,6 +36,8 @@ class BaseAsyncMetric:
         self.collecting_process.start()
 
     def _calculate_continuously(self):
+        os.environ["NVIDIA_VISIBLE_DEVICES"] = "-1"
+
         while not os.path.exists(self.network_path):
             logging.info(f"waiting for model to be saved at {self.network_path}")
             time.sleep(1)

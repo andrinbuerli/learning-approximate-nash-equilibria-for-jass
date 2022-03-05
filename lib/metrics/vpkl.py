@@ -122,5 +122,5 @@ class VPKL(BaseAsyncMetric):
         super().__init__(worker_config, network_path, parallel_threads=1,
                          metric_method=_calculate_batched_vpkl_, init_method=self.init_dataset)
 
-    def get_name(self, i: int):
-        return f"vpkl_{i}_steps_ahead"
+    def get_name(self):
+        return f"vpkl"

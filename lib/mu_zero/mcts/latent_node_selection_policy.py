@@ -65,8 +65,8 @@ class LatentNodeSelectionPolicy:
 
             not_expanded = child.prior is None
             if not_expanded:
-                with child.lock:
-                    with child.parent.lock if not child.is_root() else True:
+                with node.lock:
+                    with child.lock:
                         child.visits += virtual_loss
                         child.value, child.reward, child.prior, child.hidden_state = \
                             self.network.recurrent_inference(node.hidden_state, np.array([[child.action]]))

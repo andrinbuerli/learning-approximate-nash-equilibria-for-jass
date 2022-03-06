@@ -64,6 +64,9 @@ class BaseAsyncMetric:
 
                 results = pool.starmap(self.metric_method, params)
 
+                while self.result_queue.qsize() > 0:
+                    self._latest_result = self.result_queue.get()
+
                 if len(results) == 1 and type(results[0]) is dict:
                     self.result_queue.put(results[0])
                 else:

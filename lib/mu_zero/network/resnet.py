@@ -164,6 +164,9 @@ TOTAL: {sum([representation_params, dynamics_params, prediction_params]):,} trai
         assert policy.shape == (1, self.action_space_size)
         assert value.shape == (1, self.players, self.support_size)
 
+    def __del__(self):
+        del self.prediction_network, self.representation_network, self.dynamics_network
+
 
 class RepresentationNetwork(tf.keras.Model):
     def __init__(

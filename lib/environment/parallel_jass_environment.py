@@ -77,33 +77,37 @@ def _play_games_multi_threaded_(n_games, continuous):
 
     first_call = True
     while continuous or first_call:
-        if cancel_con is not None and cancel_con.poll(0.01):
-            logging.warning(f"Received cancel signal, stopping data collection.")
-            os.kill(os.getpid(), signal.SIGKILL)
+        try:
 
-        network = get_network(worker_config)
-        network.load(network_path)
+            if cancel_con is not None and cancel_con.poll(0.01):
+                logging.warning(f"Received cancel signal, stopping data collection.")
+                os.kill(os.getpid(), signal.SIGKILL)
 
-        agents = [get_agent(worker_config, network=network, greedy=False) for _ in range(n_games)]
+            network = get_network(worker_config)
+            network.load(network_path)
 
-        first_call = False
-        results = pool.starmap(_play_single_game_, zip(list(range(n_games)), agents))
+            agents = [get_agent(worker_config, network=network, greedy=False) for _ in range(n_games)]
 
-        states = [x[0] for x in results]
-        actions = [x[1] for x in results]
-        rewards = [x[2] for x in results]
-        probs = [x[3] for x in results]
-        outcomes = [x[4] for x in results]
+            first_call = False
+            results = pool.starmap(_play_single_game_, zip(list(range(n_games)), agents))
 
-        logging.info(f"finished {n_games} games")
+            states = [x[0] for x in results]
+            actions = [x[1] for x in results]
+            rewards = [x[2] for x in results]
+            probs = [x[3] for x in results]
+            outcomes = [x[4] for x in results]
 
-        if continuous:
-            queue.put((np.stack(states), np.stack(actions), np.stack(rewards), np.stack(probs), np.stack(outcomes)))
+            logging.info(f"finished {n_games} games")
 
-            del states, actions, rewards, probs, outcomes, network
-            gc.collect()
-        else:
-            return states, actions, rewards, probs, outcomes
+            if continuous:
+                queue.put((np.stack(states), np.stack(actions), np.stack(rewards), np.stack(probs), np.stack(outcomes)))
+
+                del states, actions, rewards, probs, outcomes, network
+                gc.collect()
+            else:
+                return states, actions, rewards, probs, outcomes
+        except Exception as e:
+            logging.warning(f"Exception occurred: {e}, continuing anyway")
 
 
 def _init_process_worker_(function, network_path: str, worker_config: WorkerConfig, check_move_validity: bool,

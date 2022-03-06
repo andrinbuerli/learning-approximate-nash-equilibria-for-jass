@@ -70,7 +70,6 @@ class BaseAsyncMetric:
 
             except Exception as e:
                 logging.error(f"Encountered error {e}, continuing anyways")
-                raise e
 
     @abc.abstractmethod
     def get_params(self, thread_nr: int, network: AbstractNetwork, init_vars=None) -> []:

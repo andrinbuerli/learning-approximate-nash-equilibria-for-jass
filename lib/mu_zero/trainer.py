@@ -196,8 +196,8 @@ class MuZeroTrainer:
 
             expected_value = support_to_scalar_per_player(value, min_value=0, nr_players=4)
             absolute_value_errors = absolute_value_errors.write(0, tf.reduce_mean(tf.abs(expected_value - tf.cast(outcomes_target[:, 0], tf.float32)), name="val_mae"))
-            expected_reward = support_to_scalar_per_player(reward, min_value=min_reward, nr_players=4)
-            absolute_reward_errors = absolute_reward_errors.write(0, tf.reduce_mean(tf.abs(expected_reward - tf.cast(rewards_target[:, 0], tf.float32)), name="reward_mae"))
+
+            absolute_reward_errors = absolute_reward_errors.write(0, 0)
             # ---------------Logging --------------- #
 
 
@@ -227,8 +227,6 @@ class MuZeroTrainer:
                 absolute_value_errors = absolute_value_errors.write(i+1, tf.reduce_mean(tf.abs(expected_value - tf.cast(outcomes_target[:, i+1], tf.float32)), name="val_mae"))
                 expected_reward = support_to_scalar_per_player(reward, min_value=min_reward, nr_players=4)
                 absolute_reward_errors = absolute_reward_errors.write(i+1, tf.reduce_mean(tf.abs(expected_reward - tf.cast(rewards_target[:, i+1], tf.float32)), name="reard_mae"))
-
-                tf.print(tf.reduce_mean(tf.abs(expected_reward - tf.cast(rewards_target[:, i+1], tf.float32))))
                 # ---------------Logging --------------- #
 
             loss = tf.reduce_mean(

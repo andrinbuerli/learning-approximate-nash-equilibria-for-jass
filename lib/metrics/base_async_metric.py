@@ -52,9 +52,9 @@ class BaseAsyncMetric:
         if self.init_method is not None:
             init_vars = self.init_method()
 
+        network = get_network(self.worker_config)
         while True:
             try:
-                network = get_network(self.worker_config)
                 network.load(self.network_path)
 
                 if self.init_method is None:
@@ -72,7 +72,7 @@ class BaseAsyncMetric:
                 else:
                     self.result_queue.put(float(np.mean(results)))
 
-                del network, results, params
+                del results, params
                 gc.collect()
 
             except Exception as e:

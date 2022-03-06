@@ -26,7 +26,7 @@
   "batch_size": 1024,
   "data_folder": "../results",
   "learning_rate": 0.0001,
-  "max_buffer_size": 4096,
+  "max_buffer_size": 20000,
   "min_buffer_size": 1024,
   "port": 8080,
   "store_model_weights_after": 10,

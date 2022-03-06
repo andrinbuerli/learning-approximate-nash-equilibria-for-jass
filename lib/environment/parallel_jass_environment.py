@@ -102,7 +102,6 @@ def _play_games_multi_threaded_(n_games, continuous):
 
             del states, actions, rewards, probs, outcomes, network
             gc.collect()
-            tf.keras.backend.clear_session()
         else:
             return states, actions, rewards, probs, outcomes
 

@@ -71,7 +71,6 @@ class BaseAsyncMetric:
 
                 del network
                 gc.collect()
-                tf.keras.backend.clear_session()
 
             except Exception as e:
                 logging.error(f"Encountered error {e}, continuing anyways")

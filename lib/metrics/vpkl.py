@@ -27,7 +27,7 @@ def _calculate_vpkl_(current_positions, policy_estimate, x):
         push_valid
     ], axis=-1)
 
-    valid_actions = valid_actions / tf.reduce_sum(valid_actions)
+    valid_actions = valid_actions / tf.reduce_sum(valid_actions, axis=-1)[:, None]
 
     policy_estimate = tf.clip_by_value(policy_estimate, 1e-7, 1. - 1e-7)
     valid_actions = tf.clip_by_value(valid_actions, 1e-7, 1. - 1e-7)

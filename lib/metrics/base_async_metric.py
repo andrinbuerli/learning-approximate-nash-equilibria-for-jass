@@ -1,4 +1,5 @@
 import abc
+import gc
 import logging
 import os
 import time
@@ -67,6 +68,10 @@ class BaseAsyncMetric:
                     self.result_queue.put(results[0])
                 else:
                     self.result_queue.put(float(np.mean(results)))
+
+                del network
+                gc.collect()
+                tf.keras.backend.clear_session()
 
             except Exception as e:
                 logging.error(f"Encountered error {e}, continuing anyways")

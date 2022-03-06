@@ -1,3 +1,5 @@
+import gc
+
 from lib.environment.networking.worker_config import WorkerConfig
 from lib.factory import get_agent, get_opponent
 from lib.jass.agent.agent import CppAgent
@@ -12,6 +14,9 @@ def _play_single_game_(i, agent: CppAgent, opponent: CppAgent):
     arena.play_game(dealer=i % 4)
 
     points = arena.points_team_0 / (arena.points_team_0 + arena.points_team_1)
+
+    del arena, agent, opponent
+    gc.collect()
 
     return points
 

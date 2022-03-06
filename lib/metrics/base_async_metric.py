@@ -69,7 +69,7 @@ class BaseAsyncMetric:
                 else:
                     self.result_queue.put(float(np.mean(results)))
 
-                del network
+                del network, results, params
                 gc.collect()
 
             except Exception as e:

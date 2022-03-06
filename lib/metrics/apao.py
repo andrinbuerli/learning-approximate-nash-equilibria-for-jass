@@ -15,7 +15,7 @@ def _play_single_game_(i, agent: CppAgent, opponent: CppAgent):
 
     points = arena.points_team_0 / (arena.points_team_0 + arena.points_team_1)
 
-    del arena, agent, opponent
+    del arena
     gc.collect()
 
     return points

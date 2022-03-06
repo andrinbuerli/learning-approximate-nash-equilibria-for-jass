@@ -77,6 +77,8 @@ class BaseAsyncMetric:
 
             except Exception as e:
                 logging.error(f"Encountered error {e}, continuing anyways")
+                del network
+                network = get_network(self.worker_config)
 
     @abc.abstractmethod
     def get_params(self, thread_nr: int, network: AbstractNetwork, init_vars=None) -> []:

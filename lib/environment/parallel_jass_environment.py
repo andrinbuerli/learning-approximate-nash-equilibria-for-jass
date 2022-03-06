@@ -72,18 +72,16 @@ def _play_games_multi_threaded_(n_games, continuous):
     network_path = _play_games_multi_threaded_.network_path
 
     from lib.util import set_allow_gpu_memory_growth
-    import tensorflow as tf
     set_allow_gpu_memory_growth(True)
 
     first_call = True
+    network = get_network(worker_config)
     while continuous or first_call:
         try:
-
             if cancel_con is not None and cancel_con.poll(0.01):
                 logging.warning(f"Received cancel signal, stopping data collection.")
                 os.kill(os.getpid(), signal.SIGKILL)
 
-            network = get_network(worker_config)
             network.load(network_path)
 
             agents = [get_agent(worker_config, network=network, greedy=False) for _ in range(n_games)]
@@ -102,12 +100,14 @@ def _play_games_multi_threaded_(n_games, continuous):
             if continuous:
                 queue.put((np.stack(states), np.stack(actions), np.stack(rewards), np.stack(probs), np.stack(outcomes)))
 
-                del states, actions, rewards, probs, outcomes, network
+                del states, actions, rewards, probs, outcomes
                 gc.collect()
             else:
                 return states, actions, rewards, probs, outcomes
         except Exception as e:
             logging.warning(f"Exception occurred: {e}, continuing anyway")
+            del network
+            network = get_network(worker_config)
 
 
 def _init_process_worker_(function, network_path: str, worker_config: WorkerConfig, check_move_validity: bool,

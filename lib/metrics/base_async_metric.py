@@ -76,10 +76,6 @@ class BaseAsyncMetric:
         pass
 
     def get_latest_result(self) -> dict:
-        if self.collecting_process.is_alive():
-            logging.warning(f"Restarting calculation of metric {self.get_name()} !")
-            self._start_calculation()
-
         while self.result_queue.qsize() > 0:
             self._latest_result = self.result_queue.get()
 

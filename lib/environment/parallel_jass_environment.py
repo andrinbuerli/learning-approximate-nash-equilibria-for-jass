@@ -72,6 +72,7 @@ def _play_games_multi_threaded_(n_games, continuous):
     network_path = _play_games_multi_threaded_.network_path
 
     from lib.util import set_allow_gpu_memory_growth
+    import tensorflow as tf
     set_allow_gpu_memory_growth(True)
 
     first_call = True
@@ -99,8 +100,9 @@ def _play_games_multi_threaded_(n_games, continuous):
         if continuous:
             queue.put((np.stack(states), np.stack(actions), np.stack(rewards), np.stack(probs), np.stack(outcomes)))
 
-            del states, actions, rewards, probs, outcomes
+            del states, actions, rewards, probs, outcomes, network
             gc.collect()
+            tf.keras.backend.clear_session()
         else:
             return states, actions, rewards, probs, outcomes
 

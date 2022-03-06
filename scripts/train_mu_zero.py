@@ -56,36 +56,36 @@ if __name__=="__main__":
         clean_up_files=True)
 
     manager = MetricsManager(
-        APAO("dmcts", worker_config, str(network_path), parallel_threads=4),
-        APAO("dpolicy", worker_config, str(network_path), parallel_threads=4),
-        APAO("random", worker_config, str(network_path), parallel_threads=4),
-        SAVE(
-            samples_per_calculation=3,
-            feature_length=worker_config.network.feature_extractor.FEATURE_LENGTH,
-            feature_shape=worker_config.network.feature_extractor.FEATURE_SHAPE,
-            label_length=LabelSetActionFull.LABEL_LENGTH,
-            worker_config=worker_config,
-            network_path=str(network_path),
-            n_steps_ahead=3
-        ),
-        SPKL(
-            samples_per_calculation=3,
-            feature_length=worker_config.network.feature_extractor.FEATURE_LENGTH,
-            feature_shape=worker_config.network.feature_extractor.FEATURE_SHAPE,
-            label_length=LabelSetActionFull.LABEL_LENGTH,
-            worker_config=worker_config,
-            network_path=str(network_path),
-            n_steps_ahead=3
-        ),
-        VPKL(
-            samples_per_calculation=3,
-            feature_length=worker_config.network.feature_extractor.FEATURE_LENGTH,
-            feature_shape=worker_config.network.feature_extractor.FEATURE_SHAPE,
-            label_length=LabelSetActionFull.LABEL_LENGTH,
-            worker_config=worker_config,
-            network_path=str(network_path),
-            n_steps_ahead=3
-        )
+        #APAO("dmcts", worker_config, str(network_path), parallel_threads=4),
+        #APAO("dpolicy", worker_config, str(network_path), parallel_threads=4),
+        #APAO("random", worker_config, str(network_path), parallel_threads=4),
+        #SAVE(
+        #    samples_per_calculation=3,
+        #    feature_length=worker_config.network.feature_extractor.FEATURE_LENGTH,
+        #    feature_shape=worker_config.network.feature_extractor.FEATURE_SHAPE,
+        #    label_length=LabelSetActionFull.LABEL_LENGTH,
+        #    worker_config=worker_config,
+        #    network_path=str(network_path),
+        #    n_steps_ahead=3
+        #),
+        #SPKL(
+        #    samples_per_calculation=3,
+        #    feature_length=worker_config.network.feature_extractor.FEATURE_LENGTH,
+        #    feature_shape=worker_config.network.feature_extractor.FEATURE_SHAPE,
+        #    label_length=LabelSetActionFull.LABEL_LENGTH,
+        #    worker_config=worker_config,
+        #    network_path=str(network_path),
+        #    n_steps_ahead=3
+        #),
+        #VPKL(
+        #    samples_per_calculation=3,
+        #    feature_length=worker_config.network.feature_extractor.FEATURE_LENGTH,
+        #    feature_shape=worker_config.network.feature_extractor.FEATURE_SHAPE,
+        #    label_length=LabelSetActionFull.LABEL_LENGTH,
+        #    worker_config=worker_config,
+        #    network_path=str(network_path),
+        #    n_steps_ahead=3
+        #)
     )
 
     if args.log:

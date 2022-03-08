@@ -58,6 +58,10 @@ class NetworkConfig(BaseConfig):
 class OptimizationConfig(BaseConfig):
     def __init__(self):
         self.port = 8080
+        self.value_loss_weight = 1.0
+        self.reward_loss_weight = 1.0
+        self.policy_loss_weight = 1.0
+        self.learning_rate = 1e-4
         self.learning_rate = 1e-4
         self.weight_decay = 1e-4
         self.adam_beta1 = 0.9

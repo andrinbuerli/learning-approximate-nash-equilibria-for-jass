@@ -3,6 +3,7 @@ from pathlib import Path
 
 import numpy as np
 
+from lib.environment.networking.worker_config import WorkerConfig
 from lib.factory import get_network
 from lib.log.console_logger import ConsoleLogger
 from lib.metrics.metrics_manager import MetricsManager
@@ -17,11 +18,16 @@ def test_fit_eager():
 
     config = get_test_config()
 
+    #base_path = Path("/app/results/1646570911")
+    #config.load_from_json(base_path / "worker_config.json")
+
     network = get_network(config)
+    #network.load(base_path / "latest_network.pd")
+
 
     replay_bufer = ReplayBufferFromFolder(
         max_buffer_size=1000,
-        batch_size=3,
+        batch_size=32,
         trajectory_length=5,
         game_data_folder=Path(__file__).parent.parent / "resources",
         clean_up_files=False)
@@ -39,8 +45,8 @@ def test_fit_eager():
         min_buffer_size=1,
         updates_per_step=2,
         store_model_weights_after=1,
+        #store_weights=False
     )
-
 
     weights_prev = network.get_weight_list()
 

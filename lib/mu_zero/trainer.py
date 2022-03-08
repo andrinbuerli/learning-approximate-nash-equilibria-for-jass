@@ -164,6 +164,7 @@ class MuZeroTrainer:
 
     @tf.function
     def train_step(self, states, next_actions, rewards_target, policies_target, outcomes_target):
+        batch_size = tf.shape(states)[0]
         trajectory_length = tf.shape(states)[1]
 
         policy_kls = tf.TensorArray(tf.float32, size=trajectory_length, dynamic_size=False, clear_after_read=True)
@@ -182,7 +183,7 @@ class MuZeroTrainer:
             min_reward = -(reward_support_size - 1) // 2
             outcome_support_size = tf.shape(value)[-1]
 
-            reward_loss = 0 # zero reward predicted for initial inference
+            reward_loss = tf.zeros((batch_size, 4), dtype=tf.float32) # zero reward predicted for initial inference
 
             value_target_distribution = scalar_to_support(outcomes_target[:, 0], support_size=outcome_support_size, min_value=0)
             value_loss = self.cross_entropy(value_target_distribution, value)

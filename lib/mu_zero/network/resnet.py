@@ -41,9 +41,10 @@ class MuZeroResidualNetwork(AbstractNetwork):
 
         self.dynamics_network = DynamicsNetwork(
                 observation_shape,
+                action_space_size,
                 players,
                 num_blocks,
-                num_channels + 1,
+                num_channels,
                 reduced_channels_reward,
                 fc_reward_layers,
                 self.full_support_size,
@@ -79,12 +80,11 @@ class MuZeroResidualNetwork(AbstractNetwork):
 
     def dynamics(self, encoded_state, action, training=False):
         # Stack encoded_state with a game specific one hot encoded action (See paper appendix Network Architecture)
-        action_one_hot = tf.ones((
-                    encoded_state.shape[0],
-                    encoded_state.shape[1],
-                    encoded_state.shape[2],
-                    1))
-        action_one_hot = tf.cast(action[:, :, None, None], tf.float32) * action_one_hot / self.action_space_size
+        action_one_hot = tf.reshape(
+            tf.tile(
+                tf.one_hot(action, depth=self.action_space_size),
+                (1, encoded_state.shape[1] * encoded_state.shape[2], 1)),
+            (-1, encoded_state.shape[1], encoded_state.shape[2], self.action_space_size))
 
         x = tf.concat((encoded_state, action_one_hot), axis=-1)
         next_encoded_state, reward = self.dynamics_network(x, training=training)
@@ -198,6 +198,7 @@ class DynamicsNetwork(tf.keras.Model):
     def __init__(
         self,
         observation_shape,
+        action_space_size,
         players,
         num_blocks,
         num_channels,
@@ -207,13 +208,14 @@ class DynamicsNetwork(tf.keras.Model):
         block_output_size_reward,
     ):
         super().__init__()
+        self.action_space_size = action_space_size
         self.players = players
         self.full_support_size = full_support_size
         self.observation_shape = observation_shape
         self.num_channels = num_channels
-        self.conv = conv3x3(num_channels - 1)
+        self.conv = conv3x3(num_channels)
         self.bn = layers.BatchNormalization()
-        self.resblocks = [ResidualBlock(num_channels - 1) for _ in range(num_blocks)]
+        self.resblocks = [ResidualBlock(num_channels) for _ in range(num_blocks)]
 
         self.conv1x1_reward =  layers.Conv2D(filters=reduced_channels_reward, kernel_size=(1, 1), padding="same",
                                              activation=None, use_bias=False)
@@ -224,7 +226,7 @@ class DynamicsNetwork(tf.keras.Model):
         )
 
     def call(self, x, training=None):
-        x = tf.reshape(x, (-1, self.observation_shape[0], self.observation_shape[1], self.num_channels))
+        x = tf.reshape(x, (-1, self.observation_shape[0], self.observation_shape[1], self.num_channels + self.action_space_size))
 
         x = self.conv(x, training=training)
         x = self.bn(x, training=training)

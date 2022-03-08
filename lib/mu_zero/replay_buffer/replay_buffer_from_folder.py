@@ -126,10 +126,10 @@ class ReplayBufferFromFolder:
         if len(indices) < self.trajectory_length:
             states, actions, rewards, probs, outcomes = trajectory
             for _ in range(self.trajectory_length - len(indices)):
-                states = np.concatenate((states, np.zeros_like(states[-1])[np.newaxis]), axis=0)
+                states = np.concatenate((states, np.zeros_like(states[-1], dtype=np.float32)[np.newaxis]), axis=0)
                 actions = np.concatenate((actions, actions[-1][np.newaxis]), axis=0)
-                rewards = np.concatenate((rewards, np.zeros_like(rewards[-1])[np.newaxis]), axis=0)
-                probs = np.concatenate((probs, np.zeros_like(probs[-1])[np.newaxis]), axis=0)
+                rewards = np.concatenate((rewards, np.zeros_like(rewards[-1], dtype=np.float32)[np.newaxis]), axis=0)
+                probs = np.concatenate((probs, np.zeros_like(probs[-1], dtype=np.float32)[np.newaxis]), axis=0)
                 outcomes = np.concatenate((outcomes, outcomes[-1][np.newaxis]), axis=0)
 
             trajectory = states, actions, rewards, probs, outcomes

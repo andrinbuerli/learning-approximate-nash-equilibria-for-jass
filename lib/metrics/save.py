@@ -62,6 +62,13 @@ def _calculate_batched_save_(network: AbstractNetwork, iterator, n_steps_ahead, 
         # solve if trajectory hans only length of 37
         current_positions = current_positions - tf.stack((zeros, tf.cast(tf.reduce_sum(supervised_policy, axis=-1) == 0, tf.int32)), axis=1)
 
+        current_teams = (current_teams + 1) % 2
+        outcomes = tf.gather_nd(
+            outcomes, tf.stack((tf.reshape(tf.repeat(tf.range(batch_size), 4), [-1, 4]), current_teams), axis=-1))
+
+        assert all(
+            tf.reduce_sum(outcomes, axis=-1) == 157 * 2), f"{tf.reduce_sum(outcomes, axis=-1)}, should match 157 * 2"
+
         mae = _calculate_mae_(outcomes, value)
         maes.append(float(mae))
 

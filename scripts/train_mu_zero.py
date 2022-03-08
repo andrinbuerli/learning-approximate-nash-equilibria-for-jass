@@ -65,7 +65,7 @@ if __name__=="__main__":
         APAO("dpolicy", worker_config, str(network_path), parallel_threads=4),
         APAO("random", worker_config, str(network_path), parallel_threads=4),
         SAVE(
-            samples_per_calculation=3,
+            samples_per_calculation=32,
             feature_length=worker_config.network.feature_extractor.FEATURE_LENGTH,
             feature_shape=worker_config.network.feature_extractor.FEATURE_SHAPE,
             label_length=LabelSetActionFull.LABEL_LENGTH,
@@ -74,7 +74,7 @@ if __name__=="__main__":
             n_steps_ahead=3
         ),
         SPKL(
-            samples_per_calculation=3,
+            samples_per_calculation=32,
             feature_length=worker_config.network.feature_extractor.FEATURE_LENGTH,
             feature_shape=worker_config.network.feature_extractor.FEATURE_SHAPE,
             label_length=LabelSetActionFull.LABEL_LENGTH,
@@ -83,7 +83,7 @@ if __name__=="__main__":
             n_steps_ahead=3
         ),
         VPKL(
-            samples_per_calculation=3,
+            samples_per_calculation=32,
             feature_length=worker_config.network.feature_extractor.FEATURE_LENGTH,
             feature_shape=worker_config.network.feature_extractor.FEATURE_SHAPE,
             label_length=LabelSetActionFull.LABEL_LENGTH,

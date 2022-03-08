@@ -5,7 +5,7 @@
   "group": "MuZero-MCTS-Experiment-0"
  },
  "agent": {
-  "c_1": 1,
+  "c_1": 1.25,
   "c_2": 19652,
   "dirichlet_alpha": 0.3,
   "dirichlet_eps": 0.25,

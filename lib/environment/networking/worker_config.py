@@ -42,7 +42,9 @@ class NetworkConfig(BaseConfig):
         self.type=""
         self.observation_shape = (4, 9, 45)
         self.action_space_size = 43
-        self.num_blocks = 2
+        self.num_blocks_representation = 2
+        self.num_blocks_dynamics = 2
+        self.num_blocks_prediction = 1
         self.num_channels = 256
         self.reduced_channels_reward = 128
         self.reduced_channels_value = 1

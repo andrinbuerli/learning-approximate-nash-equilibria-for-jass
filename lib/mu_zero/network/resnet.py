@@ -13,7 +13,9 @@ class MuZeroResidualNetwork(AbstractNetwork):
         self,
         observation_shape,
         action_space_size,
-        num_blocks,
+        num_blocks_representation,
+        num_blocks_dynamics,
+        num_blocks_prediction,
         num_channels,
         reduced_channels_reward,
         reduced_channels_value,
@@ -25,6 +27,9 @@ class MuZeroResidualNetwork(AbstractNetwork):
         players,
     ):
         super().__init__()
+        self.num_blocks_representation = num_blocks_representation
+        self.num_blocks_dynamics = num_blocks_dynamics
+        self.num_blocks_prediction = num_blocks_prediction
         self.players = players
         self.num_channels = num_channels
         self.observation_shape = observation_shape
@@ -37,13 +42,13 @@ class MuZeroResidualNetwork(AbstractNetwork):
 
         block_output_size_policy = reduced_channels_policy * observation_shape[0] * observation_shape[1]
 
-        self.representation_network = RepresentationNetwork(observation_shape, num_blocks, num_channels)
+        self.representation_network = RepresentationNetwork(observation_shape, num_blocks_representation, num_channels)
 
         self.dynamics_network = DynamicsNetwork(
                 observation_shape,
                 action_space_size,
                 players,
-                num_blocks,
+                num_blocks_dynamics,
                 num_channels,
                 reduced_channels_reward,
                 fc_reward_layers,
@@ -55,7 +60,7 @@ class MuZeroResidualNetwork(AbstractNetwork):
                 observation_shape,
                 players,
                 action_space_size,
-                num_blocks,
+                num_blocks_prediction,
                 num_channels,
                 reduced_channels_value,
                 reduced_channels_policy,

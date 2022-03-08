@@ -50,7 +50,9 @@
    256
   ],
   "feature_extractor": "cnn-full",
-  "num_blocks": 2,
+  "num_blocks_representation": 2,
+  "num_blocks_dynamics": 2,
+  "num_blocks_prediction": 1,
   "num_channels": 256,
   "observation_shape": [
    4,

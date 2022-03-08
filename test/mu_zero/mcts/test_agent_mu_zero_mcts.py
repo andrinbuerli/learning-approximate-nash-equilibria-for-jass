@@ -9,7 +9,9 @@ def test_prob_dist():
     network = MuZeroResidualNetwork(
         observation_shape=(4, 9, 45),
         action_space_size=43,
-        num_blocks=2,
+                num_blocks_representation=2,
+        num_blocks_dynamics=2,
+        num_blocks_prediction=2,
         num_channels=256,
         reduced_channels_reward=128,
         reduced_channels_value=1,
@@ -38,7 +40,9 @@ def test_play_card():
     network = MuZeroResidualNetwork(
         observation_shape=(4, 9, 45),
         action_space_size=43,
-        num_blocks=2,
+                num_blocks_representation=2,
+        num_blocks_dynamics=2,
+        num_blocks_prediction=2,
         num_channels=256,
         reduced_channels_reward=128,
         reduced_channels_value=1,
@@ -67,7 +71,9 @@ def test_play_trump():
     network = MuZeroResidualNetwork(
         observation_shape=(4, 9, 45),
         action_space_size=43,
-        num_blocks=2,
+                num_blocks_representation=2,
+        num_blocks_dynamics=2,
+        num_blocks_prediction=2,
         num_channels=256,
         reduced_channels_reward=128,
         reduced_channels_value=1,

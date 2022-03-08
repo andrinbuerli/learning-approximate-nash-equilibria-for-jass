@@ -11,7 +11,9 @@ def test_init():
     network = MuZeroResidualNetwork(
         observation_shape=(4, 9, 45),
         action_space_size=42,
-        num_blocks=2,
+                num_blocks_representation=2,
+        num_blocks_dynamics=2,
+        num_blocks_prediction=2,
         num_channels=256,
         reduced_channels_reward=128,
         reduced_channels_value=1,
@@ -46,7 +48,9 @@ def test_select():
     network = MuZeroResidualNetwork(
         observation_shape=(4, 9, 45),
         action_space_size=42,
-        num_blocks=2,
+                num_blocks_representation=2,
+        num_blocks_dynamics=2,
+        num_blocks_prediction=2,
         num_channels=256,
         reduced_channels_reward=128,
         reduced_channels_value=1,

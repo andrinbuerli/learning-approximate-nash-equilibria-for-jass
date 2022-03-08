@@ -112,17 +112,27 @@ class ReplayBufferFromFolder:
 
         logging.info(f"update done, added {self.size_of_last_update} episodes ")
 
-    def _sample_trajectory(self, episode):
+    def _sample_trajectory(self, episode, i=None):
         states, actions, rewards, probs, outcomes = episode
         episode_length = 37 if states[-1].sum() == 0 else 38
 
         assert np.allclose(probs[:episode_length].sum(axis=-1), 1)
 
-        i = np.random.choice(range(episode_length))
+        i = np.random.choice(range(episode_length)) if i is None else i
 
-        indices = [min(i+j, episode_length-1) for j in range(self.trajectory_length)]
-
+        indices = [i+j-1 for j in range(self.trajectory_length) if i+j-1 <= episode_length-1]
         trajectory = [x[indices] for x in episode]
+
+        if len(indices) < self.trajectory_length:
+            states, actions, rewards, probs, outcomes = trajectory
+            for _ in range(self.trajectory_length - len(indices)):
+                states = np.concatenate((states, np.zeros_like(states[-1])[np.newaxis]), axis=0)
+                actions = np.concatenate((actions, actions[-1][np.newaxis]), axis=0)
+                rewards = np.concatenate((rewards, np.zeros_like(rewards[-1])[np.newaxis]), axis=0)
+                probs = np.concatenate((probs, np.zeros_like(probs[-1])[np.newaxis]), axis=0)
+                outcomes = np.concatenate((outcomes, outcomes[-1][np.newaxis]), axis=0)
+
+            trajectory = states, actions, rewards, probs, outcomes
 
         return trajectory
 

@@ -33,8 +33,10 @@ class MuZeroTrainer:
             store_model_weights_after: int,
             policy_loss_weight: float = 1.0,
             value_loss_weight: float = 1.0,
-            reward_loss_weight: float = 1.0
+            reward_loss_weight: float = 1.0,
+            store_weights:bool = True
     ):
+        self.store_weights = store_weights
         self.reward_loss_weight = reward_loss_weight
         self.value_loss_weight = value_loss_weight
         self.policy_loss_weight = policy_loss_weight
@@ -156,8 +158,9 @@ class MuZeroTrainer:
 
 
     def save_latest_network(self, it: int, network_path: Path):
-        logging.info(f'Saving latest model for iteration {it} at {network_path}')
-        self.network.save(network_path)
+        if self.store_weights:
+            logging.info(f'Saving latest model for iteration {it} at {network_path}')
+            self.network.save(network_path)
 
     @tf.function
     def train_step(self, states, next_actions, rewards_target, policies_target, outcomes_target):
@@ -179,8 +182,7 @@ class MuZeroTrainer:
             min_reward = -(reward_support_size - 1) // 2
             outcome_support_size = tf.shape(value)[-1]
 
-            reward_target_distribution = scalar_to_support(rewards_target[:, 0], support_size=reward_support_size, min_value=min_reward)
-            reward_loss = self.cross_entropy(reward_target_distribution, reward)
+            reward_loss = 0 # zero reward predicted for initial inference
 
             value_target_distribution = scalar_to_support(outcomes_target[:, 0], support_size=outcome_support_size, min_value=0)
             value_loss = self.cross_entropy(value_target_distribution, value)
@@ -213,7 +215,8 @@ class MuZeroTrainer:
                                                               min_value=0)
                 value_loss += self.cross_entropy(value_target_distribution, value)
 
-                policy_ce = self.cross_entropy(policies_target[:, i + 1], policy_estimate)
+                post_terminal_states = tf.cast(tf.reduce_sum(policies_target[:, i + 1], axis=-1) == 0, tf.float32)
+                policy_ce = self.cross_entropy(policies_target[:, i + 1], policy_estimate) * (1 - post_terminal_states)
                 policy_loss += policy_ce
 
                 # ---------------Logging --------------- #

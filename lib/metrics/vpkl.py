@@ -44,7 +44,7 @@ def _calculate_batched_vpkl_(network: AbstractNetwork, iterator, n_steps_ahead, 
 
     batch_size = x.shape[0]
     trajectory_length = 37
-    position = np.random.choice(range(trajectory_length))
+    position = np.random.choice(range(trajectory_length - n_steps_ahead))
     positions = np.array(list(zip(range(batch_size), np.repeat(position, batch_size))))
 
     initial_states = tf.gather_nd(x, positions)

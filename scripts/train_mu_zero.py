@@ -51,6 +51,8 @@ if __name__=="__main__":
     else:
         network.save(network_path)
 
+    network.summary()
+
     replay_bufer = ReplayBufferFromFolder(
         max_buffer_size=worker_config.optimization.max_buffer_size,
         batch_size=worker_config.optimization.batch_size,

@@ -92,6 +92,7 @@ class MuZeroResidualNetwork(AbstractNetwork):
         # Scale encoded state between [0, 1] (See appendix paper Training)
         # calculate extremas over the spatial dimensions for each channel
         next_encoded_state_normalized = self._scale_encoded_state(next_encoded_state)
+
         return next_encoded_state_normalized, reward
 
     def initial_inference(self, observation):

@@ -186,9 +186,13 @@ class MuZeroTrainer:
             reward_loss = tf.zeros((batch_size, 4), dtype=tf.float32) # zero reward predicted for initial inference
 
             value_target_distribution = scalar_to_support(outcomes_target[:, 0], support_size=outcome_support_size, min_value=0)
-            value_loss = self.cross_entropy(value_target_distribution, value)
+            value_ce = self.cross_entropy(value_target_distribution, value)
+            # Scale gradient by the number of unroll steps (See paper appendix Training)
+            value_loss = self.scale_gradient(factor=1/trajectory_length)(value_ce)
 
-            policy_loss = self.cross_entropy(policies_target[:, 0], policy_estimate)
+            policy_ce = self.cross_entropy(policies_target[:, 0], policy_estimate)
+            # Scale gradient by the number of unroll steps (See paper appendix Training)
+            policy_loss = self.scale_gradient(factor=1/trajectory_length)(policy_ce)
 
             # ---------------Logging --------------- #
             policy_target = tf.cast(self.clip_probability_dist(policies_target[:, 0]), tf.float32)
@@ -208,17 +212,25 @@ class MuZeroTrainer:
                 next_action = tf.reshape(next_actions[:, i], [-1, 1])
                 value, reward, policy_estimate, encoded_states = self.network.recurrent_inference(encoded_states, next_action)
 
+                # Scale the gradient at the start of the dynamics function (See paper appendix Training)
+                encoded_states = self.scale_gradient(factor=1/2)(encoded_states)
+
                 reward_target_distribution = scalar_to_support(rewards_target[:, i+1], support_size=reward_support_size,
                                                                min_value=min_reward)
-                reward_loss += self.cross_entropy(reward_target_distribution, reward)
+                reward_ce = self.cross_entropy(reward_target_distribution, reward)
+                # Scale gradient by the number of unroll steps (See paper appendix Training)
+                reward_loss += self.scale_gradient(factor=1/trajectory_length)(reward_ce)
 
                 value_target_distribution = scalar_to_support(outcomes_target[:, i+1], support_size=outcome_support_size,
                                                               min_value=0)
-                value_loss += self.cross_entropy(value_target_distribution, value)
+                value_ce = self.cross_entropy(value_target_distribution, value)
+                # Scale gradient by the number of unroll steps (See paper appendix Training)
+                value_loss += self.scale_gradient(factor=1/trajectory_length)(value_ce)
 
                 post_terminal_states = tf.cast(tf.reduce_sum(policies_target[:, i + 1], axis=-1) == 0, tf.float32)
                 policy_ce = self.cross_entropy(policies_target[:, i + 1], policy_estimate) * (1 - post_terminal_states)
-                policy_loss += policy_ce
+                # Scale gradient by the number of unroll steps (See paper appendix Training)
+                policy_loss += self.scale_gradient(factor=1/trajectory_length)(policy_ce)
 
                 # ---------------Logging --------------- #
                 policy_target = tf.cast(self.clip_probability_dist(policies_target[:,  i + 1]), tf.float32)
@@ -265,6 +277,15 @@ class MuZeroTrainer:
         cross_entropy = -tf.reduce_sum(target * tf.math.log(estimate), axis=-1)
 
         return cross_entropy
+
+    @staticmethod
+    def scale_gradient(factor):
+        @tf.custom_gradient
+        def f(x):
+            def grad(upstream):
+                return upstream * tf.cast(factor, tf.float32)
+            return  x, grad
+        return f
 
     @staticmethod
     def clip_probability_dist(dist, eps=1e-07):

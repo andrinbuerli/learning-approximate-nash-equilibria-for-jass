@@ -193,7 +193,7 @@ class RepresentationNetwork(tf.keras.Model):
 
         x = self.conv(x, training=training)
         x = self.bn(x, training=training)
-        x = tf.nn.relu(x)
+        x = tf.nn.tanh(x)
 
         for block in self.resblocks:
             x = block(x, training=training)
@@ -236,7 +236,7 @@ class DynamicsNetwork(tf.keras.Model):
 
         x = self.conv(x, training=training)
         x = self.bn(x, training=training)
-        x = tf.nn.relu(x)
+        x = tf.nn.tanh(x)
         for block in self.resblocks:
             x = block(x, training=training)
         state = x
@@ -318,11 +318,11 @@ class ResidualBlock(tf.keras.Model):
     def call(self, x, training=None):
         out = self.conv1(x, training=training)
         out = self.bn1(out, training=training)
-        out = tf.nn.relu(out)
+        out = tf.nn.tanh(out)
         out = self.conv2(out, training=training)
         out = self.bn2(out, training=training)
         out += x
-        out = tf.nn.relu(out)
+        out = tf.nn.tanh(out)
         return out
 
 
@@ -331,7 +331,7 @@ def mlp(
     layer_sizes,
     output_size,
     output_activation=layers.Activation('softmax'),
-    activation=layers.Activation('relu'),
+    activation=layers.Activation('tanh'),
 ):
     sizes = layer_sizes + [output_size]
     mlp_layers = [layers.Input(shape=(input_size,))]

@@ -28,8 +28,10 @@ class LatentNodeSelectionPolicy:
             discount: float,
             dirichlet_eps: float = 0.25,
             dirichlet_alpha: float = 0.3,
+            mdp_value: bool = False,
             synchronized: bool = False,
             debug: bool = False):
+        self.mdp_value = mdp_value
         self.synchronized = synchronized
         self.discount = discount
         self.c_2 = c_2
@@ -100,12 +102,13 @@ class LatentNodeSelectionPolicy:
 
         if child.visits > 0:
             assert len(child.reward.shape) == 1, f'shape: {child.reward.shape}'
-            exploitation_term = stats.normalize(
-                child.reward[child.player] + self.discount * child.exploitation_term)
+            exploitation_term = (child.reward[child.player] + self.discount * child.exploitation_term) \
+                if self.mdp_value else child.exploitation_term
+            exploitation_term_normed = stats.normalize(exploitation_term)
         else:
-            exploitation_term = 0
+            exploitation_term_normed = 0
 
-        return exploitation_term + exploration_term
+        return exploitation_term_normed + exploration_term
 
     def _expand_node(self, node):
         node.value, node.reward, node.prior = \

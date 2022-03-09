@@ -24,7 +24,7 @@ def _play_single_game_(i, agent: CppAgent, opponent: CppAgent):
 class APAO(BaseAsyncMetric):
 
     def get_params(self, thread_nr: int, network: AbstractNetwork, init_vars=None) -> []:
-        return thread_nr, get_agent(self.worker_config, network), get_opponent(self.opponent_name)
+        return thread_nr, get_agent(self.worker_config, network, greedy=True), get_opponent(self.opponent_name)
 
     def __init__(self, opponent_name: str, worker_config: WorkerConfig, network_path: str, parallel_threads: int):
         self.opponent_name = opponent_name

@@ -17,8 +17,8 @@ class ReplayBufferFromFolder:
             game_data_folder: Path,
             max_updates=20,
             data_file_ending="jass-data.pkl",
-            cache_path=None,
-            clean_up_files=True):
+            cache_path: Path = None,
+            clean_up_files = True):
         """
         Expects entries in queue with semantics
         (states, actions, rewards, probs, outcomes)
@@ -86,6 +86,10 @@ class ReplayBufferFromFolder:
 
     def save(self):
         save_path = self.cache_path / f"replay_buffer.pkl"
+
+        if save_path.exists():
+            save_path.rename(self.cache_path / f"replay_buffer-old.pkl")
+
         with open(save_path, "wb") as f:
             pickle.dump(self.sum_tree, f)
             logging.info(f"saved replay buffer to {save_path}")

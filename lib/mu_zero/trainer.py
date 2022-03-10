@@ -187,7 +187,6 @@ class MuZeroTrainer:
             value, reward, policy_estimate, encoded_states = self.network.initial_inference(initial_states)
 
             reward_support_size = tf.shape(reward)[-1]
-            min_reward = -(reward_support_size - 1) // 2
             outcome_support_size = tf.shape(value)[-1]
 
             reward_loss = tf.zeros((batch_size, 4), dtype=tf.float32) # zero reward predicted for initial inference
@@ -223,7 +222,7 @@ class MuZeroTrainer:
                 encoded_states = self.scale_gradient(factor=1/2)(encoded_states)
 
                 reward_target_distribution = scalar_to_support(rewards_target[:, i+1], support_size=reward_support_size,
-                                                               min_value=min_reward)
+                                                               min_value=0)
                 reward_ce = self.cross_entropy(reward_target_distribution, reward)
                 # Scale gradient by the number of unroll steps (See paper appendix Training)
                 reward_loss += self.scale_gradient(factor=1/trajectory_length)(reward_ce)
@@ -248,7 +247,7 @@ class MuZeroTrainer:
 
                 expected_value = support_to_scalar_per_player(value, min_value=0, nr_players=4)
                 absolute_value_errors = absolute_value_errors.write(i+1, tf.reduce_mean(tf.abs(expected_value - tf.cast(outcomes_target[:, i+1], tf.float32)), name="val_mae"))
-                expected_reward = support_to_scalar_per_player(reward, min_value=min_reward, nr_players=4)
+                expected_reward = support_to_scalar_per_player(reward, min_value=0, nr_players=4)
                 absolute_reward_errors = absolute_reward_errors.write(i+1, tf.reduce_mean(tf.abs(expected_reward - tf.cast(rewards_target[:, i+1], tf.float32)), name="reard_mae"))
                 # ---------------Logging --------------- #
 

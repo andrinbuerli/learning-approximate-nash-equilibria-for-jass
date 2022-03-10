@@ -63,6 +63,8 @@ if __name__=="__main__":
         clean_up_files=True,
         cache_path=data_path)
 
+    replay_bufer.restore()
+
     manager = MetricsManager(
         APAO("dmcts", worker_config, str(network_path), parallel_threads=4),
         APAO("dpolicy", worker_config, str(network_path), parallel_threads=4),

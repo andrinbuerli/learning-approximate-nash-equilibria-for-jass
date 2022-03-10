@@ -34,7 +34,6 @@ class MuZeroResidualNetwork(AbstractNetwork):
         self.num_channels = num_channels
         self.observation_shape = observation_shape
         self.action_space_size = action_space_size
-        self.full_support_size = 2 * support_size + 1
         self.support_size = support_size + 1
         block_output_size_reward = reduced_channels_reward * observation_shape[0] * observation_shape[1]
 
@@ -52,7 +51,7 @@ class MuZeroResidualNetwork(AbstractNetwork):
                 num_channels,
                 reduced_channels_reward,
                 fc_reward_layers,
-                self.full_support_size,
+                self.support_size,
                 block_output_size_reward,
             )
 
@@ -165,7 +164,7 @@ TOTAL: {sum([representation_params, dynamics_params, prediction_params]):,} trai
         assert encoded_state.shape == (1, self.observation_shape[0], self.observation_shape[1], self.num_channels)
         encoded_next_state, reward = self.dynamics(encoded_state, action=np.array([[1]]))
         assert encoded_next_state.shape == (1, self.observation_shape[0], self.observation_shape[1], self.num_channels)
-        assert reward.shape == (1, self.players, self.full_support_size)
+        assert reward.shape == (1, self.players, self.support_size)
         policy, value = self.prediction(encoded_next_state)
         assert policy.shape == (1, self.action_space_size)
         assert value.shape == (1, self.players, self.support_size)

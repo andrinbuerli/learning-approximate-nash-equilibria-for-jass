@@ -30,7 +30,7 @@
   "policy_loss_weight": 1.0,
   "learning_rate": 0.0001,
   "max_buffer_size": 40000,
-  "min_buffer_size": 20000,
+  "min_buffer_size": 10000,
   "port": 8080,
   "store_model_weights_after": 10,
   "trajectory_length": 5,

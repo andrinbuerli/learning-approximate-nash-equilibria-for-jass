@@ -18,11 +18,7 @@ def test_fit_eager():
 
     config = get_test_config()
 
-    #base_path = Path("/app/results/1646570911")
-    #config.load_from_json(base_path / "worker_config.json")
-
     network = get_network(config)
-    #network.load(base_path / "latest_network.pd")
 
 
     replay_bufer = ReplayBufferFromFolder(

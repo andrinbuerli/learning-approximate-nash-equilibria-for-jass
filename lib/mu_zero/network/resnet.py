@@ -104,7 +104,7 @@ class MuZeroResidualNetwork(AbstractNetwork):
         policy, value = self.prediction(encoded_state)
         # reward equal to 0 for consistency
         batch_size = tf.shape(observation)[0]
-        reward = tf.tile(tf.one_hot(self.support_size - 1, depth=self.full_support_size)[None, None], [batch_size, self.players, 1])
+        reward = tf.tile(tf.one_hot(0, depth=self.support_size)[None, None], [batch_size, self.players, 1])
         return (
             value,
             reward,

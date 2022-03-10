@@ -9,7 +9,7 @@ def test_shapes():
     testee = MuZeroResidualNetwork(
         observation_shape=(4, 9, 45),
         action_space_size=43,
-                num_blocks_representation=2,
+        num_blocks_representation=2,
         num_blocks_dynamics=2,
         num_blocks_prediction=2,
         num_channels=256,
@@ -28,7 +28,7 @@ def test_shapes():
 
     encoded_next_state, reward = testee.dynamics(encoded_state, action=np.array([[1]]))
     assert encoded_next_state.shape == (1, 4, 9, 256)
-    assert reward.shape == (1, 4, 201)
+    assert reward.shape == (1, 4, 101)
 
     policy, value = testee.prediction(encoded_next_state)
     assert policy.shape == (1, 43)
@@ -39,7 +39,7 @@ def test_summary():
     testee = MuZeroResidualNetwork(
         observation_shape=(4, 9, 43),
         action_space_size=42,
-                num_blocks_representation=2,
+        num_blocks_representation=2,
         num_blocks_dynamics=2,
         num_blocks_prediction=2,
         num_channels=256,
@@ -63,7 +63,7 @@ def test_get_weights():
     testee = MuZeroResidualNetwork(
         observation_shape=(4, 9, 43),
         action_space_size=42,
-                num_blocks_representation=2,
+        num_blocks_representation=2,
         num_blocks_dynamics=2,
         num_blocks_prediction=2,
         num_channels=256,
@@ -86,7 +86,7 @@ def test_set_weights():
     testee = MuZeroResidualNetwork(
         observation_shape=(4, 9, 43),
         action_space_size=42,
-                num_blocks_representation=2,
+        num_blocks_representation=2,
         num_blocks_dynamics=2,
         num_blocks_prediction=2,
         num_channels=256,
@@ -113,7 +113,7 @@ def test_save_and_load():
     testee = MuZeroResidualNetwork(
         observation_shape=(4, 9, 43),
         action_space_size=42,
-                num_blocks_representation=2,
+        num_blocks_representation=2,
         num_blocks_dynamics=2,
         num_blocks_prediction=2,
         num_channels=256,

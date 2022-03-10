@@ -14,7 +14,7 @@ def test_buffer_size():
         clean_up_files=False
     )
 
-    assert testee.buffer_size == 4
+    assert testee.buffer_size == 36
 
 
 def test_batch_size():

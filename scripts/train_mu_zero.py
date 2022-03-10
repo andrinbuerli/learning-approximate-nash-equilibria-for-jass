@@ -2,6 +2,7 @@ import argparse
 import logging
 import sys
 from pathlib import Path
+import tensorflow as tf
 
 from jass.features.labels_action_full import LabelSetActionFull
 
@@ -22,6 +23,7 @@ from lib.mu_zero.trainer import MuZeroTrainer
 
 logging.getLogger("requests").setLevel(logging.WARNING)
 logging.getLogger("urllib3").setLevel(logging.WARNING)
+tf.get_logger().setLevel(logging.ERROR)
 logging.basicConfig(
     level=logging.INFO,
     stream=sys.stdout,
@@ -58,7 +60,8 @@ if __name__=="__main__":
         batch_size=worker_config.optimization.batch_size,
         trajectory_length=worker_config.optimization.trajectory_length,
         game_data_folder=data_path / "game_data",
-        clean_up_files=True)
+        clean_up_files=True,
+        cache_path=data_path)
 
     manager = MetricsManager(
         APAO("dmcts", worker_config, str(network_path), parallel_threads=4),
@@ -123,6 +126,7 @@ if __name__=="__main__":
         min_buffer_size=worker_config.optimization.min_buffer_size,
         updates_per_step=worker_config.optimization.updates_per_step,
         store_model_weights_after=worker_config.optimization.store_model_weights_after,
+        store_buffer=worker_config.optimization.store_buffer
     )
 
     connector = WorkerConnector(

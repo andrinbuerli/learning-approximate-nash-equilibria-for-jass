@@ -34,8 +34,10 @@ class MuZeroTrainer:
             policy_loss_weight: float = 1.0,
             value_loss_weight: float = 1.0,
             reward_loss_weight: float = 1.0,
-            store_weights:bool = True
+            store_weights:bool = True,
+            store_buffer:bool = False
     ):
+        self.store_buffer = store_buffer
         self.store_weights = store_weights
         self.reward_loss_weight = reward_loss_weight
         self.value_loss_weight = value_loss_weight
@@ -62,6 +64,9 @@ class MuZeroTrainer:
             logging.info(f"waiting for buffer to fill up ({self.replay_buffer.buffer_size} / {self.min_buffer_size})")
             time.sleep(5)
 
+            if self.store_buffer:
+                self.replay_buffer.save()
+
         size_of_last_update_cumsum = 0
         for it in range(iterations):
             start = time.time()
@@ -69,7 +74,6 @@ class MuZeroTrainer:
             size_of_last_update = self.replay_buffer.size_of_last_update
             size_of_last_update_cumsum += size_of_last_update
             logging.info(f"Iteration {it}, Buffer size: {buffer_size}")
-
 
             batches = self.replay_buffer.sample_from_buffer(nr_of_batches=self.updates_per_step)
 
@@ -80,6 +84,9 @@ class MuZeroTrainer:
             if (it % self.store_model_weights_after) == 0:
                 logging.info(f'Saving checkpoint for iteration {it} at {network_path}')
                 self.save_latest_network(it, network_path)
+
+                if self.store_buffer:
+                    self.replay_buffer.save()
 
             custom_metrics = self.metrics_manager.get_latest_metrics_state()
 

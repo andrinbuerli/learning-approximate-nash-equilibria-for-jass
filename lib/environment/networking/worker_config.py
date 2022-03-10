@@ -76,6 +76,7 @@ class OptimizationConfig(BaseConfig):
         self.batch_size = 128
         self.trajectory_length = 5
         self.iterations = 5
+        self.store_buffer = False
         self.data_folder = ""
 
 class LogConfig(BaseConfig):

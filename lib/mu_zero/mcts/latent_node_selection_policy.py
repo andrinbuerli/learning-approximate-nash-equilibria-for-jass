@@ -97,7 +97,7 @@ class LatentNodeSelectionPolicy:
     def _puct(self, child: Node, stats: MinMaxStats):
         P_s_a = child.parent.prior[child.action]
         prior_weight = (np.sqrt(child.avail) / (1 + child.visits)) * (
-                    self.c_1 + np.log((child.avail + self.c_1 + 1) / self.c_1))
+                    self.c_1 + np.log((child.avail + self.c_2 + 1) / self.c_2))
         exploration_term = P_s_a * prior_weight
 
         if child.visits > 0:

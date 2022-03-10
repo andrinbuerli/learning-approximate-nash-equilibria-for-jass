@@ -27,7 +27,7 @@ def test_fit_eager():
 
     replay_bufer = ReplayBufferFromFolder(
         max_buffer_size=1000,
-        batch_size=32,
+        batch_size=128,
         trajectory_length=5,
         game_data_folder=Path(__file__).parent.parent / "resources",
         clean_up_files=False)

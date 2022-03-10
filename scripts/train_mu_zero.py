@@ -41,7 +41,7 @@ if __name__=="__main__":
     worker_config.load_from_json(args.settings)
 
     data_path = Path(worker_config.optimization.data_folder) / f"{worker_config.timestamp}"
-    data_path.mkdir(parents=True, exist_ok=False)
+    data_path.mkdir(parents=True, exist_ok=True)
     worker_config.save_to_json(data_path / "worker_config.json")
 
     worker_config.network.feature_extractor = get_features(worker_config.network.feature_extractor)
@@ -49,7 +49,11 @@ if __name__=="__main__":
     network = get_network(worker_config)
     network_path = data_path / "latest_network.pd"
     if network_path.exists():
-        network.load(network_path)
+        try:
+            network.load(network_path)
+        except Exception as e:
+            logging.warning(f"could not restore network: {e}")
+            network.save(network_path)
     else:
         network.save(network_path)
 

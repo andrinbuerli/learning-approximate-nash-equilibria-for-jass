@@ -134,3 +134,5 @@ class WorkerConfig(BaseConfig):
             self.agent.__dict__ = {**(self.agent.__dict__), **loaded['agent']}
         if 'optimization' in loaded:
             self.optimization.__dict__ = {**(self.optimization.__dict__), **loaded['optimization']}
+        if 'timestamp' in loaded:
+            self.timestamp = loaded['timestamp']

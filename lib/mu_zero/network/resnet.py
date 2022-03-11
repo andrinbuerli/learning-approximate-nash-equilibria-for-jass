@@ -1,3 +1,4 @@
+import logging
 import pickle
 from pathlib import Path
 
@@ -127,12 +128,16 @@ class MuZeroResidualNetwork(AbstractNetwork):
         with open(path / "weights.pkl", "wb") as f:
             pickle.dump(self.get_weight_list(), f)
 
+        logging.info(f"saved network at {path}")
+
     def load(self, path):
         path = Path(path)
         assert path.exists()
         self.representation_network = tf.keras.models.load_model(path / "representation.pd")
         self.dynamics_network = tf.keras.models.load_model(path / "dynamics.pd")
         self.prediction_network = tf.keras.models.load_model(path / "prediction.pd")
+
+        logging.info(f"loaded network from {path}")
 
     def summary(self):
         representation_params = sum([tf.keras.backend.count_params(p) for p in self.representation_network.trainable_weights])

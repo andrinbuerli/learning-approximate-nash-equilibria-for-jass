@@ -10,7 +10,7 @@
   "dirichlet_alpha": 0.3,
   "dirichlet_eps": 0.25,
   "discount": 1,
-  "iterations": 20,
+  "iterations": 50,
   "mdp_value": false,
   "n_search_threads": 4,
   "port": 9999,

@@ -24,7 +24,7 @@ def _play_single_game_(i, agent):
         nr_games_to_play=1, cheating_mode=False, check_move_validity=check_move_validity,
         store_trajectory=True, feature_extractor=state_features, store_trajectory_inc_raw_game_state=False)
     arena.set_players(agent, agent, agent, agent)  # self-play setting!
-    arena.play_game(dealer=i % 4)
+    arena.play_game(dealer=np.random.choice([0, 1, 2, 3]))
 
     trump_probs, card_probs = agent.get_stored_probs()
 

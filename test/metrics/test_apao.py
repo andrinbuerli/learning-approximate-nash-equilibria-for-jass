@@ -8,7 +8,8 @@ from test.util import get_test_config
 def test_cpp_mcts():
     config = get_test_config()
 
-    config.agent.iterations = 1
+    config.agent.iterations = 20
+    config.agent.n_search_threads = 1
 
     testee = APAO(
         opponent_name="random",

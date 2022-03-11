@@ -24,6 +24,7 @@ def test_prob_dist():
     )
 
     obs = jasscpp.GameObservationCpp()
+    obs.player = 1
 
     testee = AgentMuZeroMCTS(
         network=network,
@@ -55,6 +56,7 @@ def test_play_card():
     )
 
     obs = jasscpp.GameObservationCpp()
+    obs.player = 1
 
     testee = AgentMuZeroMCTS(
         network=network,
@@ -86,6 +88,7 @@ def test_play_trump():
     )
 
     obs = jasscpp.GameObservationCpp()
+    obs.player = 1
 
     testee = AgentMuZeroMCTS(
         network=network,

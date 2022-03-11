@@ -15,7 +15,9 @@ def test_get_mu_zero_agent():
 
     agent = get_agent(config, network=get_network(config), greedy=True)
 
-    assert 0 <= agent.action_trump(jasscpp.GameObservationCpp()) <= 6
+    obs = jasscpp.GameObservationCpp()
+    obs.player = 1
+    assert 0 <= agent.action_trump(obs) <= 6
 
 def test_get_opponent_dmcts():
     agent = get_opponent(type="dmcts")

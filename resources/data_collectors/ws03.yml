@@ -8,7 +8,7 @@ services:
         command: >
             bash -c "cd scripts && python collect_n_send_game_data.py
             --host http://10.176.129.55
-            --max_parallel_processes 7
+            --max_parallel_processes 10
             --min_states_to_send 1"
         deploy:
           resources:
@@ -28,7 +28,7 @@ services:
         command: >
             bash -c "cd scripts && python collect_n_send_game_data.py
             --host http://10.176.129.55
-            --max_parallel_processes 7
+            --max_parallel_processes 10
             --min_states_to_send 1"
         deploy:
           resources:

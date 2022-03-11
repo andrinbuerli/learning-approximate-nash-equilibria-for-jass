@@ -8,6 +8,7 @@ import tensorflow as tf
 import tensorflow_addons as tfa
 import wandb
 
+from lib.jass.features.features_conv_cpp import FeaturesSetCppConv
 from lib.log.base_logger import BaseLogger
 from lib.metrics.metrics_manager import MetricsManager
 from lib.mu_zero.network.network_base import AbstractNetwork
@@ -56,6 +57,14 @@ class MuZeroTrainer:
             beta_1=adam_beta1,
             beta_2=adam_beta2,
             epsilon=adam_epsilon)
+
+        channel_mapping = {k: v for k, v in dict(vars(FeaturesSetCppConv)).items() if isinstance(v, int) and v < 100}
+        self.feature_names = {}
+        for c in range(FeaturesSetCppConv.FEATURE_SHAPE[-1]):
+            for k, v in channel_mapping.items():
+                if v > c:
+                    break
+                self.feature_names[c] = k
 
     def fit(self, iterations: int, network_path: Path):
         logging.info("Starting alpha zero training")
@@ -132,7 +141,7 @@ class MuZeroTrainer:
     def train(self, batches):
         training_infos = list()
         for states, actions, rewards, probs, outcomes in batches:
-            info, absolute_reward_errors, absolute_value_errors, policy_kls, policy_ces = self.train_step(
+            info, absolute_reward_errors, absolute_value_errors, policy_kls, policy_ces, ft = self.train_step(
                 tf.convert_to_tensor(states),
                 tf.convert_to_tensor(actions),
                 tf.convert_to_tensor(rewards),
@@ -155,8 +164,12 @@ class MuZeroTrainer:
                 f"PCE/policy_ce_{i}_steps_ahead": x for i, x in enumerate(policy_ces)
             }
 
+            train_input_dict = {
+                f"train_input/channel_{c}_{self.feature_names[c]}": ft[c] for c in range(FeaturesSetCppConv.FEATURE_SHAPE[-1])
+            }
+
             training_infos.append({
-                **info, **reward_error, **value_error, **policy_kls, **policy_ces
+                **info, **reward_error, **value_error, **policy_kls, **policy_ces, **train_input_dict
             })
 
             del info, absolute_reward_errors, absolute_value_errors, policy_kls, policy_ces
@@ -266,6 +279,8 @@ class MuZeroTrainer:
         # inspired by https://www.tensorflow.org/api_docs/python/tf/nn/l2_loss
         squared_weights_sum = tf.reduce_sum([tf.reduce_sum(x ** 2) for x in self.network.trainable_weights])
 
+        mean_features = tf.reduce_mean(tf.reshape(initial_states, (-1,) + FeaturesSetCppConv.FEATURE_SHAPE), axis=(0, 1, 2))
+
         return {
             "training/reward_loss": tf.reduce_mean(reward_loss),
             "training/value_loss": tf.reduce_mean(value_loss),
@@ -273,7 +288,7 @@ class MuZeroTrainer:
             "training/squared_weights_sum": squared_weights_sum,
             "training/loss": loss,
             **gradient_hists
-        }, absolute_reward_errors.stack(), absolute_value_errors.stack(), policy_kls.stack(), policy_ces.stack()
+        }, absolute_reward_errors.stack(), absolute_value_errors.stack(), policy_kls.stack(), policy_ces.stack(), mean_features
 
 
     def cross_entropy(self, target, estimate):

@@ -41,7 +41,7 @@ if __name__ == "__main__":
     parser.add_argument(f'--host', default="http://192.168.1.107")
     parser.add_argument(f'--port', default=8080)
     parser.add_argument(f'--max_parallel_processes', default=parallel_processes)
-    parser.add_argument(f'--max_parallel_threads', default=2)
+    parser.add_argument(f'--max_parallel_threads', default=4)
     parser.add_argument(f'--min_states_to_send', default=-1)
     parser.add_argument(f'--max_states', default=int(1e5))
     parser.add_argument(f'--visible_gpu_index', default=0)

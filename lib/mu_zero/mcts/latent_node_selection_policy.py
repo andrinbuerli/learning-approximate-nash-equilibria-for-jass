@@ -7,7 +7,8 @@ from time import sleep
 
 import jasscpp
 import numpy as np
-from jass.game.const import next_player, TRUMP_FULL_OFFSET, TRUMP_FULL_P
+from jass.game.const import next_player, TRUMP_FULL_OFFSET, TRUMP_FULL_P, card_values
+from jass.game.rule_schieber import RuleSchieber
 from jasscpp import RuleSchieberCpp
 
 from lib.jass.features.features_set_cpp import FeaturesSetCpp
@@ -41,13 +42,13 @@ class LatentNodeSelectionPolicy:
         self.dirichlet_alpha = dirichlet_alpha * np.ones(43)
         self.dirichlet_eps = dirichlet_eps
         self.feature_extractor = feature_extractor
-        self.rule = RuleSchieberCpp()
+        self.rule = RuleSchieber()
 
         self.nr_played_cards_in_selected_node = []
 
         self.stats = None
 
-    def tree_policy(self, node: Node, stats: MinMaxStats, virtual_loss=0) -> Node:
+    def tree_policy(self, observation: jasscpp.GameObservationCpp, node: Node, stats: MinMaxStats, virtual_loss=0) -> Node:
         while True:
             with node.lock: # ensures that node and children not currently locked, i.e. being expanded
                 node.visits += virtual_loss
@@ -73,7 +74,7 @@ class LatentNodeSelectionPolicy:
                         child.visits += virtual_loss
                         child.value, child.reward, child.prior, child.hidden_state = \
                             self.network.recurrent_inference(node.hidden_state, np.array([[child.action]]))
-                        self._expand_node(child)
+                        self._expand_node(child, observation)
                 break
 
             node = child
@@ -84,10 +85,11 @@ class LatentNodeSelectionPolicy:
         if node.is_root():
             rule = jasscpp.RuleSchieberCpp()
             node.valid_actions = rule.get_full_valid_actions_from_obs(observation)
+            assert (node.valid_actions >= 0).all(), 'Error in valid actions'
 
             features = self.feature_extractor.convert_to_features(observation, rule)[None]
             node.value, node.reward, node.prior, node.hidden_state = self.network.initial_inference(features)
-            self._expand_node(node)
+            self._expand_node(node, root_obs=observation)
 
             valid_idxs = np.where(node.valid_actions)[0]
             eta = np.random.dirichlet(self.dirichlet_alpha[:len(valid_idxs)])
@@ -110,7 +112,7 @@ class LatentNodeSelectionPolicy:
 
         return exploitation_term_normed + exploration_term
 
-    def _expand_node(self, node):
+    def _expand_node(self, node: Node, root_obs: jasscpp.GameObservationCpp):
         node.value, node.reward, node.prior = \
             [x.numpy().squeeze() for x in [node.value, node.reward, node.prior]]
 
@@ -121,12 +123,52 @@ class LatentNodeSelectionPolicy:
         for action in node.missing_actions(node.valid_actions):
             # add one child edge
             if action < TRUMP_FULL_OFFSET:
-                next_player_in_game = next_player[node.player]
-            elif action == TRUMP_FULL_P:  # PUSH
-                next_player_in_game = (node.player + 2) % 4
-            else:  # TRUMP
-                next_player_in_game = node.player
+                nr_played_cards = len(node.cards_played)
+                next_state_is_at_start_of_trick = (nr_played_cards + 1) % 4 == 0
+                if next_state_is_at_start_of_trick:
+                    next_player_in_game = self._get_start_trick_next_player(action, node, root_obs)
+                else:
+                    next_player_in_game = next_player[node.next_player]
 
-            node.add_child(
-                action=action,
-                next_player=next_player_in_game)
+                node.add_child(
+                    action=action,
+                    next_player=next_player_in_game,
+                    cards_played=list(node.cards_played + [action]))
+            else:
+                if action == TRUMP_FULL_P:  # PUSH
+                    next_player_in_game = (node.player + 2) % 4
+                else:  # TRUMP
+                    next_player_in_game = node.player
+                    root_obs.trump = action - 36
+
+                node.add_child(
+                    action=action,
+                    next_player=next_player_in_game)
+
+    def _get_start_trick_next_player(self, action, node, root_obs):
+        prev_actions = [action]
+        prev_values = [card_values[root_obs.trump, action]]
+        players = [node.next_player]
+        parent = node
+
+        while parent.parent is not None and len(prev_actions) < 4:
+            prev_actions.append(parent.action)
+            prev_values.append(card_values[root_obs.trump, parent.action])
+            players.append(parent.player)
+            parent = parent.parent
+
+        num_cards = len(prev_actions)
+        current_trick = len(node.cards_played) // 4
+        for i in range(4 - num_cards):
+            j = 4 - 1 - num_cards - i
+            card = root_obs.tricks[current_trick][j]
+            prev_actions.append(card)
+            prev_values.append(card_values[root_obs.trump, card])
+            players.append((root_obs.trick_first_player[current_trick] - j) % 4)
+
+        assert sum(players) == sum([0, 1, 2, 3]) and len(players) == 4, "invalid previous players"
+        assert len(prev_actions) == 4 and len(prev_values) == 4, "invalid previous cards"
+
+        next_player = self.rule.calc_winner(np.array(prev_actions[::-1]), players[-1], trump=root_obs.trump)
+        assert 0 <= next_player <= 3, "invalid next player"
+        return next_player

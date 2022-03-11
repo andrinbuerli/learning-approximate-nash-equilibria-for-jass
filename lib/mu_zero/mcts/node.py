@@ -12,7 +12,8 @@ class Node:
                  player: int or None,
                  next_player: int or None,
                  nr_players: int = 4,
-                 action_space_size: int = 43):
+                 action_space_size: int = 43,
+                 cards_played: [int] = []):
         """
         Args:
                 parent: parent of the node, or None if root node
@@ -56,10 +57,15 @@ class Node:
 
         self.reward = np.zeros(nr_players)
 
-        # only not all ones for root node
-        self.valid_actions = np.ones(action_space_size)
-
         self.lock = Lock()
+
+        self.cards_played = cards_played
+
+        self.valid_actions = np.ones(action_space_size)
+        if len(cards_played) > 0:
+            self.valid_actions[36:] = 0             # trump cannot be played anymore
+            if len(cards_played) < 36:
+                self.valid_actions[cards_played] = 0  # past cards cannot be played anymore, except after terminal state
 
     def is_root(self):
         return self.parent is None
@@ -69,10 +75,12 @@ class Node:
 
     def add_child(self,
                   action: int or None,
-                  next_player: int or None) -> 'Node':
+                  next_player: int or None,
+                  cards_played: [int] = []) -> 'Node':
         child = Node(parent=self, action=action,
                      player=self.next_player,
-                     next_player=next_player)
+                     next_player=next_player,
+                     cards_played=cards_played)
         self.children[action] = child
         return child
 

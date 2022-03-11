@@ -17,7 +17,8 @@ class ALPV_MCTS:
                  mdp_value: bool = False,
                  discount: float = 0.9,
                  n_search_threads: int = 4,
-                 virtual_loss: int = 10):
+                 virtual_loss: int = 10,
+                 store_trajectory_actions: bool = False):
         """
         Initialize the search tree.
         Args:
@@ -30,6 +31,8 @@ class ALPV_MCTS:
             virtual_loss: Virtual loss temporary added to nodes in search thread
         """
         #
+        self.store_trajectory_actions = store_trajectory_actions
+        self.trajectory_actions = []
         self.n_search_threads = n_search_threads
         self.virtual_loss = virtual_loss
         self.stats = stats
@@ -42,8 +45,9 @@ class ALPV_MCTS:
         self.reward_calc = reward_calc
 
         # initialize root node
+        cards_played = [x for x in observation.tricks.reshape(-1).tolist() if x >= 0]
         self.root = Node(parent=None, action=None, player=observation.player,
-                         next_player=observation.player)
+                         next_player=observation.player, cards_played=cards_played)
 
         self.node_selection.init_node(self.root, observation)
 
@@ -74,13 +78,17 @@ class ALPV_MCTS:
         """
 
         # select and possibly expand the tree using the tree policy
-        node = self.node_selection.tree_policy(self.root, virtual_loss=self.virtual_loss, stats=self.stats)
+        node = self.node_selection.tree_policy(node=self.root, observation=self.observation,virtual_loss=self.virtual_loss,
+                                               stats=self.stats)
 
         # evaluate the new node
         value = self.reward_calc.calculate_value(node)
 
+        actions = []
+
         # back propagate the rewards from the last node
         while True:
+            actions.append(node.action)
             with node.lock:
                 node.propagate(value, self.virtual_loss)
 
@@ -94,6 +102,9 @@ class ALPV_MCTS:
                 break
 
             node = node.parent
+
+        if self.store_trajectory_actions:
+            self.trajectory_actions.append(list(reversed(actions)))
 
     def get_result(self) -> (np.ndarray, np.ndarray):
         """

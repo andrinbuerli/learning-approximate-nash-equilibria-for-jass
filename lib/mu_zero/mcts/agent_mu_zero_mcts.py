@@ -52,20 +52,20 @@ class AgentMuZeroMCTS(RememberingAgent):
 
 
     def get_play_action_probs_and_value(self, obs: GameObservationCpp) -> np.array:
-            stats = MinMaxStats()
-            search = ALPV_MCTS(
-                observation=obs,
-                node_selection=self.tree_policy,
-                reward_calc=self.reward_calc_policy,
-                mdp_value=self.mdp_value,
-                stats=stats,
-                discount=self.discount,
-                virtual_loss=self.virtual_loss,
-                n_search_threads=self.n_search_threads
-            )
+        stats = MinMaxStats()
+        search = ALPV_MCTS(
+            observation=obs,
+            node_selection=self.tree_policy,
+            reward_calc=self.reward_calc_policy,
+            mdp_value=self.mdp_value,
+            stats=stats,
+            discount=self.discount,
+            virtual_loss=self.virtual_loss,
+            n_search_threads=self.n_search_threads
+        )
 
-            search.run_simulations_async(self.iterations)
+        search.run_simulations_async(self.iterations)
 
-            prob, q_value = search.get_result()
+        prob, q_value = search.get_result()
 
-            return prob
+        return prob

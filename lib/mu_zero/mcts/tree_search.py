@@ -46,7 +46,7 @@ class ALPV_MCTS:
 
         # initialize root node
         cards_played = [x for x in observation.tricks.reshape(-1).tolist() if x >= 0]
-        self.root = Node(parent=None, action=None, player=observation.player,
+        self.root = Node(parent=None, action=None, player=observation.player, trump=observation.trump,
                          next_player=observation.player, cards_played=cards_played)
 
         self.node_selection.init_node(self.root, observation)
@@ -78,7 +78,8 @@ class ALPV_MCTS:
         """
 
         # select and possibly expand the tree using the tree policy
-        node = self.node_selection.tree_policy(node=self.root, observation=self.observation,virtual_loss=self.virtual_loss,
+        node = self.node_selection.tree_policy(node=self.root, observation=self.observation,
+                                               virtual_loss=self.virtual_loss,
                                                stats=self.stats)
 
         # evaluate the new node

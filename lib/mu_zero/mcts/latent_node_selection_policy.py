@@ -135,25 +135,29 @@ class LatentNodeSelectionPolicy:
                     next_player=next_player_in_game,
                     cards_played=list(node.cards_played + [action]))
             else:
+                trump = -1
                 if action == TRUMP_FULL_P:  # PUSH
                     next_player_in_game = (node.player + 2) % 4
                 else:  # TRUMP
                     next_player_in_game = node.player
-                    root_obs.trump = action - 36
+                    trump = action - 36
 
                 node.add_child(
                     action=action,
-                    next_player=next_player_in_game)
+                    next_player=next_player_in_game,
+                    trump=trump)
 
     def _get_start_trick_next_player(self, action, node, root_obs):
+        assert node.trump > -1
+
         prev_actions = [action]
-        prev_values = [card_values[root_obs.trump, action]]
+        prev_values = [card_values[node.trump, action]]
         players = [node.next_player]
         parent = node
 
         while parent.parent is not None and len(prev_actions) < 4:
             prev_actions.append(parent.action)
-            prev_values.append(card_values[root_obs.trump, parent.action])
+            prev_values.append(card_values[node.trump, parent.action])
             players.append(parent.player)
             parent = parent.parent
 
@@ -163,12 +167,12 @@ class LatentNodeSelectionPolicy:
             j = 4 - 1 - num_cards - i
             card = root_obs.tricks[current_trick][j]
             prev_actions.append(card)
-            prev_values.append(card_values[root_obs.trump, card])
+            prev_values.append(card_values[node.trump, card])
             players.append((root_obs.trick_first_player[current_trick] - j) % 4)
 
         assert sum(players) == sum([0, 1, 2, 3]) and len(players) == 4, "invalid previous players"
         assert len(prev_actions) == 4 and len(prev_values) == 4, "invalid previous cards"
 
-        next_player = self.rule.calc_winner(np.array(prev_actions[::-1]), players[-1], trump=root_obs.trump)
+        next_player = self.rule.calc_winner(np.array(prev_actions[::-1]), players[-1], trump=node.trump)
         assert 0 <= next_player <= 3, "invalid next player"
         return next_player

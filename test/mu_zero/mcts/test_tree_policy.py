@@ -131,7 +131,7 @@ def test_get_next_player():
             prev_obs = observations[i-1]
             obs = observations[i]
             cards_played = [x for x in prev_obs.tricks.reshape(-1).tolist() if x >= 0]
-            node = Node(None, None, player=prev_obs.player, next_player=prev_obs.player, cards_played=cards_played)
+            node = Node(None, None, player=prev_obs.player, next_player=prev_obs.player, cards_played=cards_played, trump=prev_obs.trump)
             next_player = testee._get_start_trick_next_player(state.tricks.reshape(-1)[i - 1], node, prev_obs)
 
             assert next_player == obs.player

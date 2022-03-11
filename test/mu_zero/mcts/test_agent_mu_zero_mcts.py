@@ -93,9 +93,10 @@ def test_play_trump():
     testee = AgentMuZeroMCTS(
         network=network,
         feature_extractor=FeaturesSetCppConv(),
-        iterations=100
+        iterations=20
     )
 
-    action = testee.action_trump(obs)
+    for _ in range(5):
+        action = testee.action_trump(obs)
 
     assert action < 7

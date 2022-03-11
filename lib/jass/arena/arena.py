@@ -219,9 +219,8 @@ class Arena:
             self._logger.error('Illegal trump (' + str(trump_action) + ') selected')
             raise RuntimeError('Illegal trump (' + str(trump_action) + ') selected')
 
-        self.store_state(observation, trump_action)
-
         self._game.perform_action_trump(trump_action)
+        self.store_state(observation, trump_action)
         if trump_action == PUSH:
             # ask second player
             observation = self.get_agent_observation()

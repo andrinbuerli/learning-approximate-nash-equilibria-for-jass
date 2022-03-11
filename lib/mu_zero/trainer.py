@@ -279,7 +279,7 @@ class MuZeroTrainer:
         # inspired by https://www.tensorflow.org/api_docs/python/tf/nn/l2_loss
         squared_weights_sum = tf.reduce_sum([tf.reduce_sum(x ** 2) for x in self.network.trainable_weights])
 
-        mean_features = tf.reduce_mean(tf.reshape(initial_states, (-1,) + FeaturesSetCppConv.FEATURE_SHAPE), axis=(0, 1, 2))
+        mean_features = tf.reduce_mean(tf.reduce_sum(tf.reshape(initial_states, (-1,) + FeaturesSetCppConv.FEATURE_SHAPE), axis=(1, 2)), axis=0)
 
         return {
             "training/reward_loss": tf.reduce_mean(reward_loss),

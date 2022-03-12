@@ -68,13 +68,15 @@ class LatentNodeSelectionPolicy:
                 c.avail += 1
 
             not_expanded = child.prior is None
-            if not_expanded:
-                with node.lock:
-                    with child.lock:
-                        child.visits += virtual_loss
-                        child.value, child.reward, child.prior, child.hidden_state = \
-                            self.network.recurrent_inference(node.hidden_state, np.array([[child.action]]))
-                        self._expand_node(child, observation)
+            is_terminal_state = child.next_player == -1
+            if not_expanded or is_terminal_state:
+                if not_expanded:
+                    with node.lock:
+                        with child.lock:
+                            child.visits += virtual_loss
+                            child.value, child.reward, child.prior, child.hidden_state = \
+                                self.network.recurrent_inference(node.hidden_state, np.array([[child.action]]))
+                            self._expand_node(child, observation)
                 break
 
             node = child
@@ -103,14 +105,15 @@ class LatentNodeSelectionPolicy:
         exploration_term = P_s_a * prior_weight
 
         if child.visits > 0:
+            q = (child.value_sum[child.player] / child.visits)
             assert len(child.reward.shape) == 1, f'shape: {child.reward.shape}'
-            exploitation_term = (child.reward[child.player] + self.discount * child.exploitation_term) \
-                if self.mdp_value else child.exploitation_term
-            exploitation_term_normed = stats.normalize(exploitation_term)
+            q_value = (child.reward[child.player] + self.discount * q) \
+                if self.mdp_value else q
+            q_normed = stats.normalize(q_value)
         else:
-            exploitation_term_normed = 0
+            q_normed = 0
 
-        return exploitation_term_normed + exploration_term
+        return q_normed + exploration_term
 
     def _expand_node(self, node: Node, root_obs: jasscpp.GameObservationCpp):
         node.value, node.reward, node.prior = \
@@ -136,8 +139,10 @@ class LatentNodeSelectionPolicy:
                     cards_played=list(node.cards_played + [action]))
             else:
                 trump = -1
+                pushed = None
                 if action == TRUMP_FULL_P:  # PUSH
                     next_player_in_game = (node.player + 2) % 4
+                    pushed = True
                 else:  # TRUMP
                     next_player_in_game = node.player
                     trump = action - 36
@@ -145,7 +150,8 @@ class LatentNodeSelectionPolicy:
                 node.add_child(
                     action=action,
                     next_player=next_player_in_game,
-                    trump=trump)
+                    pushed=pushed,
+                    trump=trump) # mask push if played
 
     def _get_start_trick_next_player(self, action, node, root_obs):
         assert node.trump > -1

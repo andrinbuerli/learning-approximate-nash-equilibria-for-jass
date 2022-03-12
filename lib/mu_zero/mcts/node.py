@@ -14,6 +14,7 @@ class Node:
                  nr_players: int = 4,
                  action_space_size: int = 43,
                  cards_played: [int] = [],
+                 pushed: bool = False,
                  trump: int = -1):
         """
         Args:
@@ -61,16 +62,19 @@ class Node:
         self.lock = Lock()
 
         self.trump = trump
+        self.pushed = pushed
 
         self.cards_played = cards_played
 
         self.valid_actions = np.ones(action_space_size)
-        if len(cards_played) > 0:
+        if len(cards_played) > 0 or self.trump != -1:
             self.valid_actions[36:] = 0             # trump cannot be played anymore
             if len(cards_played) < 36:
                 self.valid_actions[cards_played] = 0  # past cards cannot be played anymore, except after terminal state
         elif self.trump == -1:
             self.valid_actions[:36] = 0  # cards can only be played after trump selection phase
+            if self.pushed:
+                self.valid_actions[-1] = 0
 
     def is_root(self):
         return self.parent is None
@@ -82,11 +86,13 @@ class Node:
                   action: int or None,
                   next_player: int or None,
                   cards_played: [int] = [],
+                  pushed: bool = None,
                   trump: int = -1) -> 'Node':
         child = Node(parent=self, action=action,
                      player=self.next_player,
-                     next_player=next_player,
+                     next_player=next_player if len(cards_played) < 36 else -1,
                      cards_played=cards_played,
+                     pushed=pushed if pushed is not None else self.pushed,
                      trump=trump if trump > -1 else self.trump)
         self.children[action] = child
         return child
@@ -117,8 +123,7 @@ class Node:
     def propagate(self, value, virtual_loss):
         self.visits += (1 - virtual_loss)
         self.value_sum += value
-        self.exploitation_term = self.value_sum[self.player] / self.visits
 
     def ucb(self, exploration: float) -> float:
-        return self.exploitation_term + \
+        return self.value_sum[self.player] / self.visits + \
                exploration * (math.sqrt(math.log(self.avail) / self.visits))

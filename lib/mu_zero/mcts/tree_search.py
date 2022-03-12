@@ -93,11 +93,12 @@ class ALPV_MCTS:
             with node.lock:
                 node.propagate(value, self.virtual_loss)
 
+            q = (node.value_sum[node.player] / node.visits)
             if self.mdp_value:
                 value = self.discount * value + node.reward
-                self.stats.update(node.exploitation_term * self.discount + node.reward[node.player])
+                self.stats.update(q * self.discount + node.reward[node.player])
             else:
-                self.stats.update(node.exploitation_term)
+                self.stats.update(q)
 
             if node.is_root():
                 break
@@ -118,10 +119,11 @@ class ALPV_MCTS:
 
         for action, node in self.root.children.items():
             prob[action] = node.visits
+            q = (node.value_sum[node.player] / node.visits)
             if self.mdp_value:
-                q_value[action] = node.exploitation_term * self.discount + node.reward[node.player]
+                q_value[action] = q * self.discount + node.reward[node.player]
             else:
-                q_value[action] = node.exploitation_term
+                q_value[action] = q
         prob /= np.sum(prob)
         return prob, q_value
 

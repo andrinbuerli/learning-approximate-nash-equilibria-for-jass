@@ -1,6 +1,5 @@
 import tensorflow as tf
 
-
 def support_to_scalar(distribution, min_value):
     """
     Transform a categorical representation to a scalar
@@ -26,18 +25,30 @@ def support_to_scalar_per_player(distribution, min_value, nr_players):
         support_to_scalar(tf.reshape(distribution, (-1, distribution.shape[-1])), min_value=min_value),
         (-1, nr_players))
 
-def scalar_to_support(scalar, support_size, min_value):
+def scalar_to_support(scalar_m, support_size, min_value):
     """
     Transform a scalar to a categorical representation
     Only discrete values are assumed
     """
 
-    assert len(scalar.shape) == 2, "scalar must be batched"
+    assert len(scalar_m.shape) == 2, "scalar must be batched"
 
-    tf.debugging.assert_integer(scalar)
+    tf.debugging.assert_integer(scalar_m)
 
-    scalar = tf.clip_by_value(tf.cast(scalar, tf.int32), clip_value_min=min_value, clip_value_max=min_value + support_size)
+    scalar_m = tf.clip_by_value(tf.cast(scalar_m, tf.int32), clip_value_min=min_value,
+                                clip_value_max=min_value + support_size)
+    scalar_l = tf.clip_by_value(tf.cast(scalar_m - 1, tf.int32), clip_value_min=min_value,
+                                clip_value_max=min_value + support_size)
+    scalar_h = tf.clip_by_value(tf.cast(scalar_m + 1, tf.int32), clip_value_min=min_value,
+                                clip_value_max=min_value + support_size)
 
-    distribution = tf.one_hot(scalar, depth=support_size)
+    distribution_m = tf.one_hot(scalar_m, depth=support_size)
+    distribution_l = tf.one_hot(scalar_l, depth=support_size)
+    distribution_h = tf.one_hot(scalar_h, depth=support_size)
+
+    # make support non-one hot!
+    shape = tf.shape(distribution_m)
+    rand = tf.random.uniform((shape[0], shape[1], 1), minval=0, maxval=0.5)
+    distribution = (rand / 2) * distribution_l + (1 - rand) * distribution_m + (rand / 2) * distribution_h
 
     return distribution

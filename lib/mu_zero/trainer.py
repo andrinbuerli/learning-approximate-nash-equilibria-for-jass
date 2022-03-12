@@ -1,6 +1,5 @@
 import gc
 import logging
-import pickle
 import time
 from pathlib import Path
 
@@ -12,7 +11,7 @@ from lib.jass.features.features_conv_cpp import FeaturesSetCppConv
 from lib.log.base_logger import BaseLogger
 from lib.metrics.metrics_manager import MetricsManager
 from lib.mu_zero.network.network_base import AbstractNetwork
-from lib.mu_zero.network.support_conversion import scalar_to_support, support_to_scalar, support_to_scalar_per_player
+from lib.mu_zero.network.support_conversion import scalar_to_support, support_to_scalar_per_player
 from lib.mu_zero.replay_buffer.replay_buffer_from_folder import ReplayBufferFromFolder
 
 

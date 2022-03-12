@@ -1,5 +1,7 @@
 import gc
 
+import numpy as np
+
 from lib.environment.networking.worker_config import WorkerConfig
 from lib.factory import get_agent, get_opponent
 from lib.jass.agent.agent import CppAgent
@@ -11,7 +13,7 @@ from lib.mu_zero.network.network_base import AbstractNetwork
 def _play_single_game_(i, agent: CppAgent, opponent: CppAgent):
     arena = Arena(nr_games_to_play=1, cheating_mode=False, check_move_validity=True)
     arena.set_players(agent, opponent, agent, opponent)
-    arena.play_game(dealer=i % 4)
+    arena.play_game(dealer=np.random.choice([0, 1, 2, 3]))
 
     points = arena.points_team_0 / (arena.points_team_0 + arena.points_team_1)
 

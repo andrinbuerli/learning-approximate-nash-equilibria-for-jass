@@ -46,7 +46,7 @@ class ALPV_MCTS:
 
         # initialize root node
         cards_played = [x for x in observation.tricks.reshape(-1).tolist() if x >= 0]
-        self.root = Node(parent=None, action=None, player=observation.player, trump=observation.trump,
+        self.root = Node(parent=None, action=None, player=None, trump=observation.trump,
                          next_player=observation.player, cards_played=cards_played)
 
         self.node_selection.init_node(self.root, observation)

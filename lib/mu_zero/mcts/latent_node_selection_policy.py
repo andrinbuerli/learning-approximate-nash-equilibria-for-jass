@@ -141,10 +141,10 @@ class LatentNodeSelectionPolicy:
                 trump = -1
                 pushed = None
                 if action == TRUMP_FULL_P:  # PUSH
-                    next_player_in_game = (node.player + 2) % 4
+                    next_player_in_game = (node.next_player + 2) % 4
                     pushed = True
                 else:  # TRUMP
-                    next_player_in_game = node.player
+                    next_player_in_game = node.next_player
                     trump = action - 36
 
                 node.add_child(

@@ -233,7 +233,7 @@ class MuZeroTrainer:
             absolute_reward_errors = absolute_reward_errors.write(0, 0)
 
             entropy = self.calculate_LSE(batch_size, encoded_states)
-            latent_space_entropy.write(0, entropy)
+            latent_space_entropy = latent_space_entropy.write(0, entropy)
             # ---------------Logging --------------- #
 
 
@@ -274,7 +274,7 @@ class MuZeroTrainer:
                 absolute_reward_errors = absolute_reward_errors.write(i+1, tf.reduce_mean(tf.abs(expected_reward - tf.cast(rewards_target[:, i+1], tf.float32)), name="reard_mae"))
 
                 entropy = self.calculate_LSE(batch_size, encoded_states)
-                latent_space_entropy.write(i+1, entropy)
+                latent_space_entropy = latent_space_entropy.write(i+1, entropy)
                 # ---------------Logging --------------- #
 
             loss = tf.reduce_mean(

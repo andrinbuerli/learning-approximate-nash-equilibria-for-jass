@@ -51,16 +51,11 @@
   "fc_value_layers": [
    256
   ],
-  "feature_extractor": "cnn-full",
+  "feature_extractor": "cnn-full-cheating",
   "num_blocks_representation": 2,
   "num_blocks_dynamics": 2,
   "num_blocks_prediction": 1,
   "num_channels": 256,
-  "observation_shape": [
-   4,
-   9,
-   45
-  ],
   "path": null,
   "players": 4,
   "reduced_channels_policy": 128,

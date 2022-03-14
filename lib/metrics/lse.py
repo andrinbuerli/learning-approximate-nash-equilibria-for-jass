@@ -63,7 +63,7 @@ def _calculate_batched_lse_(network: AbstractNetwork, iterator, n_steps_ahead, f
         lses.append(float(entropy))
 
     return {
-        f"lse/lse_{i}_steps_ahead": x for i, x in enumerate(lses)
+        f"SLSE/lse_{i}_steps_ahead": x for i, x in enumerate(lses)
     }
 
 class LSE(BaseAsyncMetric):

@@ -10,11 +10,11 @@ class AbstractNetwork(ABC, tf.keras.Model):
         pass
 
     @abstractmethod
-    def initial_inference(self, observation):
+    def initial_inference(self, observation, training=False):
         pass
 
     @abstractmethod
-    def recurrent_inference(self, encoded_state, action):
+    def recurrent_inference(self, encoded_state, action, training=False):
         pass
 
     @abstractmethod

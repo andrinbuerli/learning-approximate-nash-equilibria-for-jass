@@ -204,7 +204,8 @@ class MuZeroTrainer:
 
         with tf.GradientTape() as tape:
             initial_states = states[:, 0]
-            value, reward, policy_estimate, encoded_states = self.network.initial_inference(initial_states)
+            value, reward, policy_estimate, encoded_states = self.network.initial_inference(
+                initial_states, training=True)
 
             reward_support_size = tf.shape(reward)[-1]
             outcome_support_size = tf.shape(value)[-1]
@@ -239,7 +240,8 @@ class MuZeroTrainer:
 
             for i in tf.range(trajectory_length - 1):
                 next_action = tf.reshape(next_actions[:, i], [-1, 1])
-                value, reward, policy_estimate, encoded_states = self.network.recurrent_inference(encoded_states, next_action)
+                value, reward, policy_estimate, encoded_states = self.network.recurrent_inference(
+                    encoded_states, next_action, training=True)
 
                 # Scale the gradient at the start of the dynamics function (See paper appendix Training)
                 encoded_states = self.scale_gradient(factor=1/2)(encoded_states)

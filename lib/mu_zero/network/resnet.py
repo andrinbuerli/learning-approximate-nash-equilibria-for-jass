@@ -100,9 +100,9 @@ class MuZeroResidualNetwork(AbstractNetwork):
 
         return next_encoded_state_normalized, reward
 
-    def initial_inference(self, observation):
-        encoded_state = self.representation(observation)
-        policy, value = self.prediction(encoded_state)
+    def initial_inference(self, observation, training=False):
+        encoded_state = self.representation(observation, training=training)
+        policy, value = self.prediction(encoded_state, training=training)
         # reward equal to 0 for consistency
         batch_size = tf.shape(observation)[0]
         reward = tf.tile(tf.one_hot(0, depth=self.support_size)[None, None], [batch_size, self.players, 1])
@@ -113,9 +113,9 @@ class MuZeroResidualNetwork(AbstractNetwork):
             encoded_state,
         )
 
-    def recurrent_inference(self, encoded_state, action):
-        next_encoded_state, reward = self.dynamics(encoded_state, action)
-        policy, value = self.prediction(next_encoded_state)
+    def recurrent_inference(self, encoded_state, action, training=False):
+        next_encoded_state, reward = self.dynamics(encoded_state, action, training=training)
+        policy, value = self.prediction(next_encoded_state, training=training)
         return value, reward, policy, next_encoded_state
 
     def save(self, path):

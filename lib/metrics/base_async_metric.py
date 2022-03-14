@@ -76,7 +76,7 @@ class BaseAsyncMetric:
                 gc.collect()
 
             except Exception as e:
-                logging.error(f"Encountered error {e}, continuing anyways")
+                logging.error(f"{type(self)}: Encountered error {e}, continuing anyways")
                 del network
                 network = get_network(self.worker_config)
 

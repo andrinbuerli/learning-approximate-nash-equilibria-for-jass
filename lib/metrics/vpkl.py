@@ -3,23 +3,20 @@ from pathlib import Path
 import numpy as np
 import tensorflow as tf
 from jass.features.feature_example_buffer import parse_feature_example
-from jass.features.features_conv_full import FeaturesSetConvFull
 
 from lib.environment.networking.worker_config import WorkerConfig
+from lib.jass.features.features_cpp_conv_cheating import FeaturesSetCppConvCheating
 from lib.metrics.base_async_metric import BaseAsyncMetric
 from lib.mu_zero.network.network_base import AbstractNetwork
-from lib.mu_zero.network.support_conversion import support_to_scalar
 
 
-
-
-def _calculate_vpkl_(current_positions, policy_estimate, x):
-    current_states = tf.reshape(tf.gather_nd(x, current_positions), (-1,) + FeaturesSetConvFull.FEATURE_SHAPE)
-    valid_cards = tf.reshape(current_states[:, :, :, FeaturesSetConvFull.CH_CARDS_VALID], [-1, 36])
+def _calculate_vpkl_(current_positions, policy_estimate, x, features):
+    current_states = tf.reshape(tf.gather_nd(x, current_positions), (-1,) + features.FEATURE_SHAPE)
+    valid_cards = tf.reshape(current_states[:, :, :, features.CH_CARDS_VALID], [-1, 36])
     trump_valid = tf.tile(
-        tf.reshape(tf.reduce_max(current_states[:, :, :, FeaturesSetConvFull.CH_TRUMP_VALID], axis=(1, 2)), [-1, 1]),
+        tf.reshape(tf.reduce_max(current_states[:, :, :, features.CH_TRUMP_VALID], axis=(1, 2)), [-1, 1]),
         [1, 6])
-    push_valid = tf.reshape(tf.reduce_max(current_states[:, :, :, FeaturesSetConvFull.CH_PUSH_VALID], axis=(1, 2)),
+    push_valid = tf.reshape(tf.reduce_max(current_states[:, :, :, features.CH_PUSH_VALID], axis=(1, 2)),
                             [-1, 1])
     valid_actions = tf.concat([
         valid_cards,
@@ -36,7 +33,7 @@ def _calculate_vpkl_(current_positions, policy_estimate, x):
     return kl
 
 
-def _calculate_batched_vpkl_(network: AbstractNetwork, iterator, n_steps_ahead, f_shape, l_shape):
+def _calculate_batched_vpkl_(network: AbstractNetwork, iterator, n_steps_ahead, f_shape, l_shape, features):
     x, y = next(iterator)
 
     x = tf.reshape(x, (-1,) + f_shape)
@@ -55,7 +52,7 @@ def _calculate_batched_vpkl_(network: AbstractNetwork, iterator, n_steps_ahead, 
     current_positions = positions
 
     kls = []
-    kl = _calculate_vpkl_(current_positions, policy_estimate, x)
+    kl = _calculate_vpkl_(current_positions, policy_estimate, x, features)
     kls.append(float(kl))
 
     for i in range(n_steps_ahead):
@@ -70,7 +67,7 @@ def _calculate_batched_vpkl_(network: AbstractNetwork, iterator, n_steps_ahead, 
         # solve if trajectory hans only length of 37
         current_positions = current_positions - tf.stack((zeros, tf.cast(tf.reduce_sum(supervised_policy, axis=-1) == 0, tf.int32)), axis=1)
 
-        kl = _calculate_vpkl_(current_positions, policy_estimate, x)
+        kl = _calculate_vpkl_(current_positions, policy_estimate, x, features)
         kls.append(float(kl))
 
     return {
@@ -82,7 +79,8 @@ class VPKL(BaseAsyncMetric):
 
     def get_params(self, thread_nr: int, network: AbstractNetwork, init_vars=None) -> []:
         iterator = init_vars
-        return network, iterator, self.n_steps_ahead, self.trajectory_feature_shape, self.trajectory_label_shape
+        return network, iterator, self.n_steps_ahead, self.trajectory_feature_shape, \
+               self.trajectory_label_shape, self.worker_config.network.feature_extractor
 
     def init_dataset(self):
         ds = tf.data.TFRecordDataset(self.tf_record_files)
@@ -95,8 +93,6 @@ class VPKL(BaseAsyncMetric):
     def __init__(
             self,
             samples_per_calculation: int,
-            feature_length: int,
-            feature_shape: (int, int, int),
             label_length: int,
             worker_config: WorkerConfig,
             network_path: str,
@@ -104,19 +100,23 @@ class VPKL(BaseAsyncMetric):
             trajectory_length: int = 38,
             tf_record_files: [str] = None):
 
+        cheating_mode = type(worker_config.network.feature_extractor) == FeaturesSetCppConvCheating
+
+        file_ending = "*.perfect.tfrecord" if cheating_mode else "*.imperfect.tfrecord"
         self.trajectory_length = trajectory_length
         if tf_record_files is None:
             tf_record_files = [str(x.resolve()) for x in
-                               (Path(__file__).parent.parent.parent / "resources" / "supervised_data").glob("*.tfrecord")]
+                               (Path(__file__).parent.parent.parent / "resources" / "supervised_data").glob(
+                                   file_ending)]
 
         self.n_steps_ahead = n_steps_ahead
         self.samples_per_calculation = samples_per_calculation
-        self.feature_length = feature_length
-        self.feature_shape = feature_shape
+        self.feature_length = worker_config.network.feature_extractor.FEATURE_LENGTH
+        self.feature_shape = worker_config.network.feature_extractor.FEATURE_SHAPE
         self.label_length = label_length
         self.tf_record_files = tf_record_files
 
-        self.trajectory_feature_shape = (self.trajectory_length, feature_length)
+        self.trajectory_feature_shape = (self.trajectory_length, self.feature_length)
         self.trajectory_label_shape = (self.trajectory_length, label_length)
 
         super().__init__(worker_config, network_path, parallel_threads=1,

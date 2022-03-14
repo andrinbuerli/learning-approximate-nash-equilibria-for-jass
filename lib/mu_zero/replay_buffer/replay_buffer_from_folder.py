@@ -16,7 +16,7 @@ class ReplayBufferFromFolder:
             trajectory_length: int,
             game_data_folder: Path,
             max_updates=20,
-            data_file_ending="jass-data.pkl",
+            data_file_ending=".jass-data.pkl",
             cache_path: Path = None,
             clean_up_files = True):
         """
@@ -95,7 +95,7 @@ class ReplayBufferFromFolder:
             logging.info(f"saved replay buffer to {save_path}")
 
     def _update(self):
-        files = list(self.game_data_folder.glob(f"*.{self.data_file_ending}"))
+        files = list(self.game_data_folder.glob(f"*{self.data_file_ending}"))
         logging.info(f"updating replay buffer, found {len(files)} game data files")
         self.size_of_last_update = 0
         for file in files:

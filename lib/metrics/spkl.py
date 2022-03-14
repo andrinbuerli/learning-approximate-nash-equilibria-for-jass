@@ -5,6 +5,7 @@ import tensorflow as tf
 from jass.features.feature_example_buffer import parse_feature_example
 
 from lib.environment.networking.worker_config import WorkerConfig
+from lib.jass.features.features_cpp_conv_cheating import FeaturesSetCppConvCheating
 from lib.metrics.base_async_metric import BaseAsyncMetric
 from lib.mu_zero.network.network_base import AbstractNetwork
 
@@ -78,8 +79,6 @@ class SPKL(BaseAsyncMetric):
     def __init__(
             self,
             samples_per_calculation: int,
-            feature_length: int,
-            feature_shape: (int, int, int),
             label_length: int,
             worker_config: WorkerConfig,
             network_path: str,
@@ -87,19 +86,22 @@ class SPKL(BaseAsyncMetric):
             trajectory_length: int = 38,
             tf_record_files: [str] = None):
 
+        cheating_mode = type(worker_config.network.feature_extractor) == FeaturesSetCppConvCheating
+
+        file_ending = "*.perfect.tfrecord" if cheating_mode else "*.imperfect.tfrecord"
         self.trajectory_length = trajectory_length
         if tf_record_files is None:
             tf_record_files = [str(x.resolve()) for x in
-                               (Path(__file__).parent.parent.parent / "resources" / "supervised_data").glob("*.tfrecord")]
+                               (Path(__file__).parent.parent.parent / "resources" / "supervised_data").glob(file_ending)]
 
         self.n_steps_ahead = n_steps_ahead
         self.samples_per_calculation = samples_per_calculation
-        self.feature_length = feature_length
-        self.feature_shape = feature_shape
+        self.feature_length = worker_config.network.feature_extractor.FEATURE_LENGTH
+        self.feature_shape = worker_config.network.feature_extractor.FEATURE_SHAPE
         self.label_length = label_length
         self.tf_record_files = tf_record_files
 
-        self.trajectory_feature_shape = (self.trajectory_length, feature_length)
+        self.trajectory_feature_shape = (self.trajectory_length, self.feature_length)
         self.trajectory_label_shape = (self.trajectory_length, label_length)
 
         super().__init__(worker_config, network_path, parallel_threads=1,

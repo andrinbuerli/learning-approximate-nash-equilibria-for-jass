@@ -2,9 +2,6 @@ from pathlib import Path
 
 from jass.features.labels_action_full import LabelSetActionFull
 
-from lib.environment.networking.worker_config import WorkerConfig
-from lib.jass.features.features_conv_cpp import FeaturesSetCppConv
-from lib.metrics.apao import APAO
 from lib.metrics.spkl import SPKL
 from test.util import get_test_config
 
@@ -14,11 +11,9 @@ def test_spkl_0_step():
 
     testee = SPKL(
         samples_per_calculation=2,
-        feature_length=FeaturesSetCppConv.FEATURE_LENGTH,
-        feature_shape=FeaturesSetCppConv.FEATURE_SHAPE,
         label_length=LabelSetActionFull.LABEL_LENGTH,
         worker_config=config,
-        network_path = str(Path(__file__).parent.parent / "resources" / "resnet_random.pd"),
+        network_path = str(Path(__file__).parent.parent / "resources" / "imperfect_resnet_random.pd"),
         n_steps_ahead=0
     )
 
@@ -35,11 +30,9 @@ def test_spkl_1_step():
 
     testee = SPKL(
         samples_per_calculation=2,
-        feature_length=FeaturesSetCppConv.FEATURE_LENGTH,
-        feature_shape=FeaturesSetCppConv.FEATURE_SHAPE,
         label_length=LabelSetActionFull.LABEL_LENGTH,
         worker_config=config,
-        network_path = str(Path(__file__).parent.parent / "resources" / "resnet_random.pd"),
+        network_path = str(Path(__file__).parent.parent / "resources" / "imperfect_resnet_random.pd"),
         n_steps_ahead=1
     )
 
@@ -57,11 +50,9 @@ def test_spkl_30_step():
 
     testee = SPKL(
         samples_per_calculation=2,
-        feature_length=FeaturesSetCppConv.FEATURE_LENGTH,
-        feature_shape=FeaturesSetCppConv.FEATURE_SHAPE,
         label_length=LabelSetActionFull.LABEL_LENGTH,
         worker_config=config,
-        network_path=str(Path(__file__).parent.parent / "resources" / "resnet_random.pd"),
+        network_path=str(Path(__file__).parent.parent / "resources" / "imperfect_resnet_random.pd"),
         n_steps_ahead=30
     )
 
@@ -79,11 +70,29 @@ def test_spkl_larger_batch():
 
     testee = SPKL(
         samples_per_calculation=128,
-        feature_length=FeaturesSetCppConv.FEATURE_LENGTH,
-        feature_shape=FeaturesSetCppConv.FEATURE_SHAPE,
         label_length=LabelSetActionFull.LABEL_LENGTH,
         worker_config=config,
-        network_path=str(Path(__file__).parent.parent / "resources" / "resnet_random.pd"),
+        network_path=str(Path(__file__).parent.parent / "resources" / "imperfect_resnet_random.pd"),
+        n_steps_ahead=16
+    )
+
+    testee.poll_till_next_result_available()
+
+    result = testee.get_latest_result()
+
+    assert len(result) == 17
+
+    del testee
+
+
+def test_spkl_more_steps_larger_batch_perfect():
+    config = get_test_config(cheating=True)
+
+    testee = SPKL(
+        samples_per_calculation=32,
+        label_length=LabelSetActionFull.LABEL_LENGTH,
+        worker_config=config,
+        network_path = str(Path(__file__).parent.parent / "resources" / "perfect_resnet_random.pd"),
         n_steps_ahead=16
     )
 

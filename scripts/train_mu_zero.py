@@ -75,8 +75,6 @@ if __name__=="__main__":
         APAO("random", worker_config, str(network_path), parallel_threads=4),
         SAVE(
             samples_per_calculation=32,
-            feature_length=worker_config.network.feature_extractor.FEATURE_LENGTH,
-            feature_shape=worker_config.network.feature_extractor.FEATURE_SHAPE,
             label_length=LabelSetActionFull.LABEL_LENGTH,
             worker_config=worker_config,
             network_path=str(network_path),
@@ -84,8 +82,6 @@ if __name__=="__main__":
         ),
         SPKL(
             samples_per_calculation=32,
-            feature_length=worker_config.network.feature_extractor.FEATURE_LENGTH,
-            feature_shape=worker_config.network.feature_extractor.FEATURE_SHAPE,
             label_length=LabelSetActionFull.LABEL_LENGTH,
             worker_config=worker_config,
             network_path=str(network_path),
@@ -93,8 +89,6 @@ if __name__=="__main__":
         ),
         VPKL(
             samples_per_calculation=32,
-            feature_length=worker_config.network.feature_extractor.FEATURE_LENGTH,
-            feature_shape=worker_config.network.feature_extractor.FEATURE_SHAPE,
             label_length=LabelSetActionFull.LABEL_LENGTH,
             worker_config=worker_config,
             network_path=str(network_path),

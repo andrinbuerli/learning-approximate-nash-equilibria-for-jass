@@ -369,7 +369,7 @@ def test_sync_consistency():
         players=4
     )
 
-    network.load(Path(__file__).parent.parent.parent / "resources" / "resnet_random.pd")
+    network.load(Path(__file__).parent.parent.parent / "resources" / "imperfect_resnet_random.pd")
 
     tree_policy = LatentNodeSelectionPolicy(
             c_1=1,
@@ -441,7 +441,7 @@ def test_sync_vs_async_consistency():
         players=4
     )
 
-    network.load(Path(__file__).parent.parent.parent / "resources" / "resnet_random.pd")
+    network.load(Path(__file__).parent.parent.parent / "resources" / "imperfect_resnet_random.pd")
 
     tree_policy = LatentNodeSelectionPolicy(
             c_1=1,
@@ -511,7 +511,7 @@ def test_sync_vs_async_consistency_multi_threads():
         players=4
     )
 
-    network.load(Path(__file__).parent.parent.parent / "resources" / "resnet_random.pd")
+    network.load(Path(__file__).parent.parent.parent / "resources" / "imperfect_resnet_random.pd")
 
     tree_policy = LatentNodeSelectionPolicy(
             c_1=1,

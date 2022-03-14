@@ -6,6 +6,7 @@ from lib.environment.networking.worker_config import WorkerConfig
 from lib.jass.agent.agent import CppAgent
 from lib.jass.agent.agent_by_network_cpp import AgentByNetworkCpp
 from lib.jass.features.features_conv_cpp import FeaturesSetCppConv
+from lib.jass.features.features_cpp_conv_cheating import FeaturesSetCppConvCheating
 from lib.jass.features.features_set_cpp import FeaturesSetCpp
 
 
@@ -53,7 +54,7 @@ def get_network(config: WorkerConfig, network_path: str = None):
     if config.network.type == "resnet":
         from lib.mu_zero.network.resnet import MuZeroResidualNetwork
         network = MuZeroResidualNetwork(
-            observation_shape=config.network.observation_shape,
+            observation_shape=config.network.feature_extractor.FEATURE_SHAPE,
             action_space_size=config.network.action_space_size,
             num_blocks_representation=config.network.num_blocks_representation,
             num_blocks_dynamics=config.network.num_blocks_dynamics,
@@ -91,6 +92,8 @@ def get_opponent(type: str) -> CppAgent:
 def get_features(type: str) -> FeaturesSetCpp:
     if type == "cnn-full":
         return FeaturesSetCppConv()
+    if type == "cnn-full-cheating":
+        return FeaturesSetCppConvCheating()
     raise NotImplementedError(f"Opponent type {type} is not implemented.")
 
 

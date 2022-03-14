@@ -40,7 +40,6 @@ class BaseConfig:
 class NetworkConfig(BaseConfig):
     def __init__(self, features: FeaturesSetCpp):
         self.type=""
-        self.observation_shape = (4, 9, 45)
         self.action_space_size = 43
         self.num_blocks_representation = 2
         self.num_blocks_dynamics = 2
@@ -77,6 +76,7 @@ class OptimizationConfig(BaseConfig):
         self.trajectory_length = 5
         self.iterations = 5
         self.store_buffer = False
+        self.log_n_steps_ahead = 3
         self.data_folder = ""
 
 class LogConfig(BaseConfig):

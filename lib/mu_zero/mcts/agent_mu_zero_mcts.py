@@ -3,6 +3,7 @@ import numpy as np
 from jasscpp import GameObservationCpp
 
 from lib.jass.agent.remembering_agent import RememberingAgent
+from lib.jass.features.features_cpp_conv_cheating import FeaturesSetCppConvCheating
 from lib.jass.features.features_set_cpp import FeaturesSetCpp
 from lib.mu_zero.mcts.latent_node_selection_policy import LatentNodeSelectionPolicy
 from lib.mu_zero.mcts.latent_value_calc_policy import LatentValueCalculationPolicy
@@ -37,6 +38,7 @@ class AgentMuZeroMCTS(RememberingAgent):
         self.mdp_value = mdp_value
         self.discount = discount
         self.n_search_threads = n_search_threads
+        self.cheating_mode = type(feature_extractor) == FeaturesSetCppConvCheating
 
         self.tree_policy = LatentNodeSelectionPolicy(
             c_1=c_1,

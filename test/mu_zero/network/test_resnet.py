@@ -23,6 +23,8 @@ def test_shapes():
         players=4
     )
 
+    testee.save("perfect_resnet_random.pd")
+
     encoded_state = testee.representation(np.random.uniform(0, 1, (1, 4, 9, 45)))
     assert encoded_state.shape == (1, 4, 9, 256)
 

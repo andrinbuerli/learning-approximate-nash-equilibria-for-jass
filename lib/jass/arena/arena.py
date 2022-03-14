@@ -94,9 +94,11 @@ class Arena:
 
         # if cheating mode agents observation corresponds to the full game state
         if self.cheating_mode:
-            self.get_agent_observation = lambda: self._game.state
+            self.get_agent_observation = lambda a: self._game.state
         else:
-            self.get_agent_observation = lambda: jasscpp.observation_from_state(self._game.state, -1)
+            self.get_agent_observation = lambda a: self._game.state \
+                if (hasattr(a, "cheating_mode") and a.cheating_mode) \
+                else jasscpp.observation_from_state(self._game.state, -1)
 
         if self.store_trajectory:
             self.game_states, self.actions, self.rewards, self.outcomes, self.teams = [], [], [], [], []
@@ -213,7 +215,7 @@ class Arena:
         # determine trump
         # ask first player
 
-        observation = self.get_agent_observation()
+        observation = self.get_agent_observation(self._players[self._game.state.player])
         trump_action = self._players[self._game.state.player].action_trump(observation)
         if trump_action < DIAMONDS or (trump_action > MAX_TRUMP and trump_action != PUSH):
             self._logger.error('Illegal trump (' + str(trump_action) + ') selected')
@@ -223,7 +225,7 @@ class Arena:
         self.store_state(observation, trump_action)
         if trump_action == PUSH:
             # ask second player
-            observation = self.get_agent_observation()
+            observation = self.get_agent_observation(self._players[self._game.state.player])
             trump_action = self._players[self._game.state.player].action_trump(observation)
             if trump_action < DIAMONDS or trump_action > MAX_TRUMP:
                 self._logger.error('Illegal trump (' + str(trump_action) + ') selected')
@@ -233,10 +235,10 @@ class Arena:
 
         # play cards
         for cards in range(36):
-            observation = self.get_agent_observation()
+            observation = self.get_agent_observation(self._players[self._game.state.player])
             card_action = self._players[self._game.state.player].action_play_card(observation)
             if self._check_moves_validity:
-                if self.cheating_mode:
+                if self.cheating_mode or type(observation) == jasscpp.GameStateCpp:
                     assert card_action in np.flatnonzero(self._rule.get_valid_cards_from_state(observation))
                 else:
                     assert card_action in np.flatnonzero(self._rule.get_valid_cards_from_obs(observation))

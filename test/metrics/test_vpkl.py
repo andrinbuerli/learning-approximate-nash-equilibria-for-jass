@@ -12,11 +12,9 @@ def test_vpkl_0_step():
 
     testee = VPKL(
         samples_per_calculation=2,
-        feature_length=FeaturesSetCppConv.FEATURE_LENGTH,
-        feature_shape=FeaturesSetCppConv.FEATURE_SHAPE,
         label_length=LabelSetActionFull.LABEL_LENGTH,
         worker_config=config,
-        network_path = str(Path(__file__).parent.parent / "resources" / "resnet_random.pd"),
+        network_path = str(Path(__file__).parent.parent / "resources" / "imperfect_resnet_random.pd"),
         n_steps_ahead=0
     )
 
@@ -33,11 +31,9 @@ def test_vpkl_1_step():
 
     testee = VPKL(
         samples_per_calculation=2,
-        feature_length=FeaturesSetCppConv.FEATURE_LENGTH,
-        feature_shape=FeaturesSetCppConv.FEATURE_SHAPE,
         label_length=LabelSetActionFull.LABEL_LENGTH,
         worker_config=config,
-        network_path = str(Path(__file__).parent.parent / "resources" / "resnet_random.pd"),
+        network_path = str(Path(__file__).parent.parent / "resources" / "imperfect_resnet_random.pd"),
         n_steps_ahead=1
     )
 
@@ -55,11 +51,9 @@ def test_vpkl_30_step():
 
     testee = VPKL(
         samples_per_calculation=2,
-        feature_length=FeaturesSetCppConv.FEATURE_LENGTH,
-        feature_shape=FeaturesSetCppConv.FEATURE_SHAPE,
         label_length=LabelSetActionFull.LABEL_LENGTH,
         worker_config=config,
-        network_path=str(Path(__file__).parent.parent / "resources" / "resnet_random.pd"),
+        network_path=str(Path(__file__).parent.parent / "resources" / "imperfect_resnet_random.pd"),
         n_steps_ahead=30
     )
 
@@ -77,11 +71,29 @@ def test_vpkl_larger_batch():
 
     testee = VPKL(
         samples_per_calculation=128,
-        feature_length=FeaturesSetCppConv.FEATURE_LENGTH,
-        feature_shape=FeaturesSetCppConv.FEATURE_SHAPE,
         label_length=LabelSetActionFull.LABEL_LENGTH,
         worker_config=config,
-        network_path=str(Path(__file__).parent.parent / "resources" / "resnet_random.pd"),
+        network_path=str(Path(__file__).parent.parent / "resources" / "imperfect_resnet_random.pd"),
+        n_steps_ahead=16
+    )
+
+    testee.poll_till_next_result_available()
+
+    result = testee.get_latest_result()
+
+    assert len(result) == 17
+
+    del testee
+
+
+def test_vpkl_more_steps_larger_batch_perfect():
+    config = get_test_config(cheating=True)
+
+    testee = VPKL(
+        samples_per_calculation=32,
+        label_length=LabelSetActionFull.LABEL_LENGTH,
+        worker_config=config,
+        network_path = str(Path(__file__).parent.parent / "resources" / "perfect_resnet_random.pd"),
         n_steps_ahead=16
     )
 

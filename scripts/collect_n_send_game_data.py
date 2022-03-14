@@ -59,7 +59,8 @@ if __name__ == "__main__":
     config.load(response.content)
     config.network.feature_extractor = get_features(config.network.feature_extractor)
 
-    network_path = Path(__file__).parent / "tmp" / str(config.timestamp) / "latest_model.pd"
+    tmp_dir = Path(__file__).parent / "tmp"
+    network_path = tmp_dir / str(config.timestamp) / "latest_model.pd"
 
     logging.info("Connection established successfully!")
 

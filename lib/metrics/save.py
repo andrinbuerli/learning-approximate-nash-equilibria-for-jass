@@ -3,13 +3,12 @@ from pathlib import Path
 import numpy as np
 import tensorflow as tf
 from jass.features.feature_example_buffer import parse_feature_example
-from jass.features.features_conv_full import FeaturesSetConvFull
 
 from lib.environment.networking.worker_config import WorkerConfig
+from lib.jass.features.features_cpp_conv_cheating import FeaturesSetCppConvCheating
 from lib.metrics.base_async_metric import BaseAsyncMetric
 from lib.mu_zero.network.network_base import AbstractNetwork
 from lib.mu_zero.network.support_conversion import support_to_scalar
-
 
 
 def _calculate_mae_(outcomes, value):
@@ -17,7 +16,7 @@ def _calculate_mae_(outcomes, value):
     mae = tf.reduce_mean(tf.abs(value_pred - tf.cast(outcomes, tf.float32)))
     return mae
 
-def _calculate_batched_save_(network: AbstractNetwork, iterator, n_steps_ahead, f_shape, l_shape):
+def _calculate_batched_save_(network: AbstractNetwork, iterator, n_steps_ahead, f_shape, l_shape, features):
     x, y = next(iterator)
 
     x = tf.reshape(x, (-1,) + f_shape)
@@ -31,8 +30,8 @@ def _calculate_batched_save_(network: AbstractNetwork, iterator, n_steps_ahead, 
     initial_positions = tf.gather_nd(x, positions)
     value, reward, policy_estimate, encoded_states = network.initial_inference(initial_positions)
 
-    reshaped = tf.reshape(initial_positions, (-1,) + FeaturesSetConvFull.FEATURE_SHAPE)
-    current_player = tf.reduce_max(reshaped[:, :, :, FeaturesSetConvFull.CH_PLAYER:FeaturesSetConvFull.CH_PLAYER + 4], axis=(1,2))
+    reshaped = tf.reshape(initial_positions, (-1,) + features.FEATURE_SHAPE)
+    current_player = tf.reduce_max(reshaped[:, :, :, features.CH_PLAYER:features.CH_PLAYER + 4], axis=(1,2))
     current_team = tf.argmax(current_player, axis=-1) % 2
     outcomes = tf.cast(tf.gather_nd(y, positions)[:, 43:45] * 157, tf.int32)
 
@@ -74,7 +73,8 @@ class SAVE(BaseAsyncMetric):
 
     def get_params(self, thread_nr: int, network: AbstractNetwork, init_vars=None) -> []:
         iterator = init_vars
-        return network, iterator, self.n_steps_ahead, self.trajectory_feature_shape, self.trajectory_label_shape
+        return network, iterator, self.n_steps_ahead, self.trajectory_feature_shape, \
+               self.trajectory_label_shape, self.worker_config.network.feature_extractor
 
     def init_dataset(self):
         ds = tf.data.TFRecordDataset(self.tf_record_files)
@@ -87,8 +87,6 @@ class SAVE(BaseAsyncMetric):
     def __init__(
             self,
             samples_per_calculation: int,
-            feature_length: int,
-            feature_shape: (int, int, int),
             label_length: int,
             worker_config: WorkerConfig,
             network_path: str,
@@ -96,19 +94,22 @@ class SAVE(BaseAsyncMetric):
             trajectory_length: int = 38,
             tf_record_files: [str] = None):
 
+        cheating_mode = type(worker_config.network.feature_extractor) == FeaturesSetCppConvCheating
+
+        file_ending = "*.perfect.tfrecord" if cheating_mode else "*.imperfect.tfrecord"
         self.trajectory_length = trajectory_length
         if tf_record_files is None:
             tf_record_files = [str(x.resolve()) for x in
-                               (Path(__file__).parent.parent.parent / "resources" / "supervised_data").glob("*.tfrecord")]
+                               (Path(__file__).parent.parent.parent / "resources" / "supervised_data").glob(file_ending)]
 
         self.n_steps_ahead = n_steps_ahead
         self.samples_per_calculation = samples_per_calculation
-        self.feature_length = feature_length
-        self.feature_shape = feature_shape
+        self.feature_length = worker_config.network.feature_extractor.FEATURE_LENGTH
+        self.feature_shape = worker_config.network.feature_extractor.FEATURE_SHAPE
         self.label_length = label_length
         self.tf_record_files = tf_record_files
 
-        self.trajectory_feature_shape = (self.trajectory_length, feature_length)
+        self.trajectory_feature_shape = (self.trajectory_length, self.feature_length)
         self.trajectory_label_shape = (self.trajectory_length, label_length)
 
         super().__init__(worker_config, network_path, parallel_threads=1,

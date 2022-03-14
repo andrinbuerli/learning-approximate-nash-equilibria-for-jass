@@ -7,6 +7,7 @@ import tensorflow as tf
 import tensorflow_addons as tfa
 import wandb
 
+from lib.environment.networking.worker_config import WorkerConfig
 from lib.jass.features.features_conv_cpp import FeaturesSetCppConv
 from lib.log.base_logger import BaseLogger
 from lib.metrics.metrics_manager import MetricsManager
@@ -22,6 +23,7 @@ class MuZeroTrainer:
             network: AbstractNetwork,
             replay_buffer: ReplayBufferFromFolder,
             metrics_manager: MetricsManager,
+            config: WorkerConfig,
             logger: BaseLogger,
             learning_rate: float,
             weight_decay: float,
@@ -37,6 +39,7 @@ class MuZeroTrainer:
             store_weights:bool = True,
             store_buffer:bool = False
     ):
+        self.config = config
         self.store_buffer = store_buffer
         self.store_weights = store_weights
         self.reward_loss_weight = reward_loss_weight
@@ -278,7 +281,8 @@ class MuZeroTrainer:
         # inspired by https://www.tensorflow.org/api_docs/python/tf/nn/l2_loss
         squared_weights_sum = tf.reduce_sum([tf.reduce_sum(x ** 2) for x in self.network.trainable_weights])
 
-        mean_features = tf.reduce_mean(tf.reduce_sum(tf.reshape(initial_states, (-1,) + FeaturesSetCppConv.FEATURE_SHAPE), axis=(1, 2)), axis=0)
+        mean_features = tf.reduce_mean(tf.reduce_sum(tf.reshape(
+            initial_states, (-1,) + self.config.network.feature_extractor.FEATURE_SHAPE), axis=(1, 2)), axis=0)
 
         return {
             "training/reward_loss": tf.reduce_mean(reward_loss),

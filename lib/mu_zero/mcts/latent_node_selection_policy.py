@@ -4,6 +4,7 @@
 #
 from copy import deepcopy
 from time import sleep
+from typing import Union
 
 import jasscpp
 import numpy as np
@@ -83,10 +84,14 @@ class LatentNodeSelectionPolicy:
 
         return child
 
-    def init_node(self, node: Node, observation: jasscpp.GameObservationCpp):
+    def init_node(self, node: Node, observation: Union[jasscpp.GameStateCpp, jasscpp.GameObservationCpp]):
         if node.is_root():
             rule = jasscpp.RuleSchieberCpp()
-            node.valid_actions = rule.get_full_valid_actions_from_obs(observation)
+            if type(observation) == jasscpp.GameStateCpp:
+                node.valid_actions = rule.get_full_valid_actions_from_state(observation)
+            else:
+                node.valid_actions = rule.get_full_valid_actions_from_obs(observation)
+
             assert (node.valid_actions >= 0).all(), 'Error in valid actions'
 
             features = self.feature_extractor.convert_to_features(observation, rule)[None]

@@ -1,6 +1,9 @@
 import json
 
 import jasscpp
+import numpy as np
+from jass.arena.dealing_card_random_strategy import DealingCardRandomStrategy
+from jass.game.game_sim import GameSim
 from jass.game.game_state import GameState
 from jass.game.game_state_util import state_from_complete_game, observation_from_state
 
@@ -135,3 +138,105 @@ def test_get_next_player():
             next_player = testee._get_start_trick_next_player(state.tricks.reshape(-1)[i - 1], node, prev_obs)
 
             assert next_player == obs.player
+
+
+def test_select_playres():
+    network = MuZeroResidualNetwork(
+        observation_shape=(4, 9, 45),
+        action_space_size=43,
+                num_blocks_representation=2,
+        num_blocks_dynamics=2,
+        num_blocks_prediction=2,
+        num_channels=256,
+        reduced_channels_reward=128,
+        reduced_channels_value=1,
+        reduced_channels_policy=128,
+        fc_reward_layers=[256],
+        fc_value_layers=[256],
+        fc_policy_layers=[256],
+        support_size=100,
+        players=4
+    )
+
+    testee = LatentNodeSelectionPolicy(
+            c_1=1,
+            c_2=100,
+            feature_extractor=FeaturesSetCppConv(),
+            network=network,
+            dirichlet_eps=0.25,
+            dirichlet_alpha=0.3,
+            discount=1)
+
+    game = jasscpp.GameSimCpp()
+    game.init_from_cards(dealer=1, hands=DealingCardRandomStrategy().deal_cards(
+        game_nr=0,
+        total_nr_games=1))
+    obs = jasscpp.observation_from_state(game.state, -1)
+
+    node = Node(parent=None, action=None, player=obs.player, next_player=obs.player, trump=obs.trump, cards_played=[])
+    testee.init_node(node, obs)
+
+    for _ in range(38):
+        a, child = list(node.children.items())[-1]
+        child.value_sum = np.ones(4) * 1000
+        child.visits = 1
+        game.perform_action_full(a)
+        child.valid_actions = game.get_valid_actions()
+
+        child = testee.tree_policy(node=node, stats=MinMaxStats(), observation=obs)
+        assert child.action == a
+        assert child.next_player == game.state.player
+        node = child
+
+
+def test_select_players_middle_of_game():
+    network = MuZeroResidualNetwork(
+        observation_shape=(4, 9, 45),
+        action_space_size=43,
+                num_blocks_representation=2,
+        num_blocks_dynamics=2,
+        num_blocks_prediction=2,
+        num_channels=256,
+        reduced_channels_reward=128,
+        reduced_channels_value=1,
+        reduced_channels_policy=128,
+        fc_reward_layers=[256],
+        fc_value_layers=[256],
+        fc_policy_layers=[256],
+        support_size=100,
+        players=4
+    )
+
+    testee = LatentNodeSelectionPolicy(
+            c_1=1,
+            c_2=100,
+            feature_extractor=FeaturesSetCppConv(),
+            network=network,
+            dirichlet_eps=0.25,
+            dirichlet_alpha=0.3,
+            discount=1)
+
+    game = jasscpp.GameSimCpp()
+    game.init_from_cards(dealer=1, hands=DealingCardRandomStrategy().deal_cards(
+        game_nr=0,
+        total_nr_games=1))
+    game.perform_action_trump(0)
+    game.perform_action_full(np.flatnonzero(game.get_valid_cards())[0])
+
+    obs = jasscpp.observation_from_state(game.state, -1)
+
+    cards_played = [x for x in obs.tricks.reshape(-1).tolist() if x >= 0]
+    node = Node(parent=None, action=None, player=None, next_player=obs.player, trump=obs.trump, cards_played=cards_played)
+    testee.init_node(node, obs)
+
+    for _ in range(35):
+        a, child = list(node.children.items())[-1]
+        child.value_sum = np.ones(4) * 1000
+        child.visits = 1
+        game.perform_action_full(a)
+        child.valid_actions = game.get_valid_actions()
+
+        child = testee.tree_policy(node=node, stats=MinMaxStats(), observation=obs)
+        assert child.action == a
+        assert child.next_player == game.state.player
+        node = child

@@ -12,11 +12,9 @@ def test_save_0_step():
 
     testee = SAVE(
         samples_per_calculation=3,
-        feature_length=FeaturesSetCppConv.FEATURE_LENGTH,
-        feature_shape=FeaturesSetCppConv.FEATURE_SHAPE,
         label_length=LabelSetActionFull.LABEL_LENGTH,
         worker_config=config,
-        network_path = str(Path(__file__).parent.parent / "resources" / "resnet_random.pd"),
+        network_path = str(Path(__file__).parent.parent / "resources" / "imperfect_resnet_random.pd"),
         n_steps_ahead=0
     )
 
@@ -34,11 +32,9 @@ def test_save_1_step():
 
     testee = SAVE(
         samples_per_calculation=3,
-        feature_length=FeaturesSetCppConv.FEATURE_LENGTH,
-        feature_shape=FeaturesSetCppConv.FEATURE_SHAPE,
         label_length=LabelSetActionFull.LABEL_LENGTH,
         worker_config=config,
-        network_path = str(Path(__file__).parent.parent / "resources" / "resnet_random.pd"),
+        network_path = str(Path(__file__).parent.parent / "resources" / "imperfect_resnet_random.pd"),
         n_steps_ahead=1
     )
 
@@ -56,11 +52,29 @@ def test_save_more_steps_larger_batch():
 
     testee = SAVE(
         samples_per_calculation=32,
-        feature_length=FeaturesSetCppConv.FEATURE_LENGTH,
-        feature_shape=FeaturesSetCppConv.FEATURE_SHAPE,
         label_length=LabelSetActionFull.LABEL_LENGTH,
         worker_config=config,
-        network_path = str(Path(__file__).parent.parent / "resources" / "resnet_random.pd"),
+        network_path = str(Path(__file__).parent.parent / "resources" / "imperfect_resnet_random.pd"),
+        n_steps_ahead=16
+    )
+
+    testee.poll_till_next_result_available()
+
+    result = testee.get_latest_result()
+
+    assert len(result) == 17
+
+    del testee
+
+
+def test_save_more_steps_larger_batch_perfect():
+    config = get_test_config(cheating=True)
+
+    testee = SAVE(
+        samples_per_calculation=32,
+        label_length=LabelSetActionFull.LABEL_LENGTH,
+        worker_config=config,
+        network_path = str(Path(__file__).parent.parent / "resources" / "perfect_resnet_random.pd"),
         n_steps_ahead=16
     )
 

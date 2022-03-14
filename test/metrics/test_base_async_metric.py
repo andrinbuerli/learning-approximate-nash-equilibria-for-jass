@@ -27,7 +27,7 @@ def test_get_result():
 
     testee = MetricMock(
         config,
-        network_path = str(Path(__file__).parent.parent / "resources" / "resnet_random.pd"),
+        network_path = str(Path(__file__).parent.parent / "resources" / "imperfect_resnet_random.pd"),
         parallel_threads=1
     )
 
@@ -44,7 +44,7 @@ def test_get_result_multi_threaded():
 
     testee = MetricMock(
         config,
-        network_path = str(Path(__file__).parent.parent / "resources" / "resnet_random.pd"),
+        network_path = str(Path(__file__).parent.parent / "resources" / "imperfect_resnet_random.pd"),
         parallel_threads=10
     )
 

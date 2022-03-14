@@ -171,7 +171,7 @@ class MuZeroTrainer:
             }
 
             train_input_dict = {
-                f"train_input/channel_{c}_{self.feature_names[c]}": ft[c] for c in range(FeaturesSetCppConv.FEATURE_SHAPE[-1])
+                f"train_input/channel_{c}_{self.feature_names[c]}": ft[c] for c in range(self.config.network.feature_extractor.FEATURE_SHAPE[-1])
             }
 
             training_infos.append({

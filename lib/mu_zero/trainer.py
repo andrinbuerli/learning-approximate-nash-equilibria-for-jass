@@ -60,9 +60,9 @@ class MuZeroTrainer:
             beta_2=adam_beta2,
             epsilon=adam_epsilon)
 
-        channel_mapping = {k: v for k, v in dict(vars(FeaturesSetCppConv)).items() if isinstance(v, int) and v < 100}
+        channel_mapping = {k: v for k, v in dict(vars(type(self.config.network.feature_extractor))).items() if isinstance(v, int) and v < 100}
         self.feature_names = {}
-        for c in range(FeaturesSetCppConv.FEATURE_SHAPE[-1]):
+        for c in range(self.config.network.feature_extractor.FEATURE_SHAPE[-1]):
             for k, v in channel_mapping.items():
                 if v > c:
                     break

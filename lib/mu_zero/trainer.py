@@ -312,7 +312,7 @@ class MuZeroTrainer:
                                                      keepdims=True)) + 1e-7  # ensure non zero prob for each dimension
         latent_space_dist = latent_space / tf.reduce_sum(latent_space, axis=0, keepdims=True)
 
-        tf.assert_less(tf.reduce_sum(latent_space_dist, axis=0) - 1, 1e-5)
+        tf.assert_less(tf.reduce_sum(latent_space_dist, axis=0) - 1, 1e-2)
 
         entropy = - tf.reduce_mean(tf.reduce_sum((latent_space_dist * tf.math.log(latent_space_dist)), axis=0))
 

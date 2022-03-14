@@ -10,11 +10,12 @@ def test_buffer_size():
         max_buffer_size=1000,
         batch_size=32,
         trajectory_length=5,
+        data_file_ending=".imperfect.jass-data.pkl",
         game_data_folder=Path(__file__).parent.parent.parent / "resources",
         clean_up_files=False
     )
 
-    assert testee.buffer_size == 36
+    assert testee.buffer_size == 28
 
 
 def test_batch_size():
@@ -22,6 +23,7 @@ def test_batch_size():
         max_buffer_size=1000,
         batch_size=32,
         trajectory_length=5,
+        data_file_ending=".imperfect.jass-data.pkl",
         game_data_folder=Path(__file__).parent.parent.parent / "resources",
         clean_up_files=False
     )
@@ -38,6 +40,7 @@ def test_sample_trajectory():
         max_buffer_size=1000,
         batch_size=32,
         trajectory_length=5,
+        data_file_ending=".imperfect.jass-data.pkl",
         game_data_folder=Path(__file__).parent.parent.parent / "resources",
         clean_up_files=False
     )

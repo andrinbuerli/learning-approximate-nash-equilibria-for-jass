@@ -89,7 +89,7 @@ def test_select():
     child = testee.tree_policy(node=node, stats=MinMaxStats(), observation=obs)
 
     assert child.parent is node
-    assert child.valid_actions.sum() == child.valid_actions.shape[0]
+    assert child.valid_actions.sum() == 36
 
     assert node.prior is not None
     assert node.value is not None

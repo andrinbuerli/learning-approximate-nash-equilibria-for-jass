@@ -120,7 +120,7 @@ class ALPV_MCTS:
 
         for action, node in self.root.children.items():
             prob[action] = node.visits
-            q = (node.value_sum[node.player] / node.visits)
+            q = (node.value_sum[node.player] / (node.visits + 1))
             if self.mdp_value:
                 q_value[action] = q * self.discount + node.reward[node.player]
             else:

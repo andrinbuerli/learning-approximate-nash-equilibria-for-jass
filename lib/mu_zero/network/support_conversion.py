@@ -25,7 +25,7 @@ def support_to_scalar_per_player(distribution, min_value, nr_players):
         support_to_scalar(tf.reshape(distribution, (-1, distribution.shape[-1])), min_value=min_value),
         (-1, nr_players))
 
-def scalar_to_support(scalar_m, support_size, min_value):
+def scalar_to_support(scalar_m, support_size, min_value, augment=True):
     """
     Transform a scalar to a categorical representation
     Only discrete values are assumed
@@ -36,11 +36,11 @@ def scalar_to_support(scalar_m, support_size, min_value):
     tf.debugging.assert_integer(scalar_m)
 
     scalar_m = tf.clip_by_value(tf.cast(scalar_m, tf.int32), clip_value_min=min_value,
-                                clip_value_max=min_value + support_size)
+                                clip_value_max=min_value + (support_size - 1))
     scalar_l = tf.clip_by_value(tf.cast(scalar_m - 1, tf.int32), clip_value_min=min_value,
-                                clip_value_max=min_value + support_size)
+                                clip_value_max=min_value + (support_size - 1))
     scalar_h = tf.clip_by_value(tf.cast(scalar_m + 1, tf.int32), clip_value_min=min_value,
-                                clip_value_max=min_value + support_size)
+                                clip_value_max=min_value + (support_size - 1))
 
     distribution_m = tf.one_hot(scalar_m, depth=support_size)
     distribution_l = tf.one_hot(scalar_l, depth=support_size)
@@ -48,7 +48,10 @@ def scalar_to_support(scalar_m, support_size, min_value):
 
     # make support non-one hot!
     shape = tf.shape(distribution_m)
-    rand = tf.random.uniform((shape[0], shape[1], 1), minval=0, maxval=0.5)
+    if augment:
+        rand = tf.random.uniform((shape[0], shape[1], 1), minval=0, maxval=0.5)
+    else:
+        rand = 0
     distribution = (rand / 2) * distribution_l + (1 - rand) * distribution_m + (rand / 2) * distribution_h
 
     return distribution

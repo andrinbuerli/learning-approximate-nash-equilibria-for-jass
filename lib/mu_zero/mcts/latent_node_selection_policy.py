@@ -133,6 +133,7 @@ class LatentNodeSelectionPolicy:
             if action < TRUMP_FULL_OFFSET:
                 nr_played_cards = len(node.cards_played)
                 next_state_is_at_start_of_trick = (nr_played_cards + 1) % 4 == 0
+
                 if next_state_is_at_start_of_trick:
                     next_player_in_game = self._get_start_trick_next_player(action, node, root_obs)
                 else:
@@ -149,7 +150,10 @@ class LatentNodeSelectionPolicy:
                     next_player_in_game = (node.next_player + 2) % 4
                     pushed = True
                 else:  # TRUMP
-                    next_player_in_game = node.next_player
+                    if node.pushed:
+                        next_player_in_game = (node.next_player + 2) % 4
+                    else:
+                        next_player_in_game = node.next_player
                     trump = action - 36
 
                 node.add_child(

@@ -143,7 +143,7 @@ class MuZeroTrainer:
     def train(self, batches):
         training_infos = list()
         for states, actions, rewards, probs, outcomes in batches:
-            info, absolute_reward_errors, absolute_value_errors, policy_kls, policy_ces, ft = self.train_step(
+            info, absolute_reward_errors, absolute_value_errors, policy_kls, policy_ces, ls_entropies, ft = self.train_step(
                 tf.convert_to_tensor(states),
                 tf.convert_to_tensor(actions),
                 tf.convert_to_tensor(rewards),
@@ -166,12 +166,16 @@ class MuZeroTrainer:
                 f"PCE/policy_ce_{i}_steps_ahead": x for i, x in enumerate(policy_ces)
             }
 
+            ls_entropies = {
+                f"LSE/latent_space_entropy_{i}_steps_ahead": x for i, x in enumerate(ls_entropies)
+            }
+
             train_input_dict = {
                 f"train_input/channel_{c}_{self.feature_names[c]}": ft[c] for c in range(FeaturesSetCppConv.FEATURE_SHAPE[-1])
             }
 
             training_infos.append({
-                **info, **reward_error, **value_error, **policy_kls, **policy_ces, **train_input_dict
+                **info, **reward_error, **value_error, **policy_kls, **policy_ces, **ls_entropies, **train_input_dict
             })
 
             del info, absolute_reward_errors, absolute_value_errors, policy_kls, policy_ces
@@ -193,6 +197,7 @@ class MuZeroTrainer:
         policy_ces = tf.TensorArray(tf.float32, size=trajectory_length, dynamic_size=False, clear_after_read=True)
         absolute_value_errors = tf.TensorArray(tf.float32, size=trajectory_length, dynamic_size=False, clear_after_read=True)
         absolute_reward_errors = tf.TensorArray(tf.float32, size=trajectory_length, dynamic_size=False, clear_after_read=True)
+        latent_space_entropy = tf.TensorArray(tf.float32, size=trajectory_length, dynamic_size=False, clear_after_read=True)
 
         rewards_target = tf.tile(rewards_target, [1, 1, 2])
         outcomes_target = tf.tile(outcomes_target, [1, 1, 2])
@@ -226,6 +231,9 @@ class MuZeroTrainer:
             absolute_value_errors = absolute_value_errors.write(0, tf.reduce_mean(tf.abs(expected_value - tf.cast(outcomes_target[:, 0], tf.float32)), name="val_mae"))
 
             absolute_reward_errors = absolute_reward_errors.write(0, 0)
+
+            entropy = self.calculate_LSE(batch_size, encoded_states)
+            latent_space_entropy.write(0, entropy)
             # ---------------Logging --------------- #
 
 
@@ -264,6 +272,9 @@ class MuZeroTrainer:
                 absolute_value_errors = absolute_value_errors.write(i+1, tf.reduce_mean(tf.abs(expected_value - tf.cast(outcomes_target[:, i+1], tf.float32)), name="val_mae"))
                 expected_reward = support_to_scalar_per_player(reward, min_value=0, nr_players=4)
                 absolute_reward_errors = absolute_reward_errors.write(i+1, tf.reduce_mean(tf.abs(expected_reward - tf.cast(rewards_target[:, i+1], tf.float32)), name="reard_mae"))
+
+                entropy = self.calculate_LSE(batch_size, encoded_states)
+                latent_space_entropy.write(i+1, entropy)
                 # ---------------Logging --------------- #
 
             loss = tf.reduce_mean(
@@ -291,8 +302,21 @@ class MuZeroTrainer:
             "training/squared_weights_sum": squared_weights_sum,
             "training/loss": loss,
             **gradient_hists
-        }, absolute_reward_errors.stack(), absolute_value_errors.stack(), policy_kls.stack(), policy_ces.stack(), mean_features
+        }, absolute_reward_errors.stack(), absolute_value_errors.stack(), policy_kls.stack(), policy_ces.stack(),\
+               latent_space_entropy.stack(), mean_features
 
+    @staticmethod
+    def calculate_LSE(batch_size, encoded_states):
+        latent_space = tf.reshape(encoded_states, (batch_size, -1))
+        latent_space = (latent_space - tf.reduce_min(latent_space, axis=0,
+                                                     keepdims=True)) + 1e-7  # ensure non zero prob for each dimension
+        latent_space_dist = latent_space / tf.reduce_sum(latent_space, axis=0, keepdims=True)
+
+        tf.assert_less(tf.reduce_sum(latent_space_dist, axis=0) - 1, 1e-5)
+
+        entropy = - tf.reduce_mean(tf.reduce_sum((latent_space_dist * tf.math.log(latent_space_dist)), axis=0))
+
+        return entropy
 
     def cross_entropy(self, target, estimate):
         target = tf.cast(target, dtype=tf.float32)

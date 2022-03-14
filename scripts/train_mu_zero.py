@@ -6,6 +6,8 @@ import tensorflow as tf
 
 from jass.features.labels_action_full import LabelSetActionFull
 
+from lib.metrics.lse import LSE
+
 sys.path.append("../")
 
 from lib.log.wandb_logger import WandbLogger
@@ -93,6 +95,13 @@ if __name__=="__main__":
             worker_config=worker_config,
             network_path=str(network_path),
             n_steps_ahead=worker_config.optimization.log_n_steps_ahead
+        ),
+        LSE(
+            samples_per_calculation=32,
+            label_length=LabelSetActionFull.LABEL_LENGTH,
+            worker_config=worker_config,
+            network_path=str(network_path),
+            n_steps_ahead=worker_config.optimization.log_n_steps_ahead
         )
     )
 
@@ -115,6 +124,7 @@ if __name__=="__main__":
         replay_buffer=replay_bufer,
         metrics_manager=manager,
         logger=logger,
+        config=worker_config,
         value_loss_weight=worker_config.optimization.value_loss_weight,
         reward_loss_weight=worker_config.optimization.reward_loss_weight,
         policy_loss_weight=worker_config.optimization.policy_loss_weight,

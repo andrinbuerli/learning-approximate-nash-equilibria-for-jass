@@ -6,14 +6,13 @@ import tensorflow as tf
 
 from jass.features.labels_action_full import LabelSetActionFull
 
-from lib.metrics.lse import LSE
-
 sys.path.append("../")
 
 from lib.log.wandb_logger import WandbLogger
 from lib.metrics.save import SAVE
 from lib.metrics.spkl import SPKL
 from lib.metrics.vpkl import VPKL
+from lib.metrics.lse import LSE
 from lib.environment.networking.worker_config import WorkerConfig
 from lib.environment.networking.worker_connector import WorkerConnector
 from lib.factory import get_network, get_features

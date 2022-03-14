@@ -41,6 +41,8 @@ def _play_single_game_(i, agent):
 
     assert len(probs) == len(states), "Inconsistent game states and actions"
 
+    assert rewards.sum() == 157, "Invalid cumulative reward"
+
     assert np.array(probs[0]).argmax() >= TRUMP_FULL_OFFSET, "Fist action of game must be trump selection or PUSH"
 
     if np.array(probs[0]).argmax() == TRUMP_FULL_P and np.array(probs[1]).argmax() < TRUMP_FULL_OFFSET:

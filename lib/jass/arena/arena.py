@@ -94,14 +94,16 @@ class Arena:
 
         # if cheating mode agents observation corresponds to the full game state
         if self.cheating_mode:
-            self.get_agent_observation = lambda a: self._game.state
+            self.get_agent_observation = lambda a: self._store_latest_features(self._game.state)
         else:
-            self.get_agent_observation = lambda a: self._game.state \
+            self.get_agent_observation = lambda a: self._store_latest_features(self._game.state) \
                 if (hasattr(a, "cheating_mode") and a.cheating_mode) \
-                else jasscpp.observation_from_state(self._game.state, -1)
+                else self._store_latest_features(jasscpp.observation_from_state(self._game.state, -1))
 
         if self.store_trajectory:
             self.game_states, self.actions, self.rewards, self.outcomes, self.teams = [], [], [], [], []
+            self.latest_features = None
+            self.prev_points = None
             if self.store_trajectory_inc_raw_game_state:
                 self.raw_game_states = []
 
@@ -258,9 +260,9 @@ class Arena:
 
     def store_state(self, observation: jasscpp.GameStateCpp, trump_action):
         if self.store_trajectory:
-            state_feature = self.feature_extractor.convert_to_features(observation, self._rule)
+            state_feature = self.latest_features
             self.game_states.append(state_feature)
-            self.rewards.append(np.array(self._game.state.points) - np.array(observation.points))
+            self.rewards.append(np.array(self._game.state.points) - np.array(self.prev_points))
             self.actions.append(trump_action)
             if self.store_trajectory_inc_raw_game_state:
                 copy = observation
@@ -296,3 +298,9 @@ class Arena:
         if self._save_games:
             self._file_generator.__exit__(None, None, None)
         sys.stdout.write('\n')
+
+    def _store_latest_features(self, observation):
+        if self.store_trajectory:
+            self.latest_features = self.feature_extractor.convert_to_features(observation, self._rule)
+            self.prev_points = observation.points
+        return observation

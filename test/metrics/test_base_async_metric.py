@@ -3,6 +3,7 @@ from pathlib import Path
 from lib.environment.networking.worker_config import WorkerConfig
 from lib.metrics.base_async_metric import BaseAsyncMetric
 from lib.mu_zero.network.network_base import AbstractNetwork
+from test.util import get_test_config
 
 
 def metric_method(result):
@@ -22,8 +23,7 @@ class MetricMock(BaseAsyncMetric):
 
 
 def test_get_result():
-    config = WorkerConfig()
-    config.network.type = "resnet"
+    config = get_test_config()
 
     testee = MetricMock(
         config,
@@ -39,8 +39,7 @@ def test_get_result():
 
 
 def test_get_result_multi_threaded():
-    config = WorkerConfig()
-    config.network.type = "resnet"
+    config = get_test_config()
 
     testee = MetricMock(
         config,

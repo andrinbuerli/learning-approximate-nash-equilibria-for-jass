@@ -53,7 +53,6 @@ class ReplayBufferFromFolder:
                         break
                     except TimeoutError as e:
                         logging.warning(f"CAUGHT ERROR: {e}")
-
                 trajectory = self._sample_trajectory(episode)
 
                 states.append(trajectory[0]), actions.append(trajectory[1]), rewards.append(trajectory[2])

@@ -100,7 +100,7 @@ class FeaturesSetCppConvCheating(FeaturesSetCpp):
 
         # we use 3 planes for the valid actions, one for the cards and one for trump and one for push,
         # however we use the trump layers to the end.
-        valid_actions = rule.get_valid_cards_from_state(state).astype(np.float32)
+        valid_actions = np.clip(rule.get_valid_cards_from_state(state).astype(np.float32), a_min=0, a_max=1)
         valid_cards = np.zeros([36,1], dtype=np.float32)
         valid_cards[:, 0] = valid_actions[0:36]
 

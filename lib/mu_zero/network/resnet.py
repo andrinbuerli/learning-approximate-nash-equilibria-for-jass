@@ -42,33 +42,38 @@ class MuZeroResidualNetwork(AbstractNetwork):
 
         block_output_size_policy = reduced_channels_policy * observation_shape[0] * observation_shape[1]
 
-        self.representation_network = RepresentationNetwork(observation_shape, num_blocks_representation, num_channels)
+        self.representation_network = RepresentationNetwork(
+            observation_shape=observation_shape,
+            num_blocks=num_blocks_representation,
+            num_blocks_fully_connected=1,
+            num_channels=num_channels)
 
         self.dynamics_network = DynamicsNetwork(
-                observation_shape,
-                action_space_size,
-                players,
-                num_blocks_dynamics,
-                num_channels,
-                reduced_channels_reward,
-                fc_reward_layers,
-                self.support_size,
-                block_output_size_reward,
+                observation_shape=observation_shape,
+                action_space_size=action_space_size,
+                players=players,
+                num_blocks=num_blocks_dynamics,
+                num_blocks_fully_connected=1,
+                num_channels=num_channels,
+                reduced_channels_reward=reduced_channels_reward,
+                fc_reward_layers=fc_reward_layers,
+                full_support_size=self.support_size,
+                block_output_size_reward=block_output_size_reward,
             )
 
         self.prediction_network = PredictionNetwork(
-                observation_shape,
-                players,
-                action_space_size,
-                num_blocks_prediction,
-                num_channels,
-                reduced_channels_value,
-                reduced_channels_policy,
-                fc_value_layers,
-                fc_policy_layers,
-                self.support_size,
-                block_output_size_value,
-                block_output_size_policy,
+                observation_shape=observation_shape,
+                players=players,
+                action_space_size=action_space_size,
+                num_blocks=num_blocks_prediction,
+                num_channels=num_channels,
+                reduced_channels_value=reduced_channels_value,
+                reduced_channels_policy=reduced_channels_policy,
+                fc_value_layers=fc_value_layers,
+                fc_policy_layers=fc_policy_layers,
+                full_support_size=self.support_size,
+                block_output_size_value=block_output_size_value,
+                block_output_size_policy=block_output_size_policy,
             )
 
         self._warmup()
@@ -183,14 +188,16 @@ class RepresentationNetwork(tf.keras.Model):
         self,
         observation_shape,
         num_blocks,
+        num_blocks_fully_connected,
         num_channels
     ):
         super().__init__()
 
         self.observation_shape = observation_shape
-        self.conv = conv3x3(num_channels)
+        self.conv = conv2x3(num_channels)
         self.bn = layers.BatchNormalization()
         self.resblocks = [ResidualBlock(num_channels) for _ in range(num_blocks)]
+        self.resblocks_fcn = [ResidualFullyConnectedBlock(num_channels) for _ in range(num_blocks_fully_connected)]
 
     def call(self, x, training=None):
         x = tf.reshape(x, (-1, self.observation_shape[0], self.observation_shape[1], self.observation_shape[2]))
@@ -201,6 +208,10 @@ class RepresentationNetwork(tf.keras.Model):
 
         for block in self.resblocks:
             x = block(x, training=training)
+
+        for block in self.resblocks_fcn:
+            x = block(x, training=training)
+
         return x
 
 
@@ -211,6 +222,7 @@ class DynamicsNetwork(tf.keras.Model):
         action_space_size,
         players,
         num_blocks,
+        num_blocks_fully_connected,
         num_channels,
         reduced_channels_reward,
         fc_reward_layers,
@@ -223,9 +235,10 @@ class DynamicsNetwork(tf.keras.Model):
         self.full_support_size = full_support_size
         self.observation_shape = observation_shape
         self.num_channels = num_channels
-        self.conv = conv3x3(num_channels)
+        self.conv = conv2x3(num_channels)
         self.bn = layers.BatchNormalization()
         self.resblocks = [ResidualBlock(num_channels) for _ in range(num_blocks)]
+        self.resblocks_fcn = [ResidualFullyConnectedBlock(num_channels) for _ in range(num_blocks_fully_connected)]
 
         self.conv1x1_reward =  layers.Conv2D(filters=reduced_channels_reward, kernel_size=(1, 1), padding="same",
                                              activation=None, use_bias=False)
@@ -241,8 +254,13 @@ class DynamicsNetwork(tf.keras.Model):
         x = self.conv(x, training=training)
         x = self.bn(x, training=training)
         x = tf.nn.tanh(x)
+
         for block in self.resblocks:
             x = block(x, training=training)
+
+        for block in self.resblocks_fcn:
+            x = block(x, training=training)
+
         state = x
         x = self.conv1x1_reward(x, training=training)
         x = tf.reshape(x, (-1, self.block_output_size_reward))
@@ -275,6 +293,7 @@ class PredictionNetwork(tf.keras.Model):
         self.num_channels = num_channels
         self.resblocks = [ResidualBlock(num_channels) for _ in range(num_blocks)]
 
+
         self.conv1x1_value = layers.Conv2D(filters=reduced_channels_value, kernel_size=(1, 1), padding="same",
                                            activation=None, use_bias=False)
         self.conv1x1_policy = layers.Conv2D(filters=reduced_channels_policy, kernel_size=(1, 1), padding="same",
@@ -294,6 +313,7 @@ class PredictionNetwork(tf.keras.Model):
 
         for block in self.resblocks:
             x = block(x, training=training)
+
         value = self.conv1x1_value(x, training=training)
         policy = self.conv1x1_policy(x, training=training)
         value = tf.reshape(value, (-1, self.block_output_size_value))
@@ -305,8 +325,12 @@ class PredictionNetwork(tf.keras.Model):
         return policy, value
 
 
-def conv3x3(out_channels, strides=(1, 1), padding='same'):
+def conv2x3(out_channels, strides=(1, 1), padding='same'):
     return layers.Conv2D(filters=out_channels, kernel_size=(2, 3), strides=strides,
+                         padding=padding, activation=None, use_bias=False)
+
+def conv4x9(out_channels, strides=(1, 1), padding='valid'):
+    return layers.Conv2D(filters=out_channels, kernel_size=(4, 9), strides=strides,
                          padding=padding, activation=None, use_bias=False)
 
 
@@ -314,9 +338,9 @@ def conv3x3(out_channels, strides=(1, 1), padding='same'):
 class ResidualBlock(tf.keras.Model):
     def __init__(self, num_channels):
         super().__init__()
-        self.conv1 = conv3x3(num_channels)
+        self.conv1 = conv2x3(num_channels)
         self.bn1 = layers.BatchNormalization()
-        self.conv2 = conv3x3(num_channels)
+        self.conv2 = conv2x3(num_channels)
         self.bn2 = layers.BatchNormalization()
 
     def call(self, x, training=None):
@@ -325,6 +349,29 @@ class ResidualBlock(tf.keras.Model):
         out = tf.nn.tanh(out)
         out = self.conv2(out, training=training)
         out = self.bn2(out, training=training)
+        out += x
+        out = tf.nn.tanh(out)
+        return out
+
+class ResidualFullyConnectedBlock(tf.keras.Model):
+    def __init__(self, num_channels):
+        super().__init__()
+        self.conv1 = conv2x3(num_channels // 2)
+        self.bn1 = layers.BatchNormalization()
+        self.conv2 = conv4x9(num_channels // 2)
+        self.bn2 = layers.BatchNormalization()
+        self.conv3 = conv2x3(num_channels)
+        self.bn3 = layers.BatchNormalization()
+
+    def call(self, x, training=None):
+        out = self.conv1(x, training=training)
+        out = self.bn1(out, training=training)
+        out = tf.nn.tanh(out)
+        out = self.conv2(out, training=training)
+        out = self.bn2(out, training=training)
+        out = tf.nn.tanh(out)
+        out = self.conv3(out, training=training)
+        out = self.bn3(out, training=training)
         out += x
         out = tf.nn.tanh(out)
         return out

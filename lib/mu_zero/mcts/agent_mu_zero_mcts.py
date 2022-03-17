@@ -48,6 +48,7 @@ class AgentMuZeroMCTS(RememberingAgent):
             synchronized=True,
             dirichlet_eps=dirichlet_eps,
             dirichlet_alpha=dirichlet_alpha,
+            mdp_value=mdp_value,
             discount=discount)
 
         self.reward_calc_policy = LatentValueCalculationPolicy()

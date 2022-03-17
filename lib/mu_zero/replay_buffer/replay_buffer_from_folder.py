@@ -116,11 +116,11 @@ class ReplayBufferFromFolder:
                     self.sum_tree.add(data=(s, a, r, p, o), p=1)  # no priorities associated with samples yet
 
                 self.size_of_last_update += len(states)
+
+                del states, actions, rewards, probs, outcomes
+                gc.collect()
             except:
                 logging.warning(f"failed reading file {file}.")
-
-            del states, actions, rewards, probs, outcomes
-            gc.collect()
 
         logging.info(f"update done, added {self.size_of_last_update} episodes ")
 

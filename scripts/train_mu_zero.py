@@ -81,7 +81,8 @@ if __name__=="__main__":
             label_length=LabelSetActionFull.LABEL_LENGTH,
             worker_config=worker_config,
             network_path=str(network_path),
-            n_steps_ahead=worker_config.optimization.log_n_steps_ahead
+            n_steps_ahead=worker_config.optimization.log_n_steps_ahead,
+            mdp_value=worker_config.agent.mdp_value
         ),
         SPKL(
             samples_per_calculation=32,

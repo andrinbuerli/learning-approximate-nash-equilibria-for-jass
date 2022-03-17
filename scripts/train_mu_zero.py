@@ -66,7 +66,9 @@ if __name__=="__main__":
         trajectory_length=worker_config.optimization.trajectory_length,
         game_data_folder=data_path / "game_data",
         clean_up_files=True,
-        cache_path=data_path)
+        cache_path=data_path,
+        mdp_value=worker_config.agent.mdp_value,
+        gamma=worker_config.agent.discount)
 
     replay_bufer.restore()
 

@@ -45,10 +45,6 @@ class LatentNodeSelectionPolicy:
         self.feature_extractor = feature_extractor
         self.rule = RuleSchieber()
 
-        self.nr_played_cards_in_selected_node = []
-
-        self.stats = None
-
     def tree_policy(self, observation: jasscpp.GameObservationCpp, node: Node, stats: MinMaxStats, virtual_loss=0) -> Node:
         while True:
             with node.lock: # ensures that node and children not currently locked, i.e. being expanded

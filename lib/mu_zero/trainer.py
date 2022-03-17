@@ -266,7 +266,7 @@ class MuZeroTrainer:
                 # ---------------Logging --------------- #
                 policy_target = tf.cast(self.clip_probability_dist(policies_target[:,  i + 1]), tf.float32)
                 policy_kl_divergence_per_sample = tf.reduce_sum(
-                    policy_target * tf.math.log(policy_target / self.clip_probability_dist(policy_estimate)), axis=1)
+                    policy_target * tf.math.log(policy_target / self.clip_probability_dist(policy_estimate)), axis=1) * (1 - post_terminal_states)
                 policy_kls = policy_kls.write(i+1, tf.reduce_mean(policy_kl_divergence_per_sample, name="kl_mean"))
                 policy_ces = policy_ces.write(i+1, tf.reduce_mean(policy_ce, name="ce_mean"))
 

@@ -124,7 +124,7 @@ class ReplayBufferFromFolder:
         assert np.allclose(probs[:episode_length].sum(axis=-1), 1)
 
         # do not create trajectories beyond terminal state
-        i = np.random.choice(range(episode_length - self.trajectory_length)) if i is None else i
+        i = np.random.choice(range(episode_length)) if i is None else i
 
         indices = [i+j-1 for j in range(self.trajectory_length) if i+j-1 <= episode_length-1]
         trajectory = [x[indices] for x in episode]

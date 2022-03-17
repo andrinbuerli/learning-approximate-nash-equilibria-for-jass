@@ -16,7 +16,7 @@ def _calculate_mae_(outcomes, value):
     mae = tf.reduce_mean(tf.abs(value_pred - tf.cast(outcomes, tf.float32)))
     return mae
 
-def _calculate_batched_save_(network: AbstractNetwork, iterator, n_steps_ahead, f_shape, l_shape, features):
+def _calculate_batched_save_(network: AbstractNetwork, iterator, n_steps_ahead, f_shape, l_shape, features, mdp_value):
     x, y = next(iterator)
 
     x = tf.reshape(x, (-1,) + f_shape)
@@ -35,12 +35,18 @@ def _calculate_batched_save_(network: AbstractNetwork, iterator, n_steps_ahead, 
     current_team = tf.argmax(current_player, axis=-1) % 2
     outcomes = tf.cast(tf.gather_nd(y, positions)[:, 43:45] * 157, tf.int32)
 
+    if mdp_value:
+        current_points = tf.cast(reshaped[:, 0, 0, features.CH_POINTS_OWN:(features.CH_POINTS_OPP + 1)] * 157, tf.int32)
+        outcomes = outcomes - current_points
+
     current_teams = 1 - tf.cast((
             tf.tile([[0, 1, 0, 1]], [batch_size, 1]) == tf.cast(tf.reshape(tf.repeat(current_team, 4), [-1, 4]), tf.int32)),
         tf.int32)
     outcomes = tf.gather_nd(outcomes, tf.stack((tf.reshape(tf.repeat(tf.range(batch_size), 4), [-1, 4]), current_teams), axis=-1))
 
-    assert all(tf.reduce_sum(outcomes, axis=-1) == 157 * 2), f"{tf.reduce_sum(outcomes, axis=-1)}, should match 157 * 2"
+    if not mdp_value:
+        assert all(
+            tf.reduce_sum(outcomes, axis=-1) == 157 * 2), f"{tf.reduce_sum(outcomes, axis=-1)}, should match 157 * 2"
 
     min_tensor = tf.stack((tf.range(batch_size), tf.repeat(trajectory_length - 1, batch_size)), axis=1)
     zeros = tf.zeros(batch_size, dtype=tf.int32)
@@ -61,6 +67,22 @@ def _calculate_batched_save_(network: AbstractNetwork, iterator, n_steps_ahead, 
         # solve if trajectory hans only length of 37
         current_positions = current_positions - tf.stack((zeros, tf.cast(tf.reduce_sum(supervised_policy, axis=-1) == 0, tf.int32)), axis=1)
 
+        if mdp_value:
+            current_states = tf.gather_nd(x, positions)
+            reshaped = tf.reshape(current_states, (-1,) + features.FEATURE_SHAPE)
+            current_player = tf.reduce_max(reshaped[:, :, :, features.CH_PLAYER:features.CH_PLAYER + 4], axis=(1, 2))
+            current_team = tf.argmax(current_player, axis=-1) % 2
+            outcomes = tf.cast(tf.gather_nd(y, positions)[:, 43:45] * 157, tf.int32)
+            current_points = tf.cast(reshaped[:, 0, 0, features.CH_POINTS_OWN:(features.CH_POINTS_OPP + 1)] * 157, tf.int32)
+            outcomes = outcomes - current_points
+            current_teams = 1 - tf.cast((
+                    tf.tile([[0, 1, 0, 1]], [batch_size, 1]) == tf.cast(tf.reshape(tf.repeat(current_team, 4), [-1, 4]),
+                                                                        tf.int32)),
+                tf.int32)
+            outcomes = tf.gather_nd(outcomes,
+                                    tf.stack((tf.reshape(tf.repeat(tf.range(batch_size), 4), [-1, 4]), current_teams),
+                                             axis=-1))
+
         mae = _calculate_mae_(outcomes, value)
         maes.append(float(mae))
 
@@ -74,7 +96,7 @@ class SAVE(BaseAsyncMetric):
     def get_params(self, thread_nr: int, network: AbstractNetwork, init_vars=None) -> []:
         iterator = init_vars
         return network, iterator, self.n_steps_ahead, self.trajectory_feature_shape, \
-               self.trajectory_label_shape, self.worker_config.network.feature_extractor
+               self.trajectory_label_shape, self.worker_config.network.feature_extractor, self.mdp_value
 
     def init_dataset(self):
         ds = tf.data.TFRecordDataset(self.tf_record_files)
@@ -91,9 +113,11 @@ class SAVE(BaseAsyncMetric):
             worker_config: WorkerConfig,
             network_path: str,
             n_steps_ahead: int,
+            mdp_value: bool,
             trajectory_length: int = 38,
             tf_record_files: [str] = None):
 
+        self.mdp_value = mdp_value
         cheating_mode = type(worker_config.network.feature_extractor) == FeaturesSetCppConvCheating
 
         file_ending = "*.perfect.tfrecord" if cheating_mode else "*.imperfect.tfrecord"

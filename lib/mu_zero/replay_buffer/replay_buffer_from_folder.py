@@ -135,7 +135,11 @@ class ReplayBufferFromFolder:
         i = np.random.choice(range(episode_length)) if i is None else i
 
         if self.mdp_value:
-            outcomes = np.array([self.gamma**j * x for j, x in enumerate(rewards[::-1].cumsum(axis=0)[::-1])])
+            outcomes = np.array([
+                np.sum([
+                    x * self.gamma**i for i, x in enumerate(rewards[k:])
+                ], axis=0) for k in range(rewards.shape[0])
+            ])
             episode = states, actions, rewards, probs, outcomes
 
         indices = [i+j for j in range(self.trajectory_length) if i+j <= episode_length-1]

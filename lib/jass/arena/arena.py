@@ -258,12 +258,12 @@ class Arena:
             for _ in self.game_states:
                 self.outcomes.append(self._game.state.points)
 
-    def store_state(self, observation: jasscpp.GameStateCpp, trump_action):
+    def store_state(self, observation: jasscpp.GameStateCpp, action):
         if self.store_trajectory:
             state_feature = self.latest_features
             self.game_states.append(state_feature)
             self.rewards.append(np.array(self._game.state.points) - np.array(self.prev_points))
-            self.actions.append(trump_action)
+            self.actions.append(action)
             if self.store_trajectory_inc_raw_game_state:
                 copy = observation
                 self.raw_game_states.append(copy)

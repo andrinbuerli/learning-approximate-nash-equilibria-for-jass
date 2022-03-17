@@ -30,6 +30,8 @@ def _play_single_game_(i, agent):
 
     states, actions, rewards, outcomes = arena.get_trajectory()
 
+    assert (rewards.sum(axis=0) == outcomes).all()
+
     probs = np.stack(trump_probs + card_probs)
 
     if len(states) == 37:  # pad if no push

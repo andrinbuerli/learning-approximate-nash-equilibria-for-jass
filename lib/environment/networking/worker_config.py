@@ -42,7 +42,9 @@ class NetworkConfig(BaseConfig):
         self.type=""
         self.action_space_size = 43
         self.num_blocks_representation = 2
+        self.fcn_blocks_representation = 1
         self.num_blocks_dynamics = 2
+        self.fcn_blocks_dynamics = 1
         self.num_blocks_prediction = 1
         self.num_channels = 256
         self.reduced_channels_reward = 128

@@ -14,6 +14,8 @@ class ReplayBufferFromFolder:
             max_buffer_size: int,
             batch_size: int,
             trajectory_length: int,
+            mdp_value: bool,
+            gamma: float,
             game_data_folder: Path,
             max_updates=20,
             data_file_ending=".jass-data.pkl",
@@ -24,6 +26,8 @@ class ReplayBufferFromFolder:
         (states, actions, rewards, probs, outcomes)
         """
 
+        self.gamma = gamma
+        self.mdp_value = mdp_value
         self.cache_path = cache_path
         self.trajectory_length = trajectory_length
         self.clean_up_files = clean_up_files
@@ -105,15 +109,18 @@ class ReplayBufferFromFolder:
                 if self.clean_up_files:
                     file.unlink()
 
+                assert len(states) == len(actions) == len(rewards) == len(probs) == len(outcomes)
+
                 for s, a, r, p, o in zip(states, actions, rewards, probs, outcomes):
+                    assert (r.sum(axis=0) == o[0]).all()
                     self.sum_tree.add(data=(s, a, r, p, o), p=1)  # no priorities associated with samples yet
 
                 self.size_of_last_update += len(states)
-
-                del states, actions, rewards, probs, outcomes
-                gc.collect()
             except:
                 logging.warning(f"failed reading file {file}.")
+
+            del states, actions, rewards, probs, outcomes
+            gc.collect()
 
         logging.info(f"update done, added {self.size_of_last_update} episodes ")
 
@@ -121,12 +128,18 @@ class ReplayBufferFromFolder:
         states, actions, rewards, probs, outcomes = episode
         episode_length = 37 if states[-1].sum() == 0 else 38
 
+        assert (rewards.sum(axis=0) == outcomes[0]).all()
         assert np.allclose(probs[:episode_length].sum(axis=-1), 1)
 
         # do not create trajectories beyond terminal state
         i = np.random.choice(range(episode_length)) if i is None else i
 
-        indices = [i+j-1 for j in range(self.trajectory_length) if i+j-1 <= episode_length-1]
+        if self.mdp_value:
+            outcomes = np.array([self.gamma**j * x for j, x in enumerate(rewards[::-1].cumsum(axis=0)[::-1])])
+            episode = states, actions, rewards, probs, outcomes
+
+        indices = [i+j for j in range(self.trajectory_length) if i+j <= episode_length-1]
+        assert all([x >= 0 for x in indices])
         trajectory = [x[indices] for x in episode]
 
         if len(indices) < self.trajectory_length:
@@ -136,7 +149,10 @@ class ReplayBufferFromFolder:
                 actions = np.concatenate((actions, actions[-1][np.newaxis]), axis=0)
                 rewards = np.concatenate((rewards, np.zeros_like(rewards[-1], dtype=np.int32)[np.newaxis]), axis=0)
                 probs = np.concatenate((probs, np.zeros_like(probs[-1], dtype=np.float32)[np.newaxis]), axis=0)
-                outcomes = np.concatenate((outcomes, outcomes[-1][np.newaxis]), axis=0)
+                if self.mdp_value:
+                    outcomes = np.concatenate((outcomes, np.zeros_like(outcomes[-1], dtype=np.int32)[np.newaxis]), axis=0)
+                else:
+                    outcomes = np.concatenate((outcomes, outcomes[-1][np.newaxis]), axis=0)
 
             trajectory = states, actions, rewards, probs, outcomes
 

@@ -136,7 +136,7 @@ if __name__ == "__main__":
 
                 logging.info("Triggered BufferExecutor reload")
 
-                [x.clear() for x in [all_states, all_probs, all_outcomes, all_actions]]
+                [x.clear() for x in [all_states, all_actions, all_rewards, all_probs, all_outcomes]]
             except:
                 could_not_reach += 1
                 logging.error(f"Could not send data, could not reach for {could_not_reach} times...")
@@ -149,6 +149,7 @@ if __name__ == "__main__":
                     continue
         elif len(all_states) > args.max_states:
             all_states.clear()
+            all_rewards.clear()
             all_probs.clear()
             all_outcomes.clear()
             all_actions.clear()

@@ -246,7 +246,9 @@ class MuZeroTrainer:
                 # Scale the gradient at the start of the dynamics function (See paper appendix Training)
                 encoded_states = self.scale_gradient(factor=1/2)(encoded_states)
 
-                reward_target_distribution = scalar_to_support(rewards_target[:, i+1], support_size=reward_support_size,
+                # predicted reward is associated with action at t-1 therefore index i is used
+                # rather than i+1 as for policy and value
+                reward_target_distribution = scalar_to_support(rewards_target[:, i], support_size=reward_support_size,
                                                                min_value=0)
                 reward_ce = self.cross_entropy(reward_target_distribution, reward)
                 # Scale gradient by the number of unroll steps (See paper appendix Training)
@@ -258,13 +260,13 @@ class MuZeroTrainer:
                 # Scale gradient by the number of unroll steps (See paper appendix Training)
                 value_loss += self.scale_gradient(factor=1/trajectory_length)(value_ce)
 
-                post_terminal_states = tf.cast(tf.reduce_sum(policies_target[:, i + 1], axis=-1) == 0, tf.float32)
-                policy_ce = self.cross_entropy(policies_target[:, i + 1], policy_estimate) * (1 - post_terminal_states)
+                post_terminal_states = tf.cast(tf.reduce_sum(policies_target[:, i+1], axis=-1) == 0, tf.float32)
+                policy_ce = self.cross_entropy(policies_target[:, i+1], policy_estimate) * (1 - post_terminal_states)
                 # Scale gradient by the number of unroll steps (See paper appendix Training)
                 policy_loss += self.scale_gradient(factor=1/trajectory_length)(policy_ce)
 
                 # ---------------Logging --------------- #
-                policy_target = tf.cast(self.clip_probability_dist(policies_target[:,  i + 1]), tf.float32)
+                policy_target = tf.cast(self.clip_probability_dist(policies_target[:,  i+1]), tf.float32)
                 policy_kl_divergence_per_sample = tf.reduce_sum(
                     policy_target * tf.math.log(policy_target / self.clip_probability_dist(policy_estimate)), axis=1) * (1 - post_terminal_states)
                 policy_kls = policy_kls.write(i+1, tf.reduce_mean(policy_kl_divergence_per_sample, name="kl_mean"))

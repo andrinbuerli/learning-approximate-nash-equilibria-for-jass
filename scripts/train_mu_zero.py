@@ -2,6 +2,8 @@ import argparse
 import logging
 import sys
 from pathlib import Path
+from pprint import pprint
+
 import tensorflow as tf
 
 from jass.features.labels_action_full import LabelSetActionFull
@@ -40,6 +42,8 @@ if __name__=="__main__":
 
     worker_config = WorkerConfig()
     worker_config.load_from_json(args.settings)
+
+    pprint(worker_config.to_json())
 
     data_path = Path(worker_config.optimization.data_folder) / f"{worker_config.timestamp}"
     data_path.mkdir(parents=True, exist_ok=True)

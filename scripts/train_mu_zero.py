@@ -77,7 +77,7 @@ if __name__=="__main__":
         APAO("dpolicy", worker_config, str(network_path), parallel_threads=4),
         APAO("random", worker_config, str(network_path), parallel_threads=4),
         SAVE(
-            samples_per_calculation=32,
+            samples_per_calculation=worker_config.optimization.batch_size,
             label_length=LabelSetActionFull.LABEL_LENGTH,
             worker_config=worker_config,
             network_path=str(network_path),
@@ -85,21 +85,21 @@ if __name__=="__main__":
             mdp_value=worker_config.agent.mdp_value
         ),
         SPKL(
-            samples_per_calculation=32,
+            samples_per_calculation=worker_config.optimization.batch_size,
             label_length=LabelSetActionFull.LABEL_LENGTH,
             worker_config=worker_config,
             network_path=str(network_path),
             n_steps_ahead=worker_config.optimization.log_n_steps_ahead
         ),
         VPKL(
-            samples_per_calculation=32,
+            samples_per_calculation=worker_config.optimization.batch_size,
             label_length=LabelSetActionFull.LABEL_LENGTH,
             worker_config=worker_config,
             network_path=str(network_path),
             n_steps_ahead=worker_config.optimization.log_n_steps_ahead
         ),
         LSE(
-            samples_per_calculation=32,
+            samples_per_calculation=worker_config.optimization.batch_size,
             label_length=LabelSetActionFull.LABEL_LENGTH,
             worker_config=worker_config,
             network_path=str(network_path),

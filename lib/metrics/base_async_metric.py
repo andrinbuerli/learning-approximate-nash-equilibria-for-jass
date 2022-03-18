@@ -64,9 +64,6 @@ class BaseAsyncMetric:
 
                 results = pool.starmap(self.metric_method, params)
 
-                while self.result_queue.qsize() > 0:
-                    time.sleep(5)
-
                 if len(results) == 1 and type(results[0]) is dict:
                     self.result_queue.put(results[0])
                 else:
@@ -74,6 +71,9 @@ class BaseAsyncMetric:
 
                 del results, params
                 gc.collect()
+
+                while self.result_queue.qsize() > 0:
+                    time.sleep(5)
 
             except Exception as e:
                 logging.error(f"{type(self)}: Encountered error {e}, continuing anyways")

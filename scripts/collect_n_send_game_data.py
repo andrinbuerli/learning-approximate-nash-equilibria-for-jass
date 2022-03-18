@@ -87,6 +87,8 @@ if __name__ == "__main__":
     network_path.mkdir(parents=True, exist_ok=True)
     network.save(network_path)
 
+    network.summary()
+
     all_states, all_actions, all_rewards, all_probs, all_outcomes = [], [], [], [], []
 
     could_not_reach = 0
@@ -127,16 +129,14 @@ if __name__ == "__main__":
 
                 logging.info(f"Sending {len(all_states)} episodes successful")
 
+                [x.clear() for x in [all_states, all_actions, all_rewards, all_probs, all_outcomes]]
+
                 weights = pickle.loads(response.content)
 
                 logging.info("Received new weights")
 
                 network.set_weights_from_list(weights)
                 network.save(network_path)
-
-                logging.info("Triggered BufferExecutor reload")
-
-                [x.clear() for x in [all_states, all_actions, all_rewards, all_probs, all_outcomes]]
             except:
                 could_not_reach += 1
                 logging.error(f"Could not send data, could not reach for {could_not_reach} times...")

@@ -15,7 +15,7 @@ from lib.metrics.vpkl import VPKL
 from lib.metrics.lse import LSE
 from lib.environment.networking.worker_config import WorkerConfig
 from lib.environment.networking.worker_connector import WorkerConnector
-from lib.factory import get_network, get_features
+from lib.factory import get_network, get_features, get_optimizer
 from lib.log.console_logger import ConsoleLogger
 from lib.metrics.apao import APAO
 from lib.metrics.metrics_manager import MetricsManager
@@ -121,6 +121,8 @@ if __name__=="__main__":
     else:
         logger = ConsoleLogger({})
 
+    optimizer = get_optimizer(worker_config)
+
     trainer = MuZeroTrainer(
         network=network,
         replay_buffer=replay_bufer,
@@ -130,11 +132,7 @@ if __name__=="__main__":
         value_loss_weight=worker_config.optimization.value_loss_weight,
         reward_loss_weight=worker_config.optimization.reward_loss_weight,
         policy_loss_weight=worker_config.optimization.policy_loss_weight,
-        learning_rate=worker_config.optimization.learning_rate,
-        weight_decay=worker_config.optimization.weight_decay,
-        adam_beta1=worker_config.optimization.adam_beta1,
-        adam_beta2=worker_config.optimization.adam_beta2,
-        adam_epsilon=worker_config.optimization.adam_epsilon,
+        optimizer=optimizer,
         min_buffer_size=worker_config.optimization.min_buffer_size,
         updates_per_step=worker_config.optimization.updates_per_step,
         store_model_weights_after=worker_config.optimization.store_model_weights_after,

@@ -21,6 +21,8 @@
   "virtual_loss": 10
  },
  "optimization": {
+  "optimizer": "sgd",
+  "learning_rate": 0.001,
   "adam_beta1": 0.9,
   "adam_beta2": 0.999,
   "adam_epsilon": 1e-07,
@@ -29,41 +31,40 @@
   "value_loss_weight": 0.25,
   "reward_loss_weight": 1.0,
   "policy_loss_weight": 1.0,
-  "learning_rate": 0.0001,
   "max_buffer_size": 20000,
   "min_buffer_size": 10000,
   "port": 8080,
   "store_model_weights_after": 10,
   "trajectory_length": 10,
-  "updates_per_step": 32,
+  "updates_per_step": 16,
   "iterations": 1000000,
   "weight_decay": 0.0001,
   "store_buffer": true,
   "log_n_steps_ahead": 15,
-  "apa_n_games": 32
+  "apa_n_games": 4
  },
  "network": {
   "action_space_size": 43,
   "fc_policy_layers": [
-   256
+   128
   ],
   "fc_reward_layers": [
-   256
+   128
   ],
   "fc_value_layers": [
-   256
+   128
   ],
   "feature_extractor": "cnn-full-cheating",
   "num_blocks_representation": 2,
   "fcn_blocks_representation": 1,
   "num_blocks_dynamics": 3,
   "fcn_blocks_dynamics": 2,
-  "num_blocks_prediction": 1,
-  "num_channels": 256,
+  "num_blocks_prediction": 2,
+  "num_channels": 128,
   "path": null,
   "players": 4,
-  "reduced_channels_policy": 128,
-  "reduced_channels_reward": 128,
+  "reduced_channels_policy": 64,
+  "reduced_channels_reward": 64,
   "reduced_channels_value": 1,
   "support_size": 157,
   "type": "resnet"

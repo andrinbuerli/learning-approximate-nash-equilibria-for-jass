@@ -25,11 +25,7 @@ class MuZeroTrainer:
             metrics_manager: MetricsManager,
             config: WorkerConfig,
             logger: BaseLogger,
-            learning_rate: float,
-            weight_decay: float,
-            adam_beta1: float,
-            adam_beta2: float,
-            adam_epsilon: float,
+            optimizer: tf.keras.optimizers.Optimizer,
             min_buffer_size: int,
             updates_per_step: int,
             store_model_weights_after: int,
@@ -53,12 +49,7 @@ class MuZeroTrainer:
         self.replay_buffer = replay_buffer
         self.network = network
 
-        self.optimizer = tfa.optimizers.AdamW(
-            learning_rate=learning_rate,
-            weight_decay=weight_decay,
-            beta_1=adam_beta1,
-            beta_2=adam_beta2,
-            epsilon=adam_epsilon)
+        self.optimizer = optimizer
 
         channel_mapping = {k: v for k, v in dict(vars(type(self.config.network.feature_extractor))).items() if isinstance(v, int) and v < 100}
         self.feature_names = {}

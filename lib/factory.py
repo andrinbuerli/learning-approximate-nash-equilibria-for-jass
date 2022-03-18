@@ -1,6 +1,8 @@
 from pathlib import Path
 
 import numpy as np
+import tensorflow_addons as tfa
+import tensorflow as tf
 
 from lib.environment.networking.worker_config import WorkerConfig
 from lib.jass.agent.agent import CppAgent
@@ -79,6 +81,23 @@ def get_network(config: WorkerConfig, network_path: str = None):
 
     raise NotImplementedError(f"Network type {config.network.type} is not implemented.")
 
+
+def get_optimizer(config: WorkerConfig) -> tf.keras.optimizers.Optimizer:
+    if config.optimization.optimizer == "adam":
+        return tfa.optimizers.AdamW(
+            learning_rate=config.optimization.learning_rate,
+            weight_decay=config.optimization.weight_decay,
+            beta_1=config.optimization.adam_beta1,
+            beta_2=config.optimization.adam_beta2,
+            epsilon=config.optimization.adam_epsilon)
+    elif config.optimization.optimizer == "sgd":
+        return tfa.optimizers.SGDW(
+            learning_rate=config.optimization.learning_rate,
+            weight_decay=config.optimization.weight_decay,
+            momentum=config.optimization.adam_beta1,
+            nesterov=True)
+
+    raise NotImplementedError(f"Optimizer {config.optimization.optimizer} is not implemented.")
 
 def get_opponent(type: str) -> CppAgent:
     if type == "dmcts":

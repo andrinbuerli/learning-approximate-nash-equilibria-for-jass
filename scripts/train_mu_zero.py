@@ -73,9 +73,9 @@ if __name__=="__main__":
     replay_bufer.restore()
 
     manager = MetricsManager(
-        APAO("dmcts", worker_config, str(network_path), parallel_threads=4),
-        APAO("dpolicy", worker_config, str(network_path), parallel_threads=4),
-        APAO("random", worker_config, str(network_path), parallel_threads=4),
+        APAO("dmcts", worker_config, str(network_path), parallel_threads=worker_config.optimization.apa_n_games),
+        APAO("dpolicy", worker_config, str(network_path), parallel_threads=worker_config.optimization.apa_n_games),
+        APAO("random", worker_config, str(network_path), parallel_threads=worker_config.optimization.apa_n_games),
         SAVE(
             samples_per_calculation=worker_config.optimization.batch_size,
             label_length=LabelSetActionFull.LABEL_LENGTH,

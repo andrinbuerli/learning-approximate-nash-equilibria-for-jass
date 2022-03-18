@@ -79,6 +79,7 @@ class OptimizationConfig(BaseConfig):
         self.iterations = 5
         self.store_buffer = False
         self.log_n_steps_ahead = 3
+        self.apa_n_games = 4
         self.data_folder = ""
 
 class LogConfig(BaseConfig):

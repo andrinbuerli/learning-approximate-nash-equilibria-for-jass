@@ -260,7 +260,7 @@ class Arena:
                 self.outcomes.append(self._game.state.points)
 
     def store_state(self, observation: jasscpp.GameStateCpp, action):
-        assert 0 < action <  ACTION_SET_FULL_SIZE
+        assert 0 <= action <  ACTION_SET_FULL_SIZE, f"invalid action {action}"
 
         if self.store_trajectory:
             state_feature = self.latest_features

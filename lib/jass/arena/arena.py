@@ -13,7 +13,7 @@ import numpy as np
 from jass.agents.agent import Agent
 from jass.arena.dealing_card_random_strategy import DealingCardRandomStrategy
 from jass.arena.dealing_card_strategy import DealingCardStrategy
-from jass.game.const import NORTH, EAST, SOUTH, WEST, DIAMONDS, MAX_TRUMP, PUSH, next_player
+from jass.game.const import NORTH, EAST, SOUTH, WEST, DIAMONDS, MAX_TRUMP, PUSH, next_player, TRUMP_FULL_OFFSET
 from jass.game.game_observation import GameObservation
 from jass.logs.game_log_entry import GameLogEntry
 from jass.logs.log_entry_file_generator import LogEntryFileGenerator
@@ -224,7 +224,7 @@ class Arena:
             raise RuntimeError('Illegal trump (' + str(trump_action) + ') selected')
 
         self._game.perform_action_trump(trump_action)
-        self.store_state(observation, trump_action)
+        self.store_state(observation, trump_action + TRUMP_FULL_OFFSET)
         if trump_action == PUSH:
             # ask second player
             observation = self.get_agent_observation(self._players[self._game.state.player])
@@ -233,7 +233,7 @@ class Arena:
                 self._logger.error('Illegal trump (' + str(trump_action) + ') selected')
                 raise RuntimeError('Illegal trump (' + str(trump_action) + ') selected')
             self._game.perform_action_trump(trump_action)
-            self.store_state(observation, trump_action)
+            self.store_state(observation, trump_action + TRUMP_FULL_OFFSET)
 
         # play cards
         for cards in range(36):

@@ -1,4 +1,5 @@
 {
+ "timestamp": 1647700212,
  "log": {
   "projectname": "jass-mu-zero",
   "entity": "andrinburli",
@@ -55,16 +56,16 @@
   ],
   "feature_extractor": "cnn-full-cheating",
   "num_blocks_representation": 4,
-  "fcn_blocks_representation": 2,
-  "num_blocks_dynamics": 8,
+  "fcn_blocks_representation": 1,
+  "num_blocks_dynamics": 4,
   "fcn_blocks_dynamics": 2,
-  "num_blocks_prediction": 2,
+  "num_blocks_prediction": 1,
   "num_channels": 128,
   "path": null,
   "players": 4,
-  "reduced_channels_policy": 128,
-  "reduced_channels_reward": 128,
-  "reduced_channels_value": 128,
+  "reduced_channels_policy": 64,
+  "reduced_channels_reward": 64,
+  "reduced_channels_value": 64,
   "support_size": 157,
   "type": "resnet"
  }

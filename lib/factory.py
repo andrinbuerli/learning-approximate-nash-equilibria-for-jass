@@ -115,6 +115,6 @@ def get_features(type: str) -> FeaturesSetCpp:
         return FeaturesSetCppConv()
     if type == "cnn-full-cheating":
         return FeaturesSetCppConvCheating()
-    raise NotImplementedError(f"Opponent type {type} is not implemented.")
+    raise NotImplementedError(f"Features type {type} is not implemented.")
 
 

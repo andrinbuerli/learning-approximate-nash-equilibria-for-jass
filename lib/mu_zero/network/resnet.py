@@ -249,7 +249,7 @@ class DynamicsNetwork(tf.keras.Model):
                 mlp(
                 self.block_output_size_reward, fc_reward_layers, full_support_size,
                 output_activation=layers.Activation("softmax")
-            ) for _ in range(players)
+            ) for _ in range(players // 2)
         ]
 
     def call(self, x, training=None):
@@ -268,7 +268,7 @@ class DynamicsNetwork(tf.keras.Model):
         state = x
         x = tf.nn.tanh(self.conv1x1_reward(x, training=training))
         x = tf.reshape(x, (-1, self.block_output_size_reward))
-        reward = tf.stack(([fc(x) for fc in self.fc_reward]), axis=1)
+        reward = tf.tile(tf.stack(([fc(x) for fc in self.fc_reward]), axis=1), [1, 2, 1])
         return state, reward
 
 
@@ -306,7 +306,7 @@ class PredictionNetwork(tf.keras.Model):
             mlp(
                 self.block_output_size_value, fc_value_layers, full_support_size,
                 output_activation=layers.Activation("softmax")
-            ) for _ in range(players)
+            ) for _ in range(players // 2)
         ]
         self.fc_policy = mlp(
             self.block_output_size_policy, fc_policy_layers, action_space_size,
@@ -321,7 +321,7 @@ class PredictionNetwork(tf.keras.Model):
 
         value = tf.nn.tanh(self.conv1x1_value(x, training=training))
         value = tf.reshape(value, (-1, self.block_output_size_value))
-        value = tf.stack(([fc(value) for fc in self.fc_value]), axis=1)
+        value = tf.tile(tf.stack(([fc(value) for fc in self.fc_value]), axis=1), [1, 2, 1])
         policy = tf.nn.tanh(self.conv1x1_policy(x, training=training))
         policy = tf.reshape(policy, (-1, self.block_output_size_policy))
         policy = self.fc_policy(policy, training=training)

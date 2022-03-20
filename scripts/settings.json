@@ -38,7 +38,7 @@
   "trajectory_length": 10,
   "updates_per_step": 16,
   "iterations": 1000000,
-  "weight_decay": 0.001,
+  "weight_decay": 0.0,
   "store_buffer": true,
   "log_n_steps_ahead": 15,
   "apa_n_games": 4

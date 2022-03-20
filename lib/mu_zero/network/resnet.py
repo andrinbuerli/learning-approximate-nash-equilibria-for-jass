@@ -264,7 +264,7 @@ class DynamicsNetwork(tf.keras.Model):
             x = block(x, training=training)
 
         state = x
-        x = self.conv1x1_reward(x, training=training)
+        x = tf.nn.tanh(self.conv1x1_reward(x, training=training))
         x = tf.reshape(x, (-1, self.block_output_size_reward))
         reward = self.fc(x, training=training)
         reward = tf.reshape(reward, (-1, self.players, self.full_support_size))
@@ -307,7 +307,8 @@ class PredictionNetwork(tf.keras.Model):
             output_activation=layers.Activation("linear")
         )
         self.fc_policy = mlp(
-            self.block_output_size_policy, fc_policy_layers, action_space_size
+            self.block_output_size_policy, fc_policy_layers, action_space_size,
+            output_activation=layers.Activation('softmax')
         )
 
     def call(self, x, training=None):
@@ -316,8 +317,8 @@ class PredictionNetwork(tf.keras.Model):
         for block in self.resblocks:
             x = block(x, training=training)
 
-        value = self.conv1x1_value(x, training=training)
-        policy = self.conv1x1_policy(x, training=training)
+        value = tf.nn.tanh(self.conv1x1_value(x, training=training))
+        policy = tf.nn.tanh(self.conv1x1_policy(x, training=training))
         value = tf.reshape(value, (-1, self.block_output_size_value))
         policy = tf.reshape(policy, (-1, self.block_output_size_policy))
         value = self.fc_value(value, training=training)
@@ -390,5 +391,5 @@ def mlp(
     mlp_layers = [layers.Input(shape=(input_size,))]
     for i in range(len(sizes)):
         act = activation if i < len(sizes) - 1 else output_activation
-        mlp_layers += [layers.Dense(sizes[i]), act]
+        mlp_layers += [layers.Dense(sizes[i], activation=None), act]
     return tf.keras.Sequential(mlp_layers)

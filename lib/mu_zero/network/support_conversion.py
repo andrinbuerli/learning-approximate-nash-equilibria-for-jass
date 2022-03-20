@@ -25,7 +25,7 @@ def support_to_scalar_per_player(distribution, min_value, nr_players):
         support_to_scalar(tf.reshape(distribution, (-1, distribution.shape[-1])), min_value=min_value),
         (-1, nr_players))
 
-def scalar_to_support(scalar_m, support_size, min_value, augment=True):
+def scalar_to_support(scalar_m, support_size, min_value, augment=False):
     """
     Transform a scalar to a categorical representation
     Only discrete values are assumed

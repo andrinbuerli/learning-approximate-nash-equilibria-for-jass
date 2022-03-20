@@ -46,13 +46,13 @@
  "network": {
   "action_space_size": 43,
   "fc_policy_layers": [
-   256
+   256, 256, 256
   ],
   "fc_reward_layers": [
-   256
+   256, 256, 256
   ],
   "fc_value_layers": [
-   256
+   256, 256, 256
   ],
   "feature_extractor": "cnn-full-cheating",
   "num_blocks_representation": 2,
@@ -60,7 +60,7 @@
   "num_blocks_dynamics": 2,
   "fcn_blocks_dynamics": 2,
   "num_blocks_prediction": 1,
-  "num_channels": 256,
+  "num_channels": 128,
   "path": null,
   "players": 4,
   "reduced_channels_policy": 64,

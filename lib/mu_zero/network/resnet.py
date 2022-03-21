@@ -363,7 +363,8 @@ class ResidualFullyConnectedBlock(tf.keras.Model):
         self.bn1 = layers.BatchNormalization()
         self.conv2 = conv4x9(num_channels // 2)
         self.bn2 = layers.BatchNormalization()
-        self.conv3 = conv2x3(num_channels)
+        self.conv3 = layers.Conv2D(filters=num_channels, kernel_size=(1, 1), padding="same",
+                                   activation=None, use_bias=False)
         self.bn3 = layers.BatchNormalization()
 
     def call(self, x, training=None):

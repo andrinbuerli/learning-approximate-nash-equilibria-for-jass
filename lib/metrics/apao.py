@@ -11,16 +11,16 @@ from lib.mu_zero.network.network_base import AbstractNetwork
 
 
 def _play_single_game_(i, agent: CppAgent, opponent: CppAgent):
-    arena = Arena(nr_games_to_play=1, cheating_mode=False, check_move_validity=True)
+    arena = Arena(nr_games_to_play=4, cheating_mode=False, check_move_validity=True)
     arena.set_players(agent, opponent, agent, opponent)
-    arena.play_game(dealer=np.random.choice([0, 1, 2, 3]))
+    arena.play_all_games()
 
-    points = arena.points_team_0 / (arena.points_team_0 + arena.points_team_1)
+    points_0 = np.mean(arena.points_team_0 / (arena.points_team_0 + arena.points_team_1))
 
     del arena
     gc.collect()
 
-    return points
+    return points_0
 
 
 class APAO(BaseAsyncMetric):

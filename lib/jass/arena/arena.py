@@ -293,10 +293,17 @@ class Arena:
             if self.nr_games_played % self._print_every_x_games == 0:
                 points_to_write = int(self.nr_games_played / self._nr_games_to_play * 40)
                 spaces_to_write = 40 - points_to_write
-                sys.stdout.write("\r[{}{}] {:4}/{:4} games played".format('.' * points_to_write,
+
+                total = (self.points_team_0[:self.nr_games_played] + self.points_team_1[:self.nr_games_played])
+                points_0 = (self.points_team_0[:self.nr_games_played]) / total
+                points_1 = (self.points_team_1[:self.nr_games_played]) / total
+
+                logging.info("\r[{}{}] {:4}/{:4} games played, t0: {:4} t1: {:4}".format('.' * points_to_write,
                                                                           ' ' * spaces_to_write,
                                                                           self.nr_games_played,
-                                                                          self._nr_games_to_play))
+                                                                          self._nr_games_to_play,
+                                                                          points_0.mean(),
+                                                                          points_1.mean()))
             dealer = next_player[dealer]
         if self._save_games:
             self._file_generator.__exit__(None, None, None)

@@ -13,12 +13,12 @@
   "iterations": 20,
   "mdp_value": true,
   "discount": 1,
-  "n_search_threads": 4,
+  "n_search_threads": 1,
+  "virtual_loss": 1,
   "port": 9999,
   "temperature": 1.0,
   "threads_to_use": 4,
-  "type": "mu-zero-mcts",
-  "virtual_loss": 10
+  "type": "mu-zero-mcts"
  },
  "optimization": {
   "optimizer": "adam",
@@ -41,7 +41,7 @@
   "weight_decay": 0.0001,
   "store_buffer": true,
   "log_n_steps_ahead": 15,
-  "apa_n_games": 4
+  "apa_n_games": 1
  },
  "network": {
   "action_space_size": 43,

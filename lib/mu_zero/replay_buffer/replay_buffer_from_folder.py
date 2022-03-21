@@ -52,9 +52,7 @@ class ReplayBufferFromFolder:
         self.sampling_thread.start()
 
     def sample_from_buffer(self):
-        while self.sample_queue.qsize() == 0:
-            sleep(1)
-
+        logging.info("waiting for sample from replay buffer..")
         return self.sample_queue.get()
 
     def _sample_from_buffer(self, nr_of_batches):
@@ -114,13 +112,14 @@ class ReplayBufferFromFolder:
             logging.info(f"saved replay buffer to {save_path}")
 
     def _sample_continuously_from_buffer(self):
-        batches = self._sample_from_buffer(self.nr_of_batches)
-        self.sample_queue.put(batches)
+        while self.running:
+            batches = self._sample_from_buffer(self.nr_of_batches)
+            self.sample_queue.put(batches)
 
-        while self.sample_queue.qsize() > 0:
-            if not self.running:
-                return -1
-            sleep(5)
+            while self.sample_queue.qsize() > 0:
+                if not self.running:
+                    return -1
+                sleep(5)
 
     def _update(self):
         files = list(self.game_data_folder.glob(f"*{self.data_file_ending}"))

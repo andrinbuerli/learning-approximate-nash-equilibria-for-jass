@@ -68,10 +68,10 @@ class ReplayBufferFromFolder:
                         total = self.sum_tree.total()
                         s = np.random.uniform(0, total)
                         idx, priority, episode = self.sum_tree.get(s, timeout=10)
+                        trajectory = self._sample_trajectory(episode)
                         break
-                    except TimeoutError as e:
+                    except Exception as e:
                         logging.warning(f"CAUGHT ERROR: {e}")
-                trajectory = self._sample_trajectory(episode)
 
                 states.append(trajectory[0]), actions.append(trajectory[1]), rewards.append(trajectory[2])
                 probs.append(trajectory[3]), outcomes.append(trajectory[4])

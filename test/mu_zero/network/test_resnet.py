@@ -10,7 +10,9 @@ def test_shapes():
         observation_shape=(4, 9, 45),
         action_space_size=43,
         num_blocks_representation=2,
-        num_blocks_dynamics=2,
+        fcn_blocks_representation=1,
+        num_blocks_dynamics=3,
+        fcn_blocks_dynamics=2,
         num_blocks_prediction=2,
         num_channels=256,
         reduced_channels_reward=128,
@@ -22,8 +24,6 @@ def test_shapes():
         support_size=100,
         players=4
     )
-
-    testee.save("perfect_resnet_random.pd")
 
     encoded_state = testee.representation(np.random.uniform(0, 1, (1, 4, 9, 45)))
     assert encoded_state.shape == (1, 4, 9, 256)
@@ -41,10 +41,12 @@ def test_summary():
     testee = MuZeroResidualNetwork(
         observation_shape=(4, 9, 43),
         action_space_size=42,
-        num_blocks_representation=2,
-        num_blocks_dynamics=2,
+        num_blocks_representation=4,
+        fcn_blocks_representation=1,
+        num_blocks_dynamics=4,
+        fcn_blocks_dynamics=2,
         num_blocks_prediction=2,
-        num_channels=256,
+        num_channels=128,
         reduced_channels_reward=128,
         reduced_channels_value=1,
         reduced_channels_policy=128,
@@ -66,7 +68,9 @@ def test_get_weights():
         observation_shape=(4, 9, 43),
         action_space_size=42,
         num_blocks_representation=2,
-        num_blocks_dynamics=2,
+        fcn_blocks_representation=1,
+        num_blocks_dynamics=3,
+        fcn_blocks_dynamics=2,
         num_blocks_prediction=2,
         num_channels=256,
         reduced_channels_reward=128,
@@ -89,7 +93,9 @@ def test_set_weights():
         observation_shape=(4, 9, 43),
         action_space_size=42,
         num_blocks_representation=2,
-        num_blocks_dynamics=2,
+        fcn_blocks_representation=1,
+        num_blocks_dynamics=3,
+        fcn_blocks_dynamics=2,
         num_blocks_prediction=2,
         num_channels=256,
         reduced_channels_reward=128,
@@ -116,7 +122,9 @@ def test_save_and_load():
         observation_shape=(4, 9, 43),
         action_space_size=42,
         num_blocks_representation=2,
-        num_blocks_dynamics=2,
+        fcn_blocks_representation=1,
+        num_blocks_dynamics=3,
+        fcn_blocks_dynamics=2,
         num_blocks_prediction=2,
         num_channels=256,
         reduced_channels_reward=128,

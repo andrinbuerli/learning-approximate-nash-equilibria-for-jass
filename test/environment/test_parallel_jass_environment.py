@@ -7,12 +7,12 @@ from test.util import get_test_config
 
 
 def test_collect_data():
-    config = get_test_config()
+    config = get_test_config(cheating=True)
 
     config.agent.iterations = 10
     config.agent.n_search_threads = 4
 
-    path = Path(__file__).parent.parent / "resources" / "imperfect_resnet_random.pd"
+    path = Path(__file__).parent.parent / "resources" / "perfect_resnet_random.pd"
     testee = ParallelJassEnvironment(
         max_parallel_processes=1,
         max_parallel_threads=1,

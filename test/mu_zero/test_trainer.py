@@ -4,7 +4,7 @@ from pathlib import Path
 import numpy as np
 
 from lib.environment.networking.worker_config import WorkerConfig
-from lib.factory import get_network
+from lib.factory import get_network, get_optimizer
 from lib.log.console_logger import ConsoleLogger
 from lib.metrics.metrics_manager import MetricsManager
 from lib.mu_zero.replay_buffer.replay_buffer_from_folder import ReplayBufferFromFolder
@@ -17,6 +17,7 @@ def test_fit_eager():
     tf.config.run_functions_eagerly(True)
 
     config = get_test_config()
+    config.agent.mdp_value = True
 
     # base_path = Path("/app/results/1646904545")
     # config.load_from_json(base_path / "worker_config.json")
@@ -31,7 +32,9 @@ def test_fit_eager():
         batch_size=128,
         trajectory_length=5,
         game_data_folder=Path(__file__).parent.parent / "resources",
-        clean_up_files=False)
+        clean_up_files=False,
+        mdp_value=config.agent.mdp_value,
+        gamma=config.agent.discount)
 
     testee = MuZeroTrainer(
         network=network,
@@ -79,6 +82,7 @@ def test_fit_eager_perfect():
     # config.load_from_json(base_path / "worker_config.json")
 
     network = get_network(config)
+    config.agent.mdp_value = True
 
     # network.load(base_path / "latest_network.pd")
 
@@ -88,7 +92,11 @@ def test_fit_eager_perfect():
         trajectory_length=5,
         data_file_ending=".perfect.jass-data.pkl",
         game_data_folder=Path(__file__).parent.parent / "resources",
-        clean_up_files=False)
+        clean_up_files=False,
+        mdp_value=config.agent.mdp_value,
+        gamma=config.agent.discount)
+
+    optimizer = get_optimizer(config)
 
     testee = MuZeroTrainer(
         network=network,
@@ -96,11 +104,7 @@ def test_fit_eager_perfect():
         replay_buffer=replay_bufer,
         metrics_manager=MetricsManager(),
         logger=ConsoleLogger({}),
-        learning_rate=0.001,
-        weight_decay=1,
-        adam_beta1=0.9,
-        adam_beta2=0.99,
-        adam_epsilon=1e-7,
+        optimizer=optimizer,
         min_buffer_size=1,
         updates_per_step=2,
         store_model_weights_after=1,
@@ -139,7 +143,9 @@ def test_fit_non_eager():
         trajectory_length=5,
         data_file_ending=".imperfect.jass-data.pkl",
         game_data_folder=Path(__file__).parent.parent / "resources",
-        clean_up_files=False)
+        clean_up_files=False,
+        mdp_value=config.agent.mdp_value,
+        gamma=config.agent.discount)
 
     testee = MuZeroTrainer(
         network=network,
@@ -191,7 +197,9 @@ def test_fit_non_eager_perfect():
         trajectory_length=5,
         data_file_ending=".perfect.jass-data.pkl",
         game_data_folder=Path(__file__).parent.parent / "resources",
-        clean_up_files=False)
+        clean_up_files=False,
+        mdp_value=config.agent.mdp_value,
+        gamma=config.agent.discount)
 
     testee = MuZeroTrainer(
         network=network,

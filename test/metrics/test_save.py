@@ -15,7 +15,8 @@ def test_save_0_step():
         label_length=LabelSetActionFull.LABEL_LENGTH,
         worker_config=config,
         network_path = str(Path(__file__).parent.parent / "resources" / "imperfect_resnet_random.pd"),
-        n_steps_ahead=0
+        n_steps_ahead=0,
+        mdp_value=False
     )
 
     testee.poll_till_next_result_available()
@@ -35,7 +36,8 @@ def test_save_1_step():
         label_length=LabelSetActionFull.LABEL_LENGTH,
         worker_config=config,
         network_path = str(Path(__file__).parent.parent / "resources" / "imperfect_resnet_random.pd"),
-        n_steps_ahead=1
+        n_steps_ahead=1,
+        mdp_value=False
     )
 
     testee.poll_till_next_result_available()
@@ -55,7 +57,8 @@ def test_save_more_steps_larger_batch():
         label_length=LabelSetActionFull.LABEL_LENGTH,
         worker_config=config,
         network_path = str(Path(__file__).parent.parent / "resources" / "imperfect_resnet_random.pd"),
-        n_steps_ahead=16
+        n_steps_ahead=16,
+        mdp_value=False
     )
 
     testee.poll_till_next_result_available()
@@ -75,7 +78,8 @@ def test_save_more_steps_larger_batch_perfect():
         label_length=LabelSetActionFull.LABEL_LENGTH,
         worker_config=config,
         network_path = str(Path(__file__).parent.parent / "resources" / "perfect_resnet_random.pd"),
-        n_steps_ahead=16
+        n_steps_ahead=16,
+        mdp_value=False
     )
 
     testee.poll_till_next_result_available()
@@ -85,3 +89,45 @@ def test_save_more_steps_larger_batch_perfect():
     assert len(result) == 17
 
     del testee
+
+
+def test_save_more_steps_larger_batch_perfect_mdp():
+    config = get_test_config(cheating=True)
+
+    testee = SAVE(
+        samples_per_calculation=32,
+        label_length=LabelSetActionFull.LABEL_LENGTH,
+        worker_config=config,
+        network_path = str(Path(__file__).parent.parent / "resources" / "perfect_resnet_random.pd"),
+        n_steps_ahead=16,
+        mdp_value=True
+    )
+
+    testee.poll_till_next_result_available()
+
+    result = testee.get_latest_result()
+
+    assert len(result) == 17
+
+    del testee
+
+def test_save_more_steps_larger_batch_imperfect_mdp():
+    config = get_test_config(cheating=False)
+
+    testee = SAVE(
+        samples_per_calculation=32,
+        label_length=LabelSetActionFull.LABEL_LENGTH,
+        worker_config=config,
+        network_path = str(Path(__file__).parent.parent / "resources" / "imperfect_resnet_random.pd"),
+        n_steps_ahead=16,
+        mdp_value=True
+    )
+
+    testee.poll_till_next_result_available()
+
+    result = testee.get_latest_result()
+
+    assert len(result) == 17
+
+    del testee
+

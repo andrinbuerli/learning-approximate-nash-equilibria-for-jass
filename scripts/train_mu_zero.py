@@ -38,7 +38,11 @@ if __name__=="__main__":
     parser = argparse.ArgumentParser(prog="Start MuZero Training for Jass")
     parser.add_argument(f'--settings', default="settings.json")
     parser.add_argument(f'--log', default=False, action="store_true")
+    parser.add_argument(f'--eager', default=False, action="store_true")
     args = parser.parse_args()
+
+    if args.eager:
+        tf.config.experimental_run_functions_eagerly(True)
 
     worker_config = WorkerConfig()
     worker_config.load_from_json(args.settings)
@@ -67,6 +71,7 @@ if __name__=="__main__":
     replay_bufer = ReplayBufferFromFolder(
         max_buffer_size=worker_config.optimization.max_buffer_size,
         batch_size=worker_config.optimization.batch_size,
+        nr_of_batches=worker_config.optimization.updates_per_step,
         trajectory_length=worker_config.optimization.trajectory_length,
         game_data_folder=data_path / "game_data",
         clean_up_files=True,

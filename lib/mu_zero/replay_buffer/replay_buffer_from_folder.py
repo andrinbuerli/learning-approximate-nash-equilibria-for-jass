@@ -1,7 +1,10 @@
 import gc
 import logging
 import pickle
+from multiprocessing import Queue
 from pathlib import Path
+from threading import Thread
+from time import sleep
 
 import numpy as np
 
@@ -13,6 +16,7 @@ class ReplayBufferFromFolder:
             self,
             max_buffer_size: int,
             batch_size: int,
+            nr_of_batches: int,
             trajectory_length: int,
             mdp_value: bool,
             gamma: float,
@@ -26,6 +30,7 @@ class ReplayBufferFromFolder:
         (states, actions, rewards, probs, outcomes)
         """
 
+        self.nr_of_batches = nr_of_batches
         self.gamma = gamma
         self.mdp_value = mdp_value
         self.cache_path = cache_path
@@ -41,7 +46,18 @@ class ReplayBufferFromFolder:
 
         self.size_of_last_update = 0
 
-    def sample_from_buffer(self, nr_of_batches):
+        self.sample_queue = Queue()
+        self.running = True
+        self.sampling_thread = Thread(target=self._sample_continuously_from_buffer)
+        self.sampling_thread.start()
+
+    def sample_from_buffer(self):
+        while self.sample_queue.qsize() == 0:
+            sleep(1)
+
+        return self.sample_queue.get()
+
+    def _sample_from_buffer(self, nr_of_batches):
         self._update()
         batches = []
         logging.info("sampling from replay buffer..")
@@ -96,6 +112,15 @@ class ReplayBufferFromFolder:
         with open(save_path, "wb") as f:
             pickle.dump(self.sum_tree, f)
             logging.info(f"saved replay buffer to {save_path}")
+
+    def _sample_continuously_from_buffer(self):
+        batches = self._sample_from_buffer(self.nr_of_batches)
+        self.sample_queue.put(batches)
+
+        while self.sample_queue.qsize() > 0:
+            if not self.running:
+                return -1
+            sleep(5)
 
     def _update(self):
         files = list(self.game_data_folder.glob(f"*{self.data_file_ending}"))
@@ -162,4 +187,6 @@ class ReplayBufferFromFolder:
 
         return trajectory
 
+    def __del__(self):
+        self.running = False
 

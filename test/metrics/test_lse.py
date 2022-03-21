@@ -89,7 +89,7 @@ def test_lse_more_steps_larger_batch_perfect():
     config = get_test_config(cheating=True)
 
     testee = LSE(
-        samples_per_calculation=32,
+        samples_per_calculation=1024,
         label_length=LabelSetActionFull.LABEL_LENGTH,
         worker_config=config,
         network_path = str(Path(__file__).parent.parent / "resources" / "perfect_resnet_random.pd"),

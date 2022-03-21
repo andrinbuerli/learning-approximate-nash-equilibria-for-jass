@@ -77,7 +77,7 @@ class MuZeroTrainer:
             size_of_last_update_cumsum += size_of_last_update
             logging.info(f"Iteration {it}, Buffer size: {buffer_size}")
 
-            batches = self.replay_buffer.sample_from_buffer(nr_of_batches=self.updates_per_step)
+            batches = self.replay_buffer.sample_from_buffer()
 
             logging.info(f"starting {self.updates_per_step} mini batch updates.")
 

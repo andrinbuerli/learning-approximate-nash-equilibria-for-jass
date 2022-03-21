@@ -51,7 +51,7 @@ def scalar_to_support(scalar_m, support_size, min_value, augment=False):
     if augment:
         rand = tf.random.uniform((shape[0], shape[1], 1), minval=0, maxval=0.5)
     else:
-        rand = 0
+        rand = 0.5
     distribution = (rand / 2) * distribution_l + (1 - rand) * distribution_m + (rand / 2) * distribution_h
 
     return distribution

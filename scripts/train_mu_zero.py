@@ -49,7 +49,7 @@ if __name__=="__main__":
 
     pprint(worker_config.to_json())
 
-    data_path = Path(worker_config.optimization.data_folder) / f"{worker_config.timestamp}"
+    data_path = Path(worker_config.optimization.data_folder).resolve() / f"{worker_config.timestamp}"
     data_path.mkdir(parents=True, exist_ok=True)
     worker_config.save_to_json(data_path / "worker_config.json")
 

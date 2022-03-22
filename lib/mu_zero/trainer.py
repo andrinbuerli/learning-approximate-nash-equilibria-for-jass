@@ -135,11 +135,11 @@ class MuZeroTrainer:
         training_infos = list()
         for states, actions, rewards, probs, outcomes in batches:
             info, absolute_reward_errors, absolute_value_errors, policy_kls, policy_ces, ls_entropies, ft = self.train_step(
-                tf.convert_to_tensor(states),
-                tf.convert_to_tensor(actions),
-                tf.convert_to_tensor(rewards),
-                tf.convert_to_tensor(probs),
-                tf.convert_to_tensor(outcomes))
+                tf.convert_to_tensor(states.astype("float32")),
+                tf.convert_to_tensor(actions.astype("int32")),
+                tf.convert_to_tensor(rewards.astype("int32")),
+                tf.convert_to_tensor(probs.astype("float32")),
+                tf.convert_to_tensor(outcomes.astype("int32")))
 
             reward_error = {
                 f"ARE/absolute_reward_error_{i}_steps_ahead": x for i, x in enumerate(absolute_reward_errors)
@@ -181,10 +181,10 @@ class MuZeroTrainer:
 
     @tf.function(input_signature=[
         tf.TensorSpec(shape=(None, None, None), dtype=tf.float32),
-        tf.TensorSpec(shape=(None, None), dtype=tf.float32),
-        tf.TensorSpec(shape=(None, None, 2), dtype=tf.float32),
+        tf.TensorSpec(shape=(None, None), dtype=tf.int32),
+        tf.TensorSpec(shape=(None, None, 2), dtype=tf.int32),
         tf.TensorSpec(shape=(None, None, 43), dtype=tf.float32),
-        tf.TensorSpec(shape=(None, None, 2), dtype=tf.float32)
+        tf.TensorSpec(shape=(None, None, 2), dtype=tf.int32)
         ])
     def train_step(self, states, next_actions, rewards_target, policies_target, outcomes_target):
         batch_size = tf.shape(states)[0]

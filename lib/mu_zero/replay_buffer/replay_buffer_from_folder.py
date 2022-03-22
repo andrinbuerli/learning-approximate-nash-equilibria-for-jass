@@ -69,7 +69,7 @@ class ReplayBufferFromFolder:
         for _ in range(nr_of_batches):
             states, actions, rewards, probs, outcomes = [], [], [], [], []
 
-            sampled_trajectory_length = np.random.choice(range(self.min_trajecotry_length, self.max_trajectory_length))
+            sampled_trajectory_length = np.random.choice(range(self.min_trajectory_length, self.max_trajectory_length))
             for __ in range(self.batch_size):
                 while True:
                     try:

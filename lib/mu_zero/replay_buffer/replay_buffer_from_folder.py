@@ -24,7 +24,8 @@ class ReplayBufferFromFolder:
             max_updates=20,
             data_file_ending=".jass-data.pkl",
             cache_path: Path = None,
-            clean_up_files = True):
+            clean_up_files = True,
+            start_sampling = True):
         """
         Expects entries in queue with semantics
         (states, actions, rewards, probs, outcomes)
@@ -49,6 +50,10 @@ class ReplayBufferFromFolder:
         self.sample_queue = Queue()
         self.running = True
         self.sampling_thread = Thread(target=self._sample_continuously_from_buffer)
+        if start_sampling:
+            self.start_sampling()
+
+    def start_sampling(self):
         self.sampling_thread.start()
 
     def sample_from_buffer(self):

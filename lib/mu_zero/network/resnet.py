@@ -137,12 +137,18 @@ class MuZeroResidualNetwork(AbstractNetwork):
 
         logging.info(f"saved network at {path}")
 
-    def load(self, path):
+    def load(self, path, from_graph=False):
         path = Path(path)
         assert path.exists()
-        self.representation_network = tf.keras.models.load_model(path / "representation.pd")
-        self.dynamics_network = tf.keras.models.load_model(path / "dynamics.pd")
-        self.prediction_network = tf.keras.models.load_model(path / "prediction.pd")
+
+        if from_graph:
+            self.representation_network = tf.keras.models.load_model(path / "representation.pd")
+            self.dynamics_network = tf.keras.models.load_model(path / "dynamics.pd")
+            self.prediction_network = tf.keras.models.load_model(path / "prediction.pd")
+        else:
+            with open(str(path / "weights.pkl"), "rb") as f:
+                weights = pickle.load(f)
+            self.set_weights_from_list(weights)
 
         logging.info(f"loaded network from {path}")
 

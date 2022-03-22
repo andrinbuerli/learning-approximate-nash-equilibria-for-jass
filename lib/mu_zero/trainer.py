@@ -179,7 +179,13 @@ class MuZeroTrainer:
             logging.info(f'Saving latest model for iteration {it} at {network_path}')
             self.network.save(network_path)
 
-    @tf.function
+    @tf.function(input_signature=[
+        tf.TensorSpec(shape=(None, None, None), dtype=tf.float32),
+        tf.TensorSpec(shape=(None, None), dtype=tf.float32),
+        tf.TensorSpec(shape=(None, None, 2), dtype=tf.float32),
+        tf.TensorSpec(shape=(None, None, 43), dtype=tf.float32),
+        tf.TensorSpec(shape=(None, None, 2), dtype=tf.float32)
+        ])
     def train_step(self, states, next_actions, rewards_target, policies_target, outcomes_target):
         batch_size = tf.shape(states)[0]
         trajectory_length = tf.shape(states)[1]

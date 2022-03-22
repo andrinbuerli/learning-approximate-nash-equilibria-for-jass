@@ -35,7 +35,7 @@
   "min_buffer_size": 1000,
   "port": 8080,
   "store_model_weights_after": 10,
-  "max_trajectory_length": 10,
+  "max_trajectory_length": 15,
   "min_trajectory_length": 1,
   "updates_per_step": 16,
   "iterations": 1000000,

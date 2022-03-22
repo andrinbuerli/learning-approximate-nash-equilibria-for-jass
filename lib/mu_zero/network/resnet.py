@@ -206,7 +206,7 @@ class RepresentationNetwork(tf.keras.Model):
 
         x = self.conv(x, training=training)
         x = self.bn(x, training=training)
-        x = tf.nn.tanh(x)
+        x = tf.nn.leaky_relu(x)
 
         for block in self.resblocks:
             x = block(x, training=training)
@@ -257,7 +257,7 @@ class DynamicsNetwork(tf.keras.Model):
 
         x = self.conv(x, training=training)
         x = self.bn(x, training=training)
-        x = tf.nn.tanh(x)
+        x = tf.nn.leaky_relu(x)
 
         for block in self.resblocks:
             x = block(x, training=training)
@@ -266,7 +266,7 @@ class DynamicsNetwork(tf.keras.Model):
             x = block(x, training=training)
 
         state = x
-        x = tf.nn.tanh(self.conv1x1_reward(x, training=training))
+        x = tf.nn.leaky_relu(self.conv1x1_reward(x, training=training))
         x = tf.reshape(x, (-1, self.block_output_size_reward))
         reward = tf.tile(tf.stack(([fc(x) for fc in self.fc_reward]), axis=1), [1, 2, 1])
         return state, reward
@@ -319,10 +319,10 @@ class PredictionNetwork(tf.keras.Model):
         for block in self.resblocks:
             x = block(x, training=training)
 
-        value = tf.nn.tanh(self.conv1x1_value(x, training=training))
+        value = tf.nn.leaky_relu(self.conv1x1_value(x, training=training))
         value = tf.reshape(value, (-1, self.block_output_size_value))
         value = tf.tile(tf.stack(([fc(value) for fc in self.fc_value]), axis=1), [1, 2, 1])
-        policy = tf.nn.tanh(self.conv1x1_policy(x, training=training))
+        policy = tf.nn.leaky_relu(self.conv1x1_policy(x, training=training))
         policy = tf.reshape(policy, (-1, self.block_output_size_policy))
         policy = self.fc_policy(policy, training=training)
         return policy, value
@@ -349,11 +349,11 @@ class ResidualBlock(tf.keras.Model):
     def call(self, x, training=None):
         out = self.conv1(x, training=training)
         out = self.bn1(out, training=training)
-        out = tf.nn.tanh(out)
+        out = tf.nn.leaky_relu(out)
         out = self.conv2(out, training=training)
         out = self.bn2(out, training=training)
         out += x
-        out = tf.nn.tanh(out)
+        out = tf.nn.leaky_relu(out)
         return out
 
 class ResidualFullyConnectedBlock(tf.keras.Model):
@@ -370,14 +370,14 @@ class ResidualFullyConnectedBlock(tf.keras.Model):
     def call(self, x, training=None):
         out = self.conv1(x, training=training)
         out = self.bn1(out, training=training)
-        out = tf.nn.tanh(out)
+        out = tf.nn.leaky_relu(out)
         out = self.conv2(out, training=training)
         out = self.bn2(out, training=training)
-        out = tf.nn.tanh(out)
+        out = tf.nn.leaky_relu(out)
         out = self.conv3(out, training=training)
         out = self.bn3(out, training=training)
         out += x
-        out = tf.nn.tanh(out)
+        out = tf.nn.leaky_relu(out)
         return out
 
 
@@ -386,7 +386,7 @@ def mlp(
     layer_sizes,
     output_size,
     output_activation=layers.Activation('softmax'),
-    activation=layers.Activation('tanh'),
+    activation=layers.Activation('leaky_relu'),
 ):
     sizes = layer_sizes + [output_size]
     mlp_layers = [layers.Input(shape=(input_size,))]

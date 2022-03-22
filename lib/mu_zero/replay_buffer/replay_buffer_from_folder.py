@@ -17,7 +17,8 @@ class ReplayBufferFromFolder:
             max_buffer_size: int,
             batch_size: int,
             nr_of_batches: int,
-            trajectory_length: int,
+            max_trajectory_length: int,
+            min_trajectory_length: int,
             mdp_value: bool,
             gamma: float,
             game_data_folder: Path,
@@ -31,11 +32,12 @@ class ReplayBufferFromFolder:
         (states, actions, rewards, probs, outcomes)
         """
 
+        self.max_trajectory_length = max_trajectory_length
+        self.min_trajectory_length = min_trajectory_length
         self.nr_of_batches = nr_of_batches
         self.gamma = gamma
         self.mdp_value = mdp_value
         self.cache_path = cache_path
-        self.trajectory_length = trajectory_length
         self.clean_up_files = clean_up_files
         self.data_file_ending = data_file_ending
         self.game_data_folder = game_data_folder
@@ -67,13 +69,14 @@ class ReplayBufferFromFolder:
         for _ in range(nr_of_batches):
             states, actions, rewards, probs, outcomes = [], [], [], [], []
 
+            sampled_trajectory_length = np.random.choice(range(self.min_trajecotry_length, self.max_trajectory_length))
             for __ in range(self.batch_size):
                 while True:
                     try:
                         total = self.sum_tree.total()
                         s = np.random.uniform(0, total)
                         idx, priority, episode = self.sum_tree.get(s, timeout=10)
-                        trajectory = self._sample_trajectory(episode)
+                        trajectory = self._sample_trajectory(episode, sampled_trajectory_length)
                         break
                     except Exception as e:
                         logging.warning(f"CAUGHT ERROR: {e}")
@@ -153,15 +156,12 @@ class ReplayBufferFromFolder:
 
         logging.info(f"update done, added {self.size_of_last_update} episodes ")
 
-    def _sample_trajectory(self, episode, i=None):
+    def _sample_trajectory(self, episode, sampled_trajectory_length, i=None):
         states, actions, rewards, probs, outcomes = episode
         episode_length = 37 if states[-1].sum() == 0 else 38
 
         assert (rewards.sum(axis=0) == outcomes[0]).all()
         assert np.allclose(probs[:episode_length].sum(axis=-1), 1)
-
-        # do not create trajectories beyond terminal state
-        i = np.random.choice(range(episode_length)) if i is None else i
 
         if self.mdp_value:
             outcomes = np.array([
@@ -171,13 +171,16 @@ class ReplayBufferFromFolder:
             ])
             episode = states, actions, rewards, probs, outcomes
 
-        indices = [i+j for j in range(self.trajectory_length) if i+j <= episode_length-1]
+        # do not create trajectories beyond terminal state
+        i = np.random.choice(range(episode_length-sampled_trajectory_length+1)) if i is None else i
+
+        indices = [i+j for j in range(sampled_trajectory_length) if i+j <= episode_length-1]
         assert all([x >= 0 for x in indices])
         trajectory = [x[indices] for x in episode]
 
-        if len(indices) < self.trajectory_length:
+        if len(indices) < sampled_trajectory_length:
             states, actions, rewards, probs, outcomes = trajectory
-            for _ in range(self.trajectory_length - len(indices)):
+            for _ in range(sampled_trajectory_length - len(indices)):
                 states = np.concatenate((states, np.zeros_like(states[-1], dtype=np.float32)[np.newaxis]), axis=0)
                 actions = np.concatenate((actions, actions[-1][np.newaxis]), axis=0)
                 rewards = np.concatenate((rewards, np.zeros_like(rewards[-1], dtype=np.int32)[np.newaxis]), axis=0)

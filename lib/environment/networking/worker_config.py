@@ -75,7 +75,8 @@ class OptimizationConfig(BaseConfig):
         self.max_buffer_size = 1024
         self.min_buffer_size = 1024
         self.batch_size = 128
-        self.trajectory_length = 5
+        self.max_trajectory_length = 5
+        self.min_trajectory_length = 5
         self.iterations = 5
         self.store_buffer = False
         self.log_n_steps_ahead = 3

@@ -3,6 +3,7 @@ import logging
 import multiprocessing
 import os
 import pickle
+import shutil
 import sys
 import time
 from multiprocessing import Queue, Pipe
@@ -61,6 +62,9 @@ if __name__ == "__main__":
 
     tmp_dir = Path(__file__).parent / "tmp"
     network_path = tmp_dir / str(config.timestamp) / "latest_model.pd"
+
+    if network_path.exists():
+        shutil.rmtree(str(network_path))
 
     logging.info("Connection established successfully!")
 

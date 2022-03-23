@@ -1,5 +1,4 @@
 {
- "timestamp": 1647703690,
  "log": {
   "projectname": "jass-mu-zero",
   "entity": "andrinburli",
@@ -26,12 +25,12 @@
   "adam_beta1": 0.9,
   "adam_beta2": 0.999,
   "adam_epsilon": 1e-07,
-  "batch_size": 512,
+  "batch_size": 1024,
   "data_folder": "../results",
   "value_loss_weight": 0.25,
   "reward_loss_weight": 0.25,
   "policy_loss_weight": 1.0,
-  "max_buffer_size": 20000,
+  "max_buffer_size": 10000,
   "min_buffer_size": 1000,
   "port": 8080,
   "store_model_weights_after": 10,
@@ -56,17 +55,17 @@
    256, 256, 256
   ],
   "feature_extractor": "cnn-full-cheating",
-  "num_blocks_representation": 4,
+  "num_blocks_representation": 8,
   "fcn_blocks_representation": 2,
-  "num_blocks_dynamics": 4,
+  "num_blocks_dynamics": 8,
   "fcn_blocks_dynamics": 2,
   "num_blocks_prediction": 1,
   "num_channels": 128,
   "path": null,
   "players": 4,
-  "reduced_channels_policy": 32,
-  "reduced_channels_reward": 32,
-  "reduced_channels_value": 32,
+  "reduced_channels_policy": 64,
+  "reduced_channels_reward": 64,
+  "reduced_channels_value": 64,
   "support_size": 157,
   "type": "resnet"
  }

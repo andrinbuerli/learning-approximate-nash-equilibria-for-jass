@@ -69,6 +69,8 @@ class MuZeroTrainer:
             if self.store_buffer:
                 self.replay_buffer.save()
 
+        self.replay_buffer.start_sampling()
+
         size_of_last_update_cumsum = 0
         for it in range(iterations):
             start = time.time()

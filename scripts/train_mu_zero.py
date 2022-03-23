@@ -82,7 +82,6 @@ if __name__=="__main__":
         start_sampling=False)
 
     replay_bufer.restore()
-    replay_bufer.start_sampling()
 
     manager = MetricsManager(
         APAO("dmcts", worker_config, str(network_path), parallel_threads=worker_config.optimization.apa_n_games),

@@ -134,8 +134,12 @@ class MuZeroResidualNetwork(AbstractNetwork):
         self.dynamics_network.save(path / "dynamics.pd")
         self.prediction_network.save(path / "prediction.pd")
 
-        with open(path / "weights.pkl", "wb") as f:
+        src = path / f"weights{id(self)}.pkl"
+        dest = path / "weights.pkl"
+        with open(src, "wb") as f:
             pickle.dump(self.get_weight_list(), f)
+
+        shutil.move(src, dest)
 
         logging.info(f"saved network at {path}")
 

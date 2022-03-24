@@ -87,7 +87,7 @@ def _play_games_multi_threaded_(n_games, continuous):
                 logging.warning(f"Received cancel signal, stopping data collection.")
                 os.kill(os.getpid(), signal.SIGKILL)
 
-            network.load(network_path)
+            network.load(network_path, from_graph=True)
 
             agents = [get_agent(worker_config, network=network, greedy=False) for _ in range(n_games)]
 

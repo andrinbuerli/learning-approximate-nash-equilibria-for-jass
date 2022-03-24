@@ -139,7 +139,7 @@ class MuZeroResidualNetwork(AbstractNetwork):
 
         logging.info(f"saved network at {path}")
 
-    def load(self, path, from_graph=False, save=True):
+    def load(self, path, from_graph=False, save=False):
         path = Path(path)
         assert path.exists()
 

@@ -9,6 +9,7 @@ import time
 from multiprocessing import Queue, Pipe
 from pathlib import Path
 
+import numpy as np
 import psutil
 import requests
 
@@ -62,6 +63,8 @@ if __name__ == "__main__":
 
     tmp_dir = Path(__file__).parent / "tmp"
     network_path = tmp_dir / str(config.timestamp) / "latest_model.pd"
+
+    time.sleep(np.random.choice(range(10)))  # if parallel collector containers are started
 
     if network_path.exists():
         shutil.rmtree(str(network_path))

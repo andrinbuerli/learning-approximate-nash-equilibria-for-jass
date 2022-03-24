@@ -1,5 +1,7 @@
 import logging
+import os
 import pickle
+import shutil
 from pathlib import Path
 
 import numpy as np
@@ -137,7 +139,7 @@ class MuZeroResidualNetwork(AbstractNetwork):
 
         logging.info(f"saved network at {path}")
 
-    def load(self, path, from_graph=False):
+    def load(self, path, from_graph=False, save=True):
         path = Path(path)
         assert path.exists()
 
@@ -146,8 +148,17 @@ class MuZeroResidualNetwork(AbstractNetwork):
             self.dynamics_network = tf.keras.models.load_model(path / "dynamics.pd")
             self.prediction_network = tf.keras.models.load_model(path / "prediction.pd")
         else:
-            with open(str(path / "weights.pkl"), "rb") as f:
-                weights = pickle.load(f)
+            src = str(path / "weights.pkl")
+            if save:
+                dest = str(path / f"weights-{id(self)}.pkl")
+                shutil.copy(src, dest)
+                with open(dest, "rb") as f:
+                    weights = pickle.load(f)
+                os.remove(dest)
+            else:
+                with open(src, "rb") as f:
+                    weights = pickle.load(f)
+
             self.set_weights_from_list(weights)
 
         logging.info(f"loaded network from {path}")

@@ -4,6 +4,7 @@ import multiprocessing as mp
 import os
 import signal
 import time
+import traceback
 from multiprocessing import Queue
 from multiprocessing.connection import Connection
 from pathlib import Path
@@ -110,6 +111,7 @@ def _play_games_multi_threaded_(n_games, continuous):
                 return states, actions, rewards, probs, outcomes
         except Exception as e:
             logging.warning(f"Exception occurred: {e}, continuing anyway")
+            traceback.print_exc()
 
 
 def _init_process_worker_(function, network_path: str, worker_config: WorkerConfig, check_move_validity: bool,

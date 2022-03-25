@@ -47,13 +47,19 @@ class ReplayBufferFromFolder:
 
         self.sum_tree = SumTree(capacity=max_buffer_size)
 
-        self.size_of_last_update = 0
+        self._size_of_last_update = 0
 
         self.sample_queue = Queue()
         self.running = True
         self.sampling_thread = Thread(target=self._sample_continuously_from_buffer)
         if start_sampling:
             self.start_sampling()
+
+    @property
+    def size_of_last_update(self):
+        size_of_last_update = self._size_of_last_update
+        self._size_of_last_update = 0
+        return size_of_last_update
 
     def start_sampling(self):
         self.sampling_thread.start()
@@ -136,7 +142,7 @@ class ReplayBufferFromFolder:
     def _update(self):
         files = list(self.game_data_folder.glob(f"*{self.data_file_ending}"))
         logging.info(f"updating replay buffer, found {len(files)} game data files")
-        self.size_of_last_update = 0
+        size_of_last_update = 0
         for file in files:
             try:
                 with open(file, "rb") as f:
@@ -151,14 +157,16 @@ class ReplayBufferFromFolder:
                     assert (r.sum(axis=0) == o[0]).all()
                     self.sum_tree.add(data=(s, a, r, p, o), p=1)  # no priorities associated with samples yet
 
-                self.size_of_last_update += len(states)
+                size_of_last_update += len(states)
 
                 del states, actions, rewards, probs, outcomes
                 gc.collect()
             except:
                 logging.warning(f"failed reading file {file}.")
 
-        logging.info(f"update done, added {self.size_of_last_update} episodes ")
+        logging.info(f"update done, added {size_of_last_update} episodes ")
+
+        self._size_of_last_update += size_of_last_update
 
     def _sample_trajectory(self, episode, sampled_trajectory_length, i=None):
         states, actions, rewards, probs, outcomes = episode

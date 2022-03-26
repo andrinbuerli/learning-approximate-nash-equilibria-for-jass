@@ -2,18 +2,14 @@
 #
 # Created by Thomas Koller on 02.10.18
 #
-from copy import deepcopy
-from time import sleep
 from typing import Union
 
 import jasscpp
 import numpy as np
 from jass.game.const import next_player, TRUMP_FULL_OFFSET, TRUMP_FULL_P, card_values
 from jass.game.rule_schieber import RuleSchieber
-from jasscpp import RuleSchieberCpp
 
 from lib.jass.features.features_set_cpp import FeaturesSetCpp
-from lib.mu_zero.mcts.min_max_stats import MinMaxStats
 from lib.mu_zero.mcts.node import Node
 from lib.mu_zero.network.network_base import AbstractNetwork
 from lib.mu_zero.network.support_conversion import support_to_scalar
@@ -45,7 +41,7 @@ class LatentNodeSelectionPolicy:
         self.feature_extractor = feature_extractor
         self.rule = RuleSchieber()
 
-    def tree_policy(self, observation: jasscpp.GameObservationCpp, node: Node, stats: MinMaxStats, virtual_loss=0) -> Node:
+    def tree_policy(self, observation: jasscpp.GameObservationCpp, node: Node, virtual_loss=0) -> Node:
         while True:
             with node.lock: # ensures that node and children not currently locked, i.e. being expanded
                 node.visits += virtual_loss
@@ -59,7 +55,7 @@ class LatentNodeSelectionPolicy:
             assert len(children) > 0, f'Error no children for valid actions {valid_actions}, {vars(node)}'
 
             with node.lock: # ensures that node and children not currently locked, i.e. being expanded
-                child = max(children, key=lambda x: self._puct(x, stats))
+                child = max(children, key=lambda x: self._puct(x))
 
             for c in children:
                 c.avail += 1
@@ -99,7 +95,7 @@ class LatentNodeSelectionPolicy:
             node.prior[valid_idxs] = (1 - self.dirichlet_eps) * node.prior[valid_idxs] + self.dirichlet_eps * eta
 
 
-    def _puct(self, child: Node, stats: MinMaxStats):
+    def _puct(self, child: Node):
         P_s_a = child.parent.prior[child.action]
         prior_weight = (np.sqrt(child.avail) / (1 + child.visits)) * (
                     self.c_1 + np.log((child.avail + self.c_2 + 1) / self.c_2))
@@ -110,7 +106,8 @@ class LatentNodeSelectionPolicy:
             assert len(child.reward.shape) == 1, f'shape: {child.reward.shape}'
             q_value = (child.reward[child.player] + self.discount * q) \
                 if self.mdp_value else q
-            q_normed = stats.normalize(q_value)
+            q_normed = child.parent.stats.normalize(q_value)
+            #logging.info(q_normed)
         else:
             q_normed = 0
 
@@ -122,6 +119,8 @@ class LatentNodeSelectionPolicy:
 
         node.value = support_to_scalar(distribution=node.value, min_value=0).numpy()
         node.reward = support_to_scalar(distribution=node.reward, min_value=0).numpy()
+
+        [node.stats.update(v) for v in node.value]
 
         # add edges for all children
         for action in node.missing_actions(node.valid_actions):

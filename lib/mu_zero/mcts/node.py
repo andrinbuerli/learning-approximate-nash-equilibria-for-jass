@@ -64,6 +64,8 @@ class Node:
         self.trump = trump
         self.pushed = pushed
 
+        self.stats = MinMaxStats() # stats over children
+
         self.cards_played = cards_played
 
         self.valid_actions = np.ones(action_space_size)

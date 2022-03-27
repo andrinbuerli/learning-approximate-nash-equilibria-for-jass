@@ -1,4 +1,5 @@
 {
+ "timestamp": 1648311753,
  "log": {
   "projectname": "jass-mu-zero",
   "entity": "andrinburli",
@@ -27,7 +28,7 @@
   "adam_epsilon": 1e-07,
   "batch_size": 512,
   "data_folder": "../results",
-  "value_loss_weight": 0.25,
+  "value_loss_weight": 0.05,
   "reward_loss_weight": 0.25,
   "policy_loss_weight": 1.0,
   "max_buffer_size": 10000,

@@ -26,7 +26,7 @@ def support_to_scalar_per_player(distribution, min_value, nr_players):
         support_to_scalar(tf.reshape(distribution, (-1, distribution.shape[-1])), min_value=min_value),
         (-1, nr_players))
 
-def scalar_to_support(scalar_m, support_size, min_value, augment=True):
+def scalar_to_support(scalar_m, support_size, min_value, augment=False):
     """
     Transform a scalar to a categorical representation
     Only discrete values are assumed
@@ -52,7 +52,7 @@ def scalar_to_support(scalar_m, support_size, min_value, augment=True):
     if augment:
         rand = tf.random.uniform((shape[0], shape[1], 1), minval=0, maxval=0.4)
     else:
-        rand = 0.0
+        rand = 0.4
     distribution = (rand / 2) * distribution_l + (1 - rand) * distribution_m + (rand / 2) * distribution_h
 
     return distribution

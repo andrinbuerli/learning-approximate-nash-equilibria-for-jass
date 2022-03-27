@@ -183,7 +183,7 @@ class ReplayBufferFromFolder:
             ])
             episode = states, actions, rewards, probs, outcomes
 
-        # do not create trajectories beyond terminal state
+        # create trajectories beyond terminal state
         i = np.random.choice(range(episode_length)) if i is None else i
 
         indices = [i+j for j in range(sampled_trajectory_length) if i+j <= episode_length-1]

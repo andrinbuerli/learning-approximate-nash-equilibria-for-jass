@@ -299,8 +299,8 @@ class MuZeroTrainer:
             initial_states, (-1,) + self.config.network.feature_extractor.FEATURE_SHAPE), axis=(1, 2)), axis=0)
 
         return {
-            "training/reward_loss": tf.reduce_mean(reward_loss),
-            "training/value_loss": tf.reduce_mean(value_loss),
+            "training/reward_loss": tf.reduce_mean(tf.reduce_sum(reward_loss, axis=-1)),
+            "training/value_loss": tf.reduce_mean(tf.reduce_sum(value_loss, axis=-1)),
             "training/policy_loss": tf.reduce_mean(policy_loss),
             "training/squared_weights_sum": squared_weights_sum,
             "training/loss": loss,

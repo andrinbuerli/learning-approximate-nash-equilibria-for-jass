@@ -16,6 +16,7 @@ def support_to_scalar(distribution, min_value):
     indices = tf.range(start=min_value, limit=min_value + support_size, delta=1, dtype=tf.float32)
 
     expected_values = tf.reduce_sum(indices * distribution, axis=1)
+    # expected_values = tf.argmax(distribution, axis=-1)
 
     return expected_values
 
@@ -25,7 +26,7 @@ def support_to_scalar_per_player(distribution, min_value, nr_players):
         support_to_scalar(tf.reshape(distribution, (-1, distribution.shape[-1])), min_value=min_value),
         (-1, nr_players))
 
-def scalar_to_support(scalar_m, support_size, min_value, augment=False):
+def scalar_to_support(scalar_m, support_size, min_value, augment=True):
     """
     Transform a scalar to a categorical representation
     Only discrete values are assumed
@@ -49,7 +50,7 @@ def scalar_to_support(scalar_m, support_size, min_value, augment=False):
     # make support non-one hot!
     shape = tf.shape(distribution_m)
     if augment:
-        rand = tf.random.uniform((shape[0], shape[1], 1), minval=0, maxval=0.5)
+        rand = tf.random.uniform((shape[0], shape[1], 1), minval=0, maxval=0.4)
     else:
         rand = 0.0
     distribution = (rand / 2) * distribution_l + (1 - rand) * distribution_m + (rand / 2) * distribution_h

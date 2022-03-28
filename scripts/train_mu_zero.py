@@ -14,6 +14,7 @@ from lib.log.wandb_logger import WandbLogger
 from lib.metrics.save import SAVE
 from lib.metrics.spkl import SPKL
 from lib.metrics.vpkl import VPKL
+from lib.metrics.sare import SARE
 from lib.metrics.lse import LSE
 from lib.environment.networking.worker_config import WorkerConfig
 from lib.environment.networking.worker_connector import WorkerConnector
@@ -87,6 +88,14 @@ if __name__=="__main__":
         APAO("dmcts", worker_config, str(network_path), parallel_threads=worker_config.optimization.apa_n_games),
         APAO("dpolicy", worker_config, str(network_path), parallel_threads=worker_config.optimization.apa_n_games),
         APAO("random", worker_config, str(network_path), parallel_threads=worker_config.optimization.apa_n_games),
+        SARE(
+            samples_per_calculation=worker_config.optimization.batch_size,
+            label_length=LabelSetActionFull.LABEL_LENGTH,
+            worker_config=worker_config,
+            network_path=str(network_path),
+            n_steps_ahead=worker_config.optimization.log_n_steps_ahead,
+            mdp_value=worker_config.agent.mdp_value
+        ),
         SAVE(
             samples_per_calculation=worker_config.optimization.batch_size,
             label_length=LabelSetActionFull.LABEL_LENGTH,

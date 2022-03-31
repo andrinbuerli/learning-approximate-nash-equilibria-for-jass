@@ -27,7 +27,7 @@ def get_agent(config: WorkerConfig, network, greedy=False) -> CppAgent:
             virtual_loss=config.agent.virtual_loss,
             n_search_threads=config.agent.n_search_threads,
         )
-    if config.agent.type == "dmcts":
+    elif config.agent.type == "dmcts":
         import jassmlcpp
         return jassmlcpp.agent.JassAgentDMCTSFullCpp(
             hand_distribution_policy=jassmlcpp.mcts.RandomHandDistributionPolicyCpp(),
@@ -36,6 +36,12 @@ def get_agent(config: WorkerConfig, network, greedy=False) -> CppAgent:
             nr_determinizations=config.agent.nr_determinizations,
             nr_iterations=config.agent.iterations,
             threads_to_use=config.agent.threads_to_use
+        )
+    elif config.agent.type == "mcts":
+        import jassmlcpp
+        return jassmlcpp.agent.JassAgentMCTSFullCpp(
+            nr_iterations=config.agent.iterations,
+            exploration=1.5
         )
     elif config.agent.type == "random":
         import jassmlcpp
@@ -102,6 +108,8 @@ def get_optimizer(config: WorkerConfig):
 def get_opponent(type: str) -> CppAgent:
     if type == "dmcts":
         return AgentByNetworkCpp(url="http://baselines:9898/dmcts")
+    if type == "mcts":
+        return AgentByNetworkCpp(url="http://baselines:9899/mcts", cheating=True)
     elif type == "random":
         return AgentByNetworkCpp(url="http://baselines:9896/random")
     elif type == "dpolicy":

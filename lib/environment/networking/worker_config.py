@@ -94,6 +94,7 @@ class AgentConfig(BaseConfig):
         self.port = 9999
 
         self.type = "mu-zero-mcts"
+        self.cheating = False
         self.iterations=100
         self.c_1 = 1
         self.c_2 = 19652

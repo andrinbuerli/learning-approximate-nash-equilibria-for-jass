@@ -7,12 +7,12 @@ mp.set_start_method('spawn', force=True)
 from multiprocessing import Process
 from pathlib import Path
 
-from jass.service.player_service_app import PlayerServiceApp
-
 sys.path.append("../")
 
+from lib.jass.service.player_service_app import PlayerServiceApp
 from lib.environment.networking.worker_config import WorkerConfig
 from lib.jass.agent.agent_from_cpp import AgentFromCpp
+from lib.jass.agent.agent_from_cpp_cheating import AgentFromCppCheating
 from lib.factory import get_agent, get_network
 
 logging.basicConfig(
@@ -30,7 +30,10 @@ def host_agent(config: WorkerConfig):
         network = None
 
     agent = get_agent(config, network)
-    agent = AgentFromCpp(agent=agent)
+    if config.agent.cheating:
+        agent = AgentFromCppCheating(agent=agent)
+    else:
+        agent = AgentFromCpp(agent=agent)
     app = PlayerServiceApp("jass_agents")
     name = config.agent.type
     logging.info(f"Hosting player {config.agent.port}/{name}")

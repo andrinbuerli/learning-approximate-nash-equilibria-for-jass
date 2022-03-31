@@ -1,5 +1,6 @@
 from jass.game.game_observation import GameObservation
-from jasscpp import GameObservationCpp
+from jass.game.game_state import GameState
+from jasscpp import GameObservationCpp, GameStateCpp, GameSimCpp
 
 
 def set_allow_gpu_memory_growth(allow: bool):
@@ -50,3 +51,46 @@ def convert_to_cpp_observation(obs: GameObservation) -> GameObservationCpp:
     cpp_obs.trick_winner = obs.trick_winner
     cpp_obs.trump = obs.trump
     return cpp_obs
+
+
+def convert_to_cpp_state(state: GameState) -> GameStateCpp:
+    cpp_state = GameStateCpp()
+    if state.current_trick is None:
+        cpp_state.current_trick = 9
+    else:
+        cpp_state.current_trick = state.nr_tricks
+    cpp_state.dealer = state.dealer
+    cpp_state.declared_trump_player = state.declared_trump
+    cpp_state.forehand = state.forehand
+    cpp_state.hands = state.hands
+    cpp_state.nr_cards_in_trick = state.nr_cards_in_trick
+    cpp_state.nr_played_cards = state.nr_played_cards
+    cpp_state.player = state.player
+    cpp_state.points = state.points
+    cpp_state.tricks = state.tricks
+    cpp_state.trick_first_player = state.trick_first_player
+    cpp_state.trick_points = state.trick_points
+    cpp_state.trick_winner = state.trick_winner
+    cpp_state.trump = state.trump
+    return cpp_state
+
+
+def convert_to_python_game_state(cpp_state: GameStateCpp) -> GameState:
+    state = GameState()
+    state.nr_tricks = cpp_state.current_trick
+    state.current_trick = cpp_state.tricks[min(8, cpp_state.current_trick)]
+    state.dealer = cpp_state.dealer
+    state.declared_trump = cpp_state.declared_trump_player
+    state.forehand = cpp_state.forehand
+    state.hands = cpp_state.hands
+    state.nr_cards_in_trick = cpp_state.nr_cards_in_trick
+    state.nr_played_cards = cpp_state.nr_played_cards
+    state.player = cpp_state.player
+    state.points = cpp_state.points
+    state.tricks = cpp_state.tricks
+    state.trick_first_player = cpp_state.trick_first_player
+    state.trick_points = cpp_state.trick_points
+    state.trick_winner = cpp_state.trick_winner
+    state.trump = cpp_state.trump
+
+    return state

@@ -2,7 +2,7 @@
  "log": {
   "projectname": "jass-mu-zero",
   "entity": "andrinburli",
-  "group": "MuZero-MCTS-Experiment-0"
+  "group": "MuZero-MCTS-Experiment-1"
  },
  "agent": {
   "c_1": 1.25,

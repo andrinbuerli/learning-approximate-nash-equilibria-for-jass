@@ -81,6 +81,9 @@ def _play_games_multi_threaded_(n_games, continuous):
 
     first_call = True
     network = get_network(worker_config)
+
+    agents = [get_agent(worker_config, network=network, greedy=False) for _ in range(n_games)]
+
     while continuous or first_call:
         try:
             if cancel_con is not None and cancel_con.poll(0.01):
@@ -88,8 +91,6 @@ def _play_games_multi_threaded_(n_games, continuous):
                 os.kill(os.getpid(), signal.SIGKILL)
 
             network.load(network_path, from_graph=True)
-
-            agents = [get_agent(worker_config, network=network, greedy=False) for _ in range(n_games)]
 
             first_call = False
             results = pool.starmap(_play_single_game_, zip(list(range(n_games)), agents))

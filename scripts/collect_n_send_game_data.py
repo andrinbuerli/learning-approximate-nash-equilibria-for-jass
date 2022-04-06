@@ -1,4 +1,5 @@
 import argparse
+import gc
 import logging
 import multiprocessing
 import os
@@ -144,6 +145,8 @@ if __name__ == "__main__":
 
                 network.set_weights_from_list(weights)
                 network.save(network_path)
+                del weights
+                gc.collect()
             except:
                 could_not_reach += 1
                 logging.error(f"Could not send data, could not reach for {could_not_reach} times...")

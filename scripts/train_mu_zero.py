@@ -8,6 +8,8 @@ import tensorflow as tf
 
 from jass.features.labels_action_full import LabelSetActionFull
 
+from lib.mu_zero.replay_buffer.file_based_replay_buffer_from_folder import FileBasedReplayBufferFromFolder
+
 sys.path.append("../")
 
 from lib.log.wandb_logger import WandbLogger
@@ -69,7 +71,7 @@ if __name__=="__main__":
 
     network.summary()
 
-    replay_bufer = ReplayBufferFromFolder(
+    replay_buffer = FileBasedReplayBufferFromFolder(
         max_buffer_size=worker_config.optimization.max_buffer_size,
         batch_size=worker_config.optimization.batch_size,
         nr_of_batches=worker_config.optimization.updates_per_step,
@@ -80,9 +82,12 @@ if __name__=="__main__":
         cache_path=data_path,
         mdp_value=worker_config.agent.mdp_value,
         gamma=worker_config.agent.discount,
-        start_sampling=False)
+        start_sampling=False,
+        episode_data_folder=data_path / "episodes_data",
+        max_samples_per_episode=worker_config.optimization.max_samples_per_episode,
+        min_non_zero_prob_samples=worker_config.optimization.min_non_zero_prob_samples)
 
-    replay_bufer.restore()
+    replay_buffer.restore()
 
     manager = MetricsManager(
         APAO("dmcts", worker_config, str(network_path), parallel_threads=worker_config.optimization.apa_n_games),
@@ -145,7 +150,7 @@ if __name__=="__main__":
 
     trainer = MuZeroTrainer(
         network=network,
-        replay_buffer=replay_bufer,
+        replay_buffer=replay_buffer,
         metrics_manager=manager,
         logger=logger,
         config=worker_config,

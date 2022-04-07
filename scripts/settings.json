@@ -34,7 +34,7 @@
   "max_buffer_size": 10000,
   "min_buffer_size": 5000,
   "max_samples_per_episode": 60,
-  "min_non_zero_prob_samples": 1024,
+  "min_non_zero_prob_samples": 2048,
   "port": 8080,
   "store_model_weights_after": 10,
   "max_trajectory_length": 10,

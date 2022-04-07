@@ -32,12 +32,14 @@ class FileBasedReplayBufferFromFolder:
             episode_file_ending=".jass-episode.pkl",
             cache_path: Path = None,
             clean_up_files = True,
+            clean_up_episodes = False,
             start_sampling = True):
         """
         Expects entries in queue with semantics
         (states, actions, rewards, probs, outcomes)
         """
 
+        self.clean_up_episodes = clean_up_episodes
         self.min_non_zero_prob_samples = min_non_zero_prob_samples
         self.max_samples_per_episode = max_samples_per_episode
         self.episode_data_folder = episode_data_folder
@@ -155,7 +157,7 @@ class FileBasedReplayBufferFromFolder:
 
     def restore(self):
         for file in self.episode_data_folder.glob("*"):
-            self.sum_tree.add(data=file.name,
+            self.sum_tree.add(data=file.name.split(".")[0],
                               p=self.max_samples_per_episode)
         logging.info(f"restored replay buffer ({self.sum_tree.filled_size}) from {self.episode_data_folder}")
 
@@ -253,5 +255,6 @@ class FileBasedReplayBufferFromFolder:
 
     def __del__(self):
         self.stop_sampling()
-        shutil.rmtree(str(self.episode_data_folder))
+        if self.clean_up_episodes:
+            shutil.rmtree(str(self.episode_data_folder))
 

@@ -8,8 +8,6 @@ import tensorflow as tf
 
 from jass.features.labels_action_full import LabelSetActionFull
 
-from lib.mu_zero.replay_buffer.file_based_replay_buffer_from_folder import FileBasedReplayBufferFromFolder
-
 sys.path.append("../")
 
 from lib.log.wandb_logger import WandbLogger
@@ -25,6 +23,7 @@ from lib.log.console_logger import ConsoleLogger
 from lib.metrics.apao import APAO
 from lib.metrics.metrics_manager import MetricsManager
 from lib.mu_zero.replay_buffer.replay_buffer_from_folder import ReplayBufferFromFolder
+from lib.mu_zero.replay_buffer.file_based_replay_buffer_from_folder import FileBasedReplayBufferFromFolder
 from lib.mu_zero.trainer import MuZeroTrainer
 
 logging.getLogger("requests").setLevel(logging.WARNING)

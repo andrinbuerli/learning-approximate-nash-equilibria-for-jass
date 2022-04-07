@@ -199,7 +199,8 @@ class FileBasedReplayBufferFromFolder:
                         self.sum_tree.add(data=identifier,
                                           p=self.max_samples_per_episode)
                     else:
-                        self.sum_tree.update(idx=self.zero_prob_sample_indices.pop(0),
+                        self.sum_tree.update(data=identifier,
+                                             idx=self.zero_prob_sample_indices.pop(0),
                                              p=self.max_samples_per_episode)
 
                 size_of_last_update += len(states)

@@ -62,11 +62,14 @@ class SumTree:
 
         self.filled_size = min(self.capacity, self.filled_size + 1)
 
-    def update(self, idx, p):
+    def update(self, idx, p, data=None):
         change = p - self.tree[idx]
 
         self.tree[idx] = p
         self._propagate(idx, change)
+        if data is not None:
+            dataIdx = idx - self.capacity + 1
+            self.data[dataIdx] = data
 
     def get(self, s, timeout=10):
         # logging.debug("get")

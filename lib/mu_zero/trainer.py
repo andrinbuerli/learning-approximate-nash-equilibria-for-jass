@@ -111,6 +111,7 @@ class MuZeroTrainer:
                 data = {
                     "meta/buffer_size": buffer_size,
                     "meta/non_zero_samples": non_zero_samples,
+                    "meta/sum_tree_total": self.replay_buffer.sum_tree.total(),
                     "meta/learning_rate": current_lr,
                     "meta/size_of_last_update": size_of_last_update,
                     "meta/size_of_last_update_cumsum": size_of_last_update_cumsum,

@@ -191,11 +191,17 @@ class FileBasedReplayBufferFromFolder:
                 for s, a, r, p, o in zip(states, actions, rewards, probs, outcomes):
                     assert (r.sum(axis=0) == o[0]).all()
                     identifier = str(uuid.uuid4())
-                    file = self.episode_data_folder / f"{identifier}{self.episode_file_ending}"
-                    with open(str(file), "wb") as f:
+                    episode_file = self.episode_data_folder / f"{identifier}{self.episode_file_ending}"
+                    with open(str(episode_file), "wb") as f:
                         pickle.dump((s, a, r, p, o), f)
 
                     if len(self.zero_prob_sample_indices) == 0:
+                        old_identifier = self.sum_tree.get_data_at_cursor()
+                        old_episode_file = self.episode_data_folder / f"{old_identifier}{self.episode_file_ending}"
+
+                        if old_episode_file.exists() and self.clean_up_files:
+                            old_episode_file.unlink()
+
                         self.sum_tree.add(data=identifier,
                                           p=self.max_samples_per_episode)
                     else:

@@ -50,6 +50,9 @@ class SumTree:
     def total(self):
         return self.tree[0]
 
+    def get_data_at_cursor(self):
+        return self.data[self.write]
+
     def add(self, p, data):
         idx = self.write + self.capacity - 1
 

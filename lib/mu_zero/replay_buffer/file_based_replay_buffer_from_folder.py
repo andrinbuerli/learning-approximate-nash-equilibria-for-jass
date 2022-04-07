@@ -125,7 +125,6 @@ class FileBasedReplayBufferFromFolder:
                         self.sum_tree.update(idx, priority)
                         if priority == 0:
                             self.zero_prob_sample_indices.append(idx)
-                            file.unlink()
                         break
                     except Exception as e:
                         logging.warning(f"CAUGHT ERROR: {e}")
@@ -205,8 +204,15 @@ class FileBasedReplayBufferFromFolder:
                         self.sum_tree.add(data=identifier,
                                           p=self.max_samples_per_episode)
                     else:
+                        idx = self.zero_prob_sample_indices.pop(0)
+                        old_identifier = self.sum_tree.get_data_at(idx)
+                        old_episode_file = self.episode_data_folder / f"{old_identifier}{self.episode_file_ending}"
+
+                        if old_episode_file.exists() and self.clean_up_files:
+                            old_episode_file.unlink()
+
                         self.sum_tree.update(data=identifier,
-                                             idx=self.zero_prob_sample_indices.pop(0),
+                                             idx=idx,
                                              p=self.max_samples_per_episode)
 
                 size_of_last_update += len(states)

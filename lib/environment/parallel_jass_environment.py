@@ -60,7 +60,7 @@ def _play_single_game_(i, agent):
 
     logging.info(f"finished single game {i}, cached positions: {len(states)}")
 
-    del arena
+    del arena, agent
     gc.collect()
 
     return states, actions, rewards, probs, outcomes

@@ -77,6 +77,8 @@ class OptimizationConfig(BaseConfig):
         self.batch_size = 128
         self.max_trajectory_length = 5
         self.min_trajectory_length = 5
+        self.max_samples_per_episode=2
+        self.min_non_zero_prob_samples=1
         self.iterations = 5
         self.store_buffer = False
         self.log_n_steps_ahead = 3

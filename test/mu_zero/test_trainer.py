@@ -194,12 +194,16 @@ def test_fit_non_eager_perfect():
     replay_bufer = ReplayBufferFromFolder(
         max_buffer_size=1000,
         batch_size=3,
-        trajectory_length=5,
+        min_trajectory_length=1,
+        max_trajectory_length=38,
         data_file_ending=".perfect.jass-data.pkl",
         game_data_folder=Path(__file__).parent.parent / "resources",
         clean_up_files=False,
         mdp_value=config.agent.mdp_value,
-        gamma=config.agent.discount)
+        gamma=config.agent.discount,
+    nr_of_batches=2)
+
+    optimizer = get_optimizer(config)
 
     testee = MuZeroTrainer(
         network=network,
@@ -207,16 +211,11 @@ def test_fit_non_eager_perfect():
         replay_buffer=replay_bufer,
         metrics_manager=MetricsManager(),
         logger=ConsoleLogger({}),
-        learning_rate=0.001,
-        weight_decay=1,
-        adam_beta1=0.9,
-        adam_beta2=0.99,
-        adam_epsilon=1e-7,
+        optimizer=optimizer,
         min_buffer_size=1,
         updates_per_step=2,
-        store_model_weights_after=1,
+        store_model_weights_after=1
     )
-
 
     weights_prev = network.get_weight_list()
 

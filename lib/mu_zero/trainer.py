@@ -4,16 +4,14 @@ import time
 from pathlib import Path
 
 import tensorflow as tf
-import tensorflow_addons as tfa
 import wandb
 
 from lib.environment.networking.worker_config import WorkerConfig
-from lib.jass.features.features_conv_cpp import FeaturesSetCppConv
 from lib.log.base_logger import BaseLogger
 from lib.metrics.metrics_manager import MetricsManager
 from lib.mu_zero.network.network_base import AbstractNetwork
 from lib.mu_zero.network.support_conversion import scalar_to_support, support_to_scalar_per_player
-from lib.mu_zero.replay_buffer.replay_buffer_from_folder import ReplayBufferFromFolder
+from lib.mu_zero.replay_buffer.file_based_replay_buffer_from_folder import FileBasedReplayBufferFromFolder
 
 
 class MuZeroTrainer:
@@ -21,7 +19,7 @@ class MuZeroTrainer:
     def __init__(
             self,
             network: AbstractNetwork,
-            replay_buffer: ReplayBufferFromFolder,
+            replay_buffer: FileBasedReplayBufferFromFolder,
             metrics_manager: MetricsManager,
             config: WorkerConfig,
             logger: BaseLogger,
@@ -75,9 +73,10 @@ class MuZeroTrainer:
         for it in range(iterations):
             start = time.time()
             buffer_size = self.replay_buffer.buffer_size
+            non_zero_samples = self.replay_buffer.non_zero_samples
             size_of_last_update = self.replay_buffer.size_of_last_update
             size_of_last_update_cumsum += size_of_last_update
-            logging.info(f"Iteration {it}, Buffer size: {buffer_size}")
+            logging.info(f"Iteration {it}, Buffer size: {buffer_size}, Non zero  samples: {non_zero_samples}")
 
             batches = self.replay_buffer.sample_from_buffer()
 
@@ -111,6 +110,7 @@ class MuZeroTrainer:
 
                 data = {
                     "meta/buffer_size": buffer_size,
+                    "meta/non_zero_samples": non_zero_samples,
                     "meta/learning_rate": current_lr,
                     "meta/size_of_last_update": size_of_last_update,
                     "meta/size_of_last_update_cumsum": size_of_last_update_cumsum,

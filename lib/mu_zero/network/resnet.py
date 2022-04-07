@@ -30,6 +30,7 @@ class MuZeroResidualNetwork(AbstractNetwork):
         fc_policy_layers,
         support_size,
         players,
+        network_path=None
     ):
         super().__init__()
         self.num_blocks_representation = num_blocks_representation
@@ -46,13 +47,14 @@ class MuZeroResidualNetwork(AbstractNetwork):
 
         block_output_size_policy = reduced_channels_policy * observation_shape[0] * observation_shape[1]
 
-        self.representation_network = RepresentationNetwork(
-            observation_shape=observation_shape,
-            num_blocks=num_blocks_representation,
-            num_blocks_fully_connected=fcn_blocks_representation,
-            num_channels=num_channels)
+        if network_path is None:
+            self.representation_network = RepresentationNetwork(
+                observation_shape=observation_shape,
+                num_blocks=num_blocks_representation,
+                num_blocks_fully_connected=fcn_blocks_representation,
+                num_channels=num_channels)
 
-        self.dynamics_network = DynamicsNetwork(
+            self.dynamics_network = DynamicsNetwork(
                 observation_shape=observation_shape,
                 action_space_size=action_space_size,
                 players=players,
@@ -65,7 +67,7 @@ class MuZeroResidualNetwork(AbstractNetwork):
                 block_output_size_reward=block_output_size_reward,
             )
 
-        self.prediction_network = PredictionNetwork(
+            self.prediction_network = PredictionNetwork(
                 observation_shape=observation_shape,
                 players=players,
                 action_space_size=action_space_size,
@@ -79,6 +81,8 @@ class MuZeroResidualNetwork(AbstractNetwork):
                 block_output_size_value=block_output_size_value,
                 block_output_size_policy=block_output_size_policy,
             )
+        else:
+            self.load(network_path, from_graph=True)
 
         self._warmup()
 
@@ -203,7 +207,7 @@ TOTAL: {sum([representation_params, dynamics_params, prediction_params]):,} trai
         assert value.shape == (1, self.players, self.support_size)
 
     def __del__(self):
-        del self.prediction_network, self.representation_network, self.dynamics_network
+        del self
 
 
 class RepresentationNetwork(tf.keras.Model):

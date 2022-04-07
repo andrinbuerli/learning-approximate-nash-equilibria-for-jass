@@ -79,13 +79,11 @@ def _play_games_multi_threaded_(n_games, continuous):
     worker_config = _play_games_multi_threaded_.worker_config
     network_path = _play_games_multi_threaded_.network_path
 
+    import tensorflow as tf
     from lib.util import set_allow_gpu_memory_growth
     set_allow_gpu_memory_growth(True)
 
     first_call = True
-    network = get_network(worker_config)
-
-    agents = [get_agent(worker_config, network=network, greedy=False) for _ in range(n_games)]
 
     while continuous or first_call:
         try:
@@ -93,7 +91,8 @@ def _play_games_multi_threaded_(n_games, continuous):
                 logging.warning(f"Received cancel signal, stopping data collection.")
                 os.kill(os.getpid(), signal.SIGKILL)
 
-            network.load(network_path, from_graph=True)
+            network = get_network(worker_config, network_path=network_path)
+            agents = [get_agent(worker_config, network=network, greedy=False) for _ in range(n_games)]
 
             first_call = False
             results = pool.starmap(_play_single_game_, zip(list(range(n_games)), agents))
@@ -109,7 +108,8 @@ def _play_games_multi_threaded_(n_games, continuous):
             if continuous:
                 queue.put((np.stack(states), np.stack(actions), np.stack(rewards), np.stack(probs), np.stack(outcomes)))
 
-                del states, actions, rewards, probs, outcomes
+                del states, actions, rewards, probs, outcomes, agents, network
+                tf.keras.backend.clear_session()
                 gc.collect()
             else:
                 return states, actions, rewards, probs, outcomes

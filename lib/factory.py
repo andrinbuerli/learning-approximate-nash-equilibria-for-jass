@@ -75,11 +75,9 @@ def get_network(config: WorkerConfig, network_path: str = None):
             fc_value_layers=config.network.fc_value_layers,
             fc_policy_layers=config.network.fc_policy_layers,
             support_size=config.network.support_size,
-            players=config.network.players
+            players=config.network.players,
+            network_path=network_path
         )
-
-        if config.network.path is not None:
-            network.load(network_path)
 
         return network
 

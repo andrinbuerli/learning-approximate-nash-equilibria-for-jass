@@ -52,10 +52,9 @@ class BaseAsyncMetric:
         if self.init_method is not None:
             init_vars = self.init_method()
 
-        network = get_network(self.worker_config)
         while True:
             try:
-                network.load(self.network_path)
+                network = get_network(self.worker_config, network_path=self.network_path)
 
                 if self.init_method is None:
                     params = [self.get_params(i, network) for i in range(self.parallel_threads)]
@@ -69,7 +68,8 @@ class BaseAsyncMetric:
                 else:
                     self.result_queue.put(float(np.mean(results)))
 
-                del results, params
+                del results, params, network
+                tf.keras.backend.clear_session()
                 gc.collect()
 
                 while self.result_queue.qsize() > 0:
@@ -77,8 +77,6 @@ class BaseAsyncMetric:
 
             except Exception as e:
                 logging.error(f"{type(self)}: Encountered error {e}, continuing anyways")
-                del network
-                network = get_network(self.worker_config)
 
     @abc.abstractmethod
     def get_params(self, thread_nr: int, network: AbstractNetwork, init_vars=None) -> []:

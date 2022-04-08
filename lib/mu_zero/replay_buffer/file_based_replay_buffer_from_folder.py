@@ -87,6 +87,11 @@ class FileBasedReplayBufferFromFolder:
             logging.info("Waiting for sampling thread shutdown")
 
     def sample_from_buffer(self):
+        if not self.sampling_thread.is_alive():
+            logging.warning("Restarting sampling thread..")
+            self.sampling_thread = Thread(target=self._sample_continuously_from_buffer)
+            self.start_sampling()
+
         logging.info("waiting for sample from replay buffer..")
         return self.sample_queue.get()
 
@@ -151,7 +156,6 @@ class FileBasedReplayBufferFromFolder:
 
     @property
     def buffer_size(self):
-        self._update()
         return self.sum_tree.filled_size
 
     def restore(self):

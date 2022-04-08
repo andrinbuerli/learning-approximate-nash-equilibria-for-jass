@@ -1,6 +1,7 @@
 import math
 
 import numpy as np
+from jasscpp import GameStateCpp
 
 
 def deal_random_hand(known_hands: [[int]]) -> (np.ndarray, float):
@@ -11,6 +12,8 @@ def deal_random_hand(known_hands: [[int]]) -> (np.ndarray, float):
         one hot encoded 4x36 array
     """
     # shuffle card ids
+
+    known_hands = [list(x) for x in known_hands]
 
     flat_played_cards = [y for x in known_hands for y in x]
 
@@ -42,3 +45,23 @@ def deal_random_hand(known_hands: [[int]]) -> (np.ndarray, float):
     prob = 1 / combinations
 
     return hands, prob
+
+
+def copy_state(state: GameStateCpp) -> GameStateCpp:
+    cpp_state = GameStateCpp()
+    cpp_state.current_trick = state.current_trick
+    cpp_state.dealer = state.dealer
+    cpp_state.declared_trump_player = state.declared_trump_player
+    cpp_state.forehand = state.forehand
+    cpp_state.hands = np.copy(state.hands)
+    cpp_state.nr_cards_in_trick = state.nr_cards_in_trick
+    cpp_state.nr_played_cards = state.nr_played_cards
+    cpp_state.player = int(state.player)
+    cpp_state.points = np.copy(state.points)
+    tricks = np.copy(state.tricks)
+    cpp_state.tricks = tricks
+    cpp_state.trick_first_player = np.copy(state.trick_first_player)
+    cpp_state.trick_points = np.copy(state.trick_points)
+    cpp_state.trick_winner = np.copy(state.trick_winner)
+    cpp_state.trump = state.trump
+    return cpp_state

@@ -1,3 +1,4 @@
+import array
 import logging
 from typing import Tuple
 
@@ -19,7 +20,9 @@ class OOS:
             players: int,
             chance_sampling: bool,
             iterations_per_chance_sample: int,
-            log:bool = False):
+            log: bool = False,
+            asserts: bool = False):
+        self.asserts = asserts
         self.iterations_per_chance_sample = iterations_per_chance_sample
         self.chance_sampling = chance_sampling
         self.log = log
@@ -39,11 +42,11 @@ class OOS:
         self.information_sets = {}
 
     def get_infostate_key(self, h: GameStateCpp):
-        return f"{h.trump}:{h.forehand}:{np.flatnonzero(h.hands[h.player])}:{h.tricks[h.current_trick]}"
+        return array.array('b', [h.trump, h.forehand, *np.flatnonzero(h.hands[h.player]), *h.tricks[h.current_trick]]).tostring()
 
     def get_infostate_key_from_obs(self, m: Tuple[GameStateCpp, GameObservationCpp]):
         if isinstance(m, GameObservationCpp):
-            return f"{m.trump}:{m.forehand}:{np.flatnonzero(m.hand)}:{m.tricks[m.current_trick]}"
+            return array.array('b', [m.trump, m.forehand, *np.flatnonzero(m.hand), *m.tricks[m.current_trick]]).tostring()
         else:
             return self.get_infostate_key(m)
 
@@ -67,75 +70,23 @@ class OOS:
             else:
                 targeted_mode = targeted_mode_init
 
-            if targeted_mode:
-                p_bar_h = 1
-                known_hands = self.get_known_hands(m)
-                hands_targeted, prob_targeted = deal_random_hand(known_hands=known_hands)
-                p_bar_h *= prob_targeted
+            w_T = self.calculate_weighting_factor(m, targeted_mode)
 
-                game = GameSimCpp()
-                game.state.hands = hands_targeted
-                game.state.dealer = m.dealer
-                game.state.player = next_player[m.dealer]
+            hands, prob_targeted, prob_untargeted = self.sample_chance_outcome(m, targeted_mode)
 
-                if m.forehand > -1:
-                    if m.forehand == 0:
-                        a = TRUMP_FULL_P
-                        key = self.get_infostate_key(game.state)
-                        if key in self.information_sets:
-                            p_a = self.get_average_stragety(key)[a]
-                        else:
-                            p_a = 1 / game.get_valid_actions().sum()
-                        game.perform_action_full(a)
-                        p_bar_h *= p_a
-
-                    a = m.trump + TRUMP_FULL_OFFSET
-                    key = self.get_infostate_key(game.state)
-                    if key in self.information_sets:
-                        p_a = self.get_average_stragety(key)[a]
-                    else:
-                        p_a = 1 / game.get_valid_actions().sum()
-                    game.perform_action_full(a)
-                    p_bar_h *= p_a
-
-                for c in m.tricks.reshape(-1):
-                    if c == -1:
-                        break
-
-                    key = self.get_infostate_key(game.state)
-                    if key in self.information_sets:
-                        p_a = self.get_average_stragety(key)[c]
-                    else:
-                        p_a = 1 / game.get_valid_actions().sum()
-
-                    game.perform_action_full(c)
-                    p_bar_h *= p_a
-
-                w_T = (1 - self.delta) + self.delta * p_bar_h
-            else:
-                w_T = 1
-
-
-            if self.chance_sampling:
-                hands, prob_targeted, prob_untargeted = self.sample_chance_outcome(m, targeted_mode)
-
-                for _ in range(self.iterations_per_chance_sample):
-                    for i in range(self.players):
-                        state = GameStateCpp()
-                        state.dealer = m.dealer
-                        state.player = next_player[m.dealer]
-                        state.hands = hands
-                        self.iterate(
-                            m, state,
-                            [1 for _ in range(self.players)], prob_untargeted * 1,
-                                                              prob_targeted * w_T, prob_untargeted * w_T,
-                            i, targeted_mode)
-            else:
+            for _ in range(self.iterations_per_chance_sample if self.chance_sampling else 1):
                 for i in range(self.players):
                     state = GameStateCpp()
                     state.dealer = m.dealer
                     state.player = next_player[m.dealer]
-                    self.iterate(m, state, [1 for _ in range(self.players)], 1, w_T, w_T, i, targeted_mode)
+                    state.hands = hands
+                    self.iterate(
+                        m, state,
+                        [(1 if j == i else prob_untargeted * 1) for j in range(self.players)],
+                        [prob_untargeted * 1 for j in range(self.players)],
+                        prob_targeted * w_T, prob_untargeted * w_T,
+                        i, targeted_mode)
+
 
             if self.log:
                 #imregret = np.nanmean([r.max() for key, (_, _, r) in self.infostates.items()])
@@ -152,7 +103,58 @@ class OOS:
                     imregret = [-1 for _ in valid_actions]
 
                 self.immediate_regrets.append(imregret)
-                logging.info(f"Touched infosets: {len(self.information_sets)}, cards played: {m.nr_played_cards}, Average Regret: {imregret}")
+                #logging.info(f"Touched infosets: {len(self.information_sets)}, cards played: {m.nr_played_cards}, Average Regret: {imregret}")
+
+    def calculate_weighting_factor(self, m, targeted_mode):
+        pi_bar_h = 1
+        known_hands = self.get_known_hands(m)
+        hands, prob = deal_random_hand(known_hands=known_hands)
+        #pi_bar_h *= prob
+
+        game = GameSimCpp()
+        game.state.hands = hands
+        game.state.dealer = m.dealer
+        game.state.player = next_player[m.dealer]
+
+        if m.forehand > -1:
+            if m.forehand == 0:
+                a = TRUMP_FULL_P
+                key = self.get_infostate_key(game.state)
+                if key in self.information_sets:
+                    p_a = self.get_average_stragety(key)[a]
+                else:
+                    p_a = 1 / game.get_valid_actions().sum()
+                game.perform_action_full(a)
+                pi_bar_h *= p_a
+
+            a = m.trump + TRUMP_FULL_OFFSET
+            key = self.get_infostate_key(game.state)
+            if key in self.information_sets:
+                p_a = self.get_average_stragety(key)[a]
+            else:
+                p_a = 1 / game.get_valid_actions().sum()
+            game.perform_action_full(a)
+            pi_bar_h *= p_a
+
+        for c in m.tricks.reshape(-1):
+            if c == -1:
+                break
+
+            key = self.get_infostate_key(game.state)
+            if key in self.information_sets:
+                p_a = self.get_average_stragety(key)[c]
+            else:
+                p_a = 1 / game.get_valid_actions().sum()
+
+            game.perform_action_full(c)
+            pi_bar_h *= p_a
+
+        if targeted_mode:
+            w_T = (1 - self.delta) + self.delta * (pi_bar_h / 1)
+        else:
+            w_T = 1
+
+        return w_T
 
     def sample_chance_outcome(self, m, targeted_mode):
         known_hands = self.get_known_hands(m)
@@ -164,6 +166,8 @@ class OOS:
             hands = hands_targeted
         else:
             hands = hands_untargeted
+
+        # add potentially missing information sets
         game = GameSimCpp()
         game.state.hands = hands_targeted
         game.state.dealer = m.dealer
@@ -190,7 +194,10 @@ class OOS:
                 self.add_information_set(key, game.get_valid_actions())
 
             game.perform_action_full(c)
-        assert hands.sum() == 36
+
+        if self.asserts:
+            assert hands.sum() == 36
+
         return hands, prob_targeted, prob_untargeted
 
     def iterate(
@@ -198,7 +205,7 @@ class OOS:
             m: Tuple[GameStateCpp, GameObservationCpp],
             h: GameStateCpp,
             pi_i: [float],
-            pi_o: float,
+            pi_o: [float],
             s_1: float,
             s_2: float,
             i: int,
@@ -217,39 +224,23 @@ class OOS:
         :return:
         """
 
-        assert s_1 <= 1, f"invalid value for s_1: {s_1}"
-        assert s_2 <= 1, f"invalid value for s_2: {s_2}"
+        if self.asserts:
+            assert s_1 <= 1, f"invalid value for s_1: {s_1}"
+            assert s_2 <= 1, f"invalid value for s_2: {s_2}"
 
         is_terminal_history = h.nr_played_cards == 36
-        is_chance_node = h.hands.min() == -1
         if is_terminal_history:
             return 1, self.delta * s_1 + (1 - self.delta) * s_2, h.points
-        elif is_chance_node:
-            known_hands = self.get_known_hands(m)
-            hands_targeted, prob_targeted = deal_random_hand(known_hands=known_hands)
-            if isinstance(m, GameObservationCpp):
-                known_hands = [hand if i == m.player else [] for i, hand in enumerate(known_hands)]
-            hands_untargeted, prob_untargeted = deal_random_hand(known_hands=known_hands)
-
-            if targeted_mode:
-                h.hands = hands_targeted
-            else:
-                h.hands = hands_untargeted
-
-            assert h.hands.sum() == 36
-
-            return self.iterate(
-                m, h,
-                pi_i, prob_untargeted * pi_o,
-                prob_targeted * s_1, prob_untargeted * s_2,
-                i, targeted_mode)
 
         infoset_key = self.get_infostate_key(h)
 
         if infoset_key in self.information_sets:
             regret, avg_strategy, imm_regrets, valid_actions = self.information_sets[infoset_key]
             valid_actions_list = np.flatnonzero(valid_actions)
-            assert (valid_actions == self.rule.get_full_valid_actions_from_state(h)).all()
+
+            if self.asserts:
+                assert (valid_actions == self.rule.get_full_valid_actions_from_state(h)).all()
+
             current_strategy = self.regret_matching(regret, valid_actions_list)
             if h.player == i:
                 current_strategy = self.add_exploration(current_strategy, valid_actions_list)
@@ -264,12 +255,12 @@ class OOS:
 
         if infoset_key not in self.information_sets:
             avg_strategy, imm_regrets, regret = self.add_information_set(infoset_key, valid_actions)
-            x, l, u = self.playout(h, a, (self.delta * s_1 + (1 - self.delta) * s_2) / valid_actions.sum())
+            x, l, u = self.playout(h, a, current_strategy[a], (self.delta * s_1 + (1 - self.delta) * s_2) / valid_actions.sum())
         else:
             pi_i_prime =  [current_strategy[a] * pi_ii if player == h.player else pi_ii for player, pi_ii in enumerate(pi_i)]
-            pi_o_prime = current_strategy[a] * pi_o if h.player != i else pi_o
+            pi_o_prime = [current_strategy[a] * pi_oi if player != h.player else pi_oi for player, pi_oi in enumerate(pi_o)]
 
-            h_tmp = copy_state(h)
+            h_tmp = h #copy_state(h)
             game.state = h
             game.perform_action_full(a)
             h_prime = game.state
@@ -282,7 +273,7 @@ class OOS:
         for v_a in valid_actions_list:
             if h.player == i:
                 u_i = self.get_utility_for(u, i)
-                W = u_i * pi_o / l
+                W = u_i * pi_o[h.player] / l
                 if v_a == a:
                     imm_regrets[v_a] = (c - x) * W
                 else:
@@ -290,10 +281,9 @@ class OOS:
 
                 regret[v_a] = regret[v_a] + imm_regrets[v_a]
             else:
-                # TODO: FIX PROBLEMS WITH VALUES SMALLER THAN computable with float32 -> RUNTIME WARNINGS
                 pi_i_I = (self.delta * s_1 + (1 - self.delta) * s_2)
                 avg_strategy[v_a] = avg_strategy[v_a] \
-                                    + ((pi_i[h.player] * current_strategy[v_a]) / pi_i_I)
+                                    + (pi_i[h.player] / pi_i_I) * current_strategy[v_a]
 
         self.information_sets[infoset_key] = (regret, avg_strategy, imm_regrets, valid_actions)
 
@@ -327,7 +317,7 @@ class OOS:
             self,
             h: GameStateCpp,
             m: GameObservationCpp,
-            avg_strategy: np.array,
+            current_strategy: np.array,
             valid_actions_list: [int],
             s_1: float,
             s_2: float,
@@ -335,7 +325,7 @@ class OOS:
 
         if targeted:
             p_a_targeted = 1
-            if h.trump == -1:  # trump phase
+            if h.trump == -1 and m.trump > -1:  # trump phase
                 if h.forehand == -1:
                     if m.forehand == 1:
                         a = (m.trump + TRUMP_FULL_OFFSET) if m.trump > -1 else -1
@@ -349,12 +339,12 @@ class OOS:
                 a = m.tricks.reshape(-1)[h.nr_played_cards]
 
             if a == -1:  # action lies beyond current game history m
-                a, p_a_targeted = self.sample_action(avg_strategy, valid_actions_list)
+                a, p_a_targeted = self.sample_action(current_strategy, valid_actions_list)
 
-            p_a_untargeted = avg_strategy[a]
+            p_a_untargeted = current_strategy[a]
             return a, s_1 * p_a_targeted, s_2 * p_a_untargeted
         else:
-            a, p_a_untargeted = self.sample_action(avg_strategy, valid_actions_list)
+            a, p_a_untargeted = self.sample_action(current_strategy, valid_actions_list)
 
             if h.trump == -1:  # trump phase
                 if h.forehand == -1:
@@ -386,30 +376,21 @@ class OOS:
         p_a = strategy[a]
         return a, p_a
 
-    def playout(self, h, a, l):
-        while True:
-            try:
-                game = GameSimCpp()
-                game.state = h
-                game.perform_action_full(a)
+    def playout(self, h, a1, p_a, l):
+        game = GameSimCpp()
+        game.state = h
+        game.perform_action_full(a1)
 
-                x = 1
-                aa = []
-                while not game.is_done():
-                    valid_actions = np.flatnonzero(game.get_valid_actions())
-                    assert len(valid_actions) > 0, f"invalid nr of valid actions {valid_actions}, {game.state}"
-                    a = np.random.choice(valid_actions)
-                    aa.append((a, valid_actions, game.state.player, game.state.hands.sum()))
-                    game.perform_action_full(a)
-                    x *= 1 / len(valid_actions)
-            except AssertionError as e:
-                logging.warning(f"caught: {e}, continuing anyways")
-                continue
-
-            break
+        x = 1
+        while not game.is_done():
+            valid_actions = np.flatnonzero(game.get_valid_actions())
+            assert len(valid_actions) > 0, f"invalid nr of valid actions {valid_actions}, {game.state}"
+            a = np.random.choice(valid_actions)
+            game.perform_action_full(a)
+            x *= 1 / len(valid_actions)
 
         u = game.state.points
-        return x, l * x, u
+        return x, l * p_a * x, u
 
     def add_exploration(self, strategy, valid_actions_list):
         probs = strategy[valid_actions_list]
@@ -418,7 +399,8 @@ class OOS:
         strategy[valid_actions_list] = probs
         strategy /= strategy.sum()
 
-        assert np.isclose(strategy.sum(), 1)
+        if self.asserts:
+            assert np.isclose(strategy.sum(), 1)
 
         return strategy
 

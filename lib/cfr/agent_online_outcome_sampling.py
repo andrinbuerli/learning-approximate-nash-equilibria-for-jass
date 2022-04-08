@@ -27,19 +27,24 @@ class AgentOnlineOutcomeSampling(RememberingAgent):
                  action_space=43,
                  players=4,
                  log=False,
+                 chance_sampling=True,
                  temperature=1.0):
         super().__init__(temperature=temperature)
 
         self.cheating_mode = False
 
-        self.iterations = iterations * chance_samples
+        if chance_sampling:
+            self.iterations = iterations * chance_samples
+        else:
+            self.iterations = iterations
+
         self.search = OOS(
             delta=delta,
             epsilon=epsilon,
             gamma=gamma,
             action_space=action_space,
             players=players,
-            chance_sampling=True,
+            chance_sampling=chance_sampling,
             iterations_per_chance_sample=iterations,
             log=log)
 

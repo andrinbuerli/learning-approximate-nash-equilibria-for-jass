@@ -54,7 +54,8 @@ class SumTree:
         return self.data[self.write]
 
     def get_data_at(self, idx):
-        return self.data[idx]
+        dataIdx = idx - self.capacity + 1
+        return self.data[dataIdx]
 
     def add(self, p, data):
         idx = self.write + self.capacity - 1

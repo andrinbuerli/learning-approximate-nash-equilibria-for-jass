@@ -62,6 +62,7 @@ class MuZeroTrainer:
 
         while self.replay_buffer.buffer_size < self.min_buffer_size:
             logging.info(f"waiting for buffer to fill up ({self.replay_buffer.buffer_size} / {self.min_buffer_size})")
+            self.replay_buffer.update()
             time.sleep(5)
 
             if self.store_buffer:

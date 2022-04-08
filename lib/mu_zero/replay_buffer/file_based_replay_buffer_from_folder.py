@@ -96,12 +96,12 @@ class FileBasedReplayBufferFromFolder:
         return self.sample_queue.get()
 
     def _sample_from_buffer(self, nr_of_batches):
-        self._update()
+        self.update()
 
         while self.non_zero_samples < self.min_non_zero_prob_samples or self.sum_tree.filled_size < self.batch_size:
             sleep(5)
             logging.info(f"waiting for more samples ({self.non_zero_samples} / {self.min_non_zero_prob_samples}) ..")
-            self._update()
+            self.update()
 
         batches = []
         logging.info("sampling from replay buffer..")
@@ -177,7 +177,7 @@ class FileBasedReplayBufferFromFolder:
                     return -1
                 sleep(5)
 
-    def _update(self):
+    def update(self):
         files = list(self.game_data_folder.glob(f"*{self.data_file_ending}"))
         logging.info(f"updating replay buffer, found {len(files)} game data files")
         size_of_last_update = 0

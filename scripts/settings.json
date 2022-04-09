@@ -10,7 +10,7 @@
   "c_2": 19652,
   "dirichlet_alpha": 0.3,
   "dirichlet_eps": 0.25,
-  "iterations": 1,
+  "iterations": 20,
   "mdp_value": true,
   "discount": 1,
   "n_search_threads": 1,

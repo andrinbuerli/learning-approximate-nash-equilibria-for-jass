@@ -33,7 +33,7 @@
   "policy_loss_weight": 1.0,
   "max_buffer_size": 60000,
   "min_buffer_size": 60000,
-  "max_samples_per_episode": 90,
+  "max_samples_per_episode": 120,
   "min_non_zero_prob_samples": 10000,
   "port": 8080,
   "store_model_weights_after": 10,

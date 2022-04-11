@@ -22,6 +22,7 @@ class FileBasedReplayBufferFromFolder:
             max_trajectory_length: int,
             min_trajectory_length: int,
             mdp_value: bool,
+            valid_policy_target: bool,
             gamma: float,
             game_data_folder: Path,
             episode_data_folder: Path,
@@ -39,6 +40,7 @@ class FileBasedReplayBufferFromFolder:
         (states, actions, rewards, probs, outcomes)
         """
 
+        self.valid_policy_target = valid_policy_target
         self.clean_up_episodes = clean_up_episodes
         self.min_non_zero_prob_samples = min_non_zero_prob_samples
         self.max_samples_per_episode = max_samples_per_episode
@@ -237,6 +239,19 @@ class FileBasedReplayBufferFromFolder:
         episode_length = 37 if states[-1].sum() == 0 else 38
 
         assert (rewards.sum(axis=0) == outcomes[0]).all()
+
+        if self.valid_policy_target:
+            valid_cards = states.reshape(-1, 36, 45)[:, :, 19]
+            valid_trumps = np.ones((states.shape[0], 7))
+            valid_trumps[:, -1] *= states.reshape(-1, 36, 45)[:, 0, 44]
+            valid_trumps *= states.reshape(-1, 36, 45)[:, 0, 43][:, None]
+
+            valid_actions = np.concatenate((valid_cards, valid_trumps), axis=1)
+            valid_actions /= np.maximum(np.nansum(valid_actions, axis=1, keepdims=True), 1)
+
+            probs = valid_actions
+            episode = states, actions, rewards, probs, outcomes
+
         assert np.allclose(probs[:episode_length].sum(axis=-1), 1)
 
         if self.mdp_value:

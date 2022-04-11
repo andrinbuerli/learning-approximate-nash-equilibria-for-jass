@@ -84,6 +84,7 @@ class OptimizationConfig(BaseConfig):
         self.log_n_steps_ahead = 3
         self.apa_n_games = 4
         self.data_folder = ""
+        self.valid_policy_target = False
 
 class LogConfig(BaseConfig):
     def __init__(self):

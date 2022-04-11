@@ -5,7 +5,6 @@ from pathlib import Path
 from pprint import pprint
 
 import tensorflow as tf
-
 from jass.features.labels_action_full import LabelSetActionFull
 
 sys.path.append("../")
@@ -22,7 +21,6 @@ from lib.factory import get_network, get_features, get_optimizer
 from lib.log.console_logger import ConsoleLogger
 from lib.metrics.apao import APAO
 from lib.metrics.metrics_manager import MetricsManager
-from lib.mu_zero.replay_buffer.replay_buffer_from_folder import ReplayBufferFromFolder
 from lib.mu_zero.replay_buffer.file_based_replay_buffer_from_folder import FileBasedReplayBufferFromFolder
 from lib.mu_zero.trainer import MuZeroTrainer
 
@@ -80,6 +78,7 @@ if __name__=="__main__":
         clean_up_files=True,
         cache_path=data_path,
         mdp_value=worker_config.agent.mdp_value,
+        valid_policy_target=worker_config.optimization.valid_policy_target,
         gamma=worker_config.agent.discount,
         start_sampling=False,
         episode_data_folder=data_path / "episodes_data",

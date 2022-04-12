@@ -2,14 +2,17 @@
 #
 # Created by Thomas Koller on 27.07.20
 #
+import io
 import logging
 import sys
+import time
 from datetime import datetime
 from typing import List
 from typing import Union
 
 import jasscpp
 import numpy as np
+import tqdm
 from jass.agents.agent import Agent
 from jass.arena.dealing_card_random_strategy import DealingCardRandomStrategy
 from jass.arena.dealing_card_strategy import DealingCardStrategy
@@ -22,6 +25,22 @@ from jass.logs.log_entry_file_generator import LogEntryFileGenerator
 from lib.jass.agent.agent import CppAgent
 from lib.jass.features.features_set_cpp import FeaturesSetCpp
 
+class TqdmToLogger(io.StringIO):
+    """
+        Output stream for TQDM which will output to logger module instead of
+        the StdOut.
+    """
+    logger = None
+    level = None
+    buf = ''
+    def __init__(self,logger,level=None):
+        super(TqdmToLogger, self).__init__()
+        self.logger = logger
+        self.level = level or logging.INFO
+    def write(self,buf):
+        self.buf = buf.strip('\r\n\t ')
+    def flush(self):
+        self.logger.log(self.level, self.buf)
 
 class Arena:
     """
@@ -36,12 +55,13 @@ class Arena:
     def __init__(self,
                  nr_games_to_play: int,
                  dealing_card_strategy: DealingCardStrategy = None,
-                 print_every_x_games: int = 5,
+                 log: bool = False,
                  check_move_validity=True,
                  save_filename=None,
                  cheating_mode=False,
                  store_trajectory=False,
                  store_trajectory_inc_raw_game_state=False,
+                 reset_agents=False,
                  feature_extractor: FeaturesSetCpp = None):
         """
 
@@ -53,6 +73,7 @@ class Arena:
             save_filename: True if results should be save
             cheating_mode: True if agents will receive the full game state
         """
+        self.reset_agents = reset_agents
         self.store_trajectory_inc_raw_game_state = store_trajectory_inc_raw_game_state
         self.feature_extractor = feature_extractor
         self.store_trajectory = store_trajectory
@@ -83,7 +104,7 @@ class Arena:
         self._points_team_1 = np.zeros(self._nr_games_to_play)
 
         # Print  progress
-        self._print_every_x_games = print_every_x_games
+        self.log = log
         self._check_moves_validity = check_move_validity
 
         # Save file if enabled
@@ -259,6 +280,10 @@ class Arena:
             for _ in self.game_states:
                 self.outcomes.append(self._game.state.points)
 
+        if self.reset_agents:
+            for a in [x for x in self.players if hasattr(x, "reset")]:
+                a.reset()
+
     def store_state(self, observation: jasscpp.GameStateCpp, action):
         assert 0 <= action <  ACTION_SET_FULL_SIZE, f"invalid action {action}"
 
@@ -288,22 +313,25 @@ class Arena:
         if self._save_games:
             self._file_generator.__enter__()
         dealer = NORTH
-        for game_id in range(self._nr_games_to_play):
-            self.play_game(dealer=dealer)
-            if self.nr_games_played % self._print_every_x_games == 0:
-                points_to_write = int(self.nr_games_played / self._nr_games_to_play * 40)
-                spaces_to_write = 40 - points_to_write
 
+        rng = range(self._nr_games_to_play)
+        if self.log:
+            tqdm_out = TqdmToLogger(logging.getLogger(), level=logging.INFO)
+            pbar = tqdm.tqdm(rng, desc=f"Schieber Jass Arena", file=tqdm_out)
+        else:
+            pbar = rng
+        for game_id in pbar:
+            self.play_game(dealer=dealer)
+            if self.log:
                 total = (self.points_team_0[:self.nr_games_played] + self.points_team_1[:self.nr_games_played])
                 points_0 = (self.points_team_0[:self.nr_games_played]) / total
                 points_1 = (self.points_team_1[:self.nr_games_played]) / total
 
-                logging.info("\r[{}{}] {:4}/{:4} games played, t0: {:4} t1: {:4}".format('.' * points_to_write,
-                                                                          ' ' * spaces_to_write,
-                                                                          self.nr_games_played,
-                                                                          self._nr_games_to_play,
-                                                                          points_0.mean(),
-                                                                          points_1.mean()))
+                pbar.set_postfix({
+                    "t0": points_0.mean(),
+                    "t1": points_1.mean()
+                })
+
             dealer = next_player[dealer]
         if self._save_games:
             self._file_generator.__exit__(None, None, None)

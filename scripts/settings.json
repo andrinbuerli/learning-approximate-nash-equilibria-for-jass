@@ -64,12 +64,12 @@
   "num_blocks_dynamics": 4,
   "fcn_blocks_dynamics": 2,
   "num_blocks_prediction": 1,
-  "num_channels": 128,
+  "num_channels": 256,
   "path": null,
   "players": 4,
-  "reduced_channels_policy": 64,
-  "reduced_channels_reward": 64,
-  "reduced_channels_value": 64,
+  "reduced_channels_policy": 128,
+  "reduced_channels_reward": 128,
+  "reduced_channels_value": 128,
   "support_size": 157,
   "type": "resnet"
  }

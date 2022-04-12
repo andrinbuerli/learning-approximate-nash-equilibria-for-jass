@@ -22,11 +22,11 @@
  },
  "optimization": {
   "optimizer": "adam",
-  "learning_rate": 0.1,
+  "learning_rate": 0.01,
   "adam_beta1": 0.9,
   "adam_beta2": 0.999,
   "adam_epsilon": 1e-07,
-  "batch_size": 512,
+  "batch_size": 1024,
   "data_folder": "../results",
   "value_loss_weight": 1.0,
   "reward_loss_weight": 1.0,

@@ -233,13 +233,16 @@ class RepresentationNetwork(tf.keras.Model):
         x = self.bn(x, training=training)
         x = tf.nn.leaky_relu(x)
 
+        state = x
         for block in self.resblocks:
             x = block(x, training=training)
 
         for block in self.resblocks_fcn:
             x = block(x, training=training)
 
-        return x
+        state = x + state # overall residual connection
+
+        return state
 
 
 class DynamicsNetwork(tf.keras.Model):
@@ -262,8 +265,6 @@ class DynamicsNetwork(tf.keras.Model):
         self.full_support_size = full_support_size
         self.observation_shape = observation_shape
         self.num_channels = num_channels
-        self.conv = conv2x3(num_channels)
-        self.bn = layers.BatchNormalization()
         self.resblocks = [ResidualBlock(num_channels) for _ in range(num_blocks)]
         self.resblocks_fcn = [ResidualFullyConnectedBlock(num_channels) for _ in range(num_blocks_fully_connected)]
 
@@ -274,24 +275,22 @@ class DynamicsNetwork(tf.keras.Model):
                 mlp(
                 self.block_output_size_reward, fc_reward_layers, full_support_size,
                 output_activation=layers.Activation("softmax"),
-                name="reward"
+                name=f"reward_{_}"
             ) for _ in range(players // 2)
         ]
 
     def call(self, x, training=None):
-        x = tf.reshape(x, (-1, self.observation_shape[0], self.observation_shape[1], self.num_channels + self.action_space_size))
+        state = tf.reshape(x, (-1, self.observation_shape[0], self.observation_shape[1], self.num_channels + self.action_space_size))
 
-        x = self.conv(x, training=training)
-        x = self.bn(x, training=training)
-        x = tf.nn.leaky_relu(x)
-
+        x = state
         for block in self.resblocks:
             x = block(x, training=training)
 
         for block in self.resblocks_fcn:
             x = block(x, training=training)
 
-        state = x
+        state = x + state # overall residual connection
+
         x = tf.nn.leaky_relu(self.conv1x1_reward(x, training=training))
         x = tf.reshape(x, (-1, self.block_output_size_reward))
         reward = tf.tile(tf.stack(([fc(x) for fc in self.fc_reward]), axis=1), [1, 2, 1])
@@ -332,7 +331,7 @@ class PredictionNetwork(tf.keras.Model):
             mlp(
                 self.block_output_size_value, fc_value_layers, full_support_size,
                 output_activation=layers.Activation("softmax"),
-                name="value"
+                name=f"value_{_}"
             ) for _ in range(players // 2)
         ]
         self.fc_policy = mlp(

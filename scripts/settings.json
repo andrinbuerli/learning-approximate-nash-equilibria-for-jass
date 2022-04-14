@@ -53,7 +53,7 @@
    256
   ],
   "fc_reward_layers": [
-   256
+   256, 256, 256
   ],
   "fc_value_layers": [
    256

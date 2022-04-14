@@ -64,7 +64,7 @@
   "num_blocks_dynamics": 4,
   "fcn_blocks_dynamics": 2,
   "num_blocks_prediction": 0,
-  "num_channels": 128,
+  "num_channels": 256,
   "path": null,
   "players": 4,
   "reduced_channels_policy": 32,

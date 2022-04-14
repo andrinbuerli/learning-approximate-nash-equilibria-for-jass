@@ -380,8 +380,8 @@ class ResidualBlock(tf.keras.Model):
         out = tf.nn.leaky_relu(out)
         out = self.conv2(out, training=training)
         out = self.bn2(out, training=training)
-        out += x
         out = tf.nn.leaky_relu(out)
+        out += x
         return out
 
 class ResidualFullyConnectedBlock(tf.keras.Model):
@@ -404,8 +404,8 @@ class ResidualFullyConnectedBlock(tf.keras.Model):
         out = tf.nn.leaky_relu(out)
         out = self.conv3(out, training=training)
         out = self.bn3(out, training=training)
-        out += x
         out = tf.nn.leaky_relu(out)
+        out += x
         return out
 
 

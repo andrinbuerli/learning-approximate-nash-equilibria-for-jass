@@ -271,7 +271,7 @@ class DynamicsNetwork(tf.keras.Model):
         self.resblocks_fcn = [ResidualFullyConnectedBlock(num_channels) for _ in range(num_blocks_fully_connected)]
 
         self.conv1x1_reward =  layers.Conv2D(filters=reduced_channels_reward, kernel_size=(1, 1), padding="same",
-                                             activation=None, use_bias=False)
+                                             activation=None, use_bias=False, kernel_initializer="he_uniform")
         self.block_output_size_reward = block_output_size_reward
         self.fc_reward = [
                 mlp(
@@ -329,9 +329,9 @@ class PredictionNetwork(tf.keras.Model):
 
 
         self.conv1x1_value = layers.Conv2D(filters=reduced_channels_value, kernel_size=(1, 1), padding="same",
-                                           activation=None, use_bias=False)
+                                           activation=None, use_bias=False, kernel_initializer="he_uniform")
         self.conv1x1_policy = layers.Conv2D(filters=reduced_channels_policy, kernel_size=(1, 1), padding="same",
-                                           activation=None, use_bias=False)
+                                           activation=None, use_bias=False, kernel_initializer="he_uniform")
         self.block_output_size_value = block_output_size_value
         self.block_output_size_policy = block_output_size_policy
         self.fc_value = [
@@ -364,11 +364,11 @@ class PredictionNetwork(tf.keras.Model):
 
 def conv2x3(out_channels, strides=(1, 1), padding='same'):
     return layers.Conv2D(filters=out_channels, kernel_size=(2, 3), strides=strides,
-                         padding=padding, activation=None, use_bias=False)
+                         padding=padding, activation=None, use_bias=False, kernel_initializer="he_uniform")
 
 def conv4x9(out_channels, strides=(1, 1), padding='valid'):
     return layers.Conv2D(filters=out_channels, kernel_size=(4, 9), strides=strides,
-                         padding=padding, activation=None, use_bias=False)
+                         padding=padding, activation=None, use_bias=False, kernel_initializer="he_uniform")
 
 
 # Residual block
@@ -398,7 +398,7 @@ class ResidualFullyConnectedBlock(tf.keras.Model):
         self.conv2 = conv4x9(num_channels // 2)
         self.bn2 = layers.BatchNormalization()
         self.conv3 = layers.Conv2D(filters=num_channels, kernel_size=(1, 1), padding="same",
-                                   activation=None, use_bias=False)
+                                   activation=None, use_bias=False, kernel_initializer="he_uniform")
         self.bn3 = layers.BatchNormalization()
 
     def call(self, x, training=None):
@@ -427,5 +427,6 @@ def mlp(
     mlp_layers = [layers.Input(shape=(input_size,))]
     for i in range(len(sizes)):
         act = activation if i < len(sizes) - 1 else output_activation
-        mlp_layers += [layers.Dense(sizes[i], activation=None, name=f"{name}-dense-{i}"), act]
+        init = "he_uniform" if i < len(sizes) - 1 else "glorot_uniform"
+        mlp_layers += [layers.Dense(sizes[i], activation=None, name=f"{name}-dense-{i}", kernel_initializer=init), act]
     return tf.keras.Sequential(mlp_layers)

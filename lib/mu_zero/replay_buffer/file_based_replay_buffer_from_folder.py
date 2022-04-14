@@ -227,8 +227,8 @@ class FileBasedReplayBufferFromFolder:
                 gc.collect()
             except:
                 logging.warning(f"failed reading file {file}.")
-                if self.clean_up_files:
-                    file.unlink()
+                # if self.clean_up_files:
+                #    file.unlink()
 
         logging.info(f"update done, added {size_of_last_update} episodes ")
 

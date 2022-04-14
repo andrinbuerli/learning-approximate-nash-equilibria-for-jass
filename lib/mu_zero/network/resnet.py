@@ -231,7 +231,7 @@ class RepresentationNetwork(tf.keras.Model):
 
         x = self.conv(x, training=training)
         x = self.bn(x, training=training)
-        x = tf.nn.leaky_relu(x)
+        x = tf.nn.tanh(x)
 
         state = x
         for block in self.resblocks:
@@ -271,7 +271,7 @@ class DynamicsNetwork(tf.keras.Model):
         self.resblocks_fcn = [ResidualFullyConnectedBlock(num_channels) for _ in range(num_blocks_fully_connected)]
 
         self.conv1x1_reward =  layers.Conv2D(filters=reduced_channels_reward, kernel_size=(1, 1), padding="same",
-                                             activation=None, use_bias=False, kernel_initializer="he_uniform")
+                                             activation=None, use_bias=False, kernel_initializer="glorot_uniform")
         self.block_output_size_reward = block_output_size_reward
         self.fc_reward = [
                 mlp(
@@ -286,7 +286,7 @@ class DynamicsNetwork(tf.keras.Model):
 
         x = self.conv(x, training=training)
         x = self.bn(x, training=training)
-        x = tf.nn.leaky_relu(x)
+        x = tf.nn.tanh(x)
 
         state = x
         for block in self.resblocks:
@@ -298,7 +298,7 @@ class DynamicsNetwork(tf.keras.Model):
 
         state = x + state # overall residual connection
 
-        x = tf.nn.leaky_relu(self.conv1x1_reward(state, training=training))
+        x = tf.nn.tanh(self.conv1x1_reward(state, training=training))
         x = tf.reshape(x, (-1, self.block_output_size_reward))
         reward = tf.tile(tf.stack(([fc(x) for fc in self.fc_reward]), axis=1), [1, 2, 1])
         return state, reward
@@ -329,9 +329,9 @@ class PredictionNetwork(tf.keras.Model):
 
 
         self.conv1x1_value = layers.Conv2D(filters=reduced_channels_value, kernel_size=(1, 1), padding="same",
-                                           activation=None, use_bias=False, kernel_initializer="he_uniform")
+                                           activation=None, use_bias=False, kernel_initializer="glorot_uniform")
         self.conv1x1_policy = layers.Conv2D(filters=reduced_channels_policy, kernel_size=(1, 1), padding="same",
-                                           activation=None, use_bias=False, kernel_initializer="he_uniform")
+                                           activation=None, use_bias=False, kernel_initializer="glorot_uniform")
         self.block_output_size_value = block_output_size_value
         self.block_output_size_policy = block_output_size_policy
         self.fc_value = [
@@ -353,10 +353,10 @@ class PredictionNetwork(tf.keras.Model):
         for block in self.resblocks:
             x = block(x, training=training)
 
-        value = tf.nn.leaky_relu(self.conv1x1_value(x, training=training))
+        value = tf.nn.tanh(self.conv1x1_value(x, training=training))
         value = tf.reshape(value, (-1, self.block_output_size_value))
         value = tf.tile(tf.stack(([fc(value) for fc in self.fc_value]), axis=1), [1, 2, 1])
-        policy = tf.nn.leaky_relu(self.conv1x1_policy(x, training=training))
+        policy = tf.nn.tanh(self.conv1x1_policy(x, training=training))
         policy = tf.reshape(policy, (-1, self.block_output_size_policy))
         policy = self.fc_policy(policy, training=training)
         return policy, value
@@ -364,11 +364,11 @@ class PredictionNetwork(tf.keras.Model):
 
 def conv2x3(out_channels, strides=(1, 1), padding='same'):
     return layers.Conv2D(filters=out_channels, kernel_size=(2, 3), strides=strides,
-                         padding=padding, activation=None, use_bias=False, kernel_initializer="he_uniform")
+                         padding=padding, activation=None, use_bias=False, kernel_initializer="glorot_uniform")
 
 def conv4x9(out_channels, strides=(1, 1), padding='valid'):
     return layers.Conv2D(filters=out_channels, kernel_size=(4, 9), strides=strides,
-                         padding=padding, activation=None, use_bias=False, kernel_initializer="he_uniform")
+                         padding=padding, activation=None, use_bias=False, kernel_initializer="glorot_uniform")
 
 
 # Residual block
@@ -383,10 +383,10 @@ class ResidualBlock(tf.keras.Model):
     def call(self, x, training=None):
         out = self.conv1(x, training=training)
         out = self.bn1(out, training=training)
-        out = tf.nn.leaky_relu(out)
+        out = tf.nn.tanh(out)
         out = self.conv2(out, training=training)
         out = self.bn2(out, training=training)
-        out = tf.nn.leaky_relu(out)
+        out = tf.nn.tanh(out)
         out += x
         return out
 
@@ -398,19 +398,19 @@ class ResidualFullyConnectedBlock(tf.keras.Model):
         self.conv2 = conv4x9(num_channels // 2)
         self.bn2 = layers.BatchNormalization()
         self.conv3 = layers.Conv2D(filters=num_channels, kernel_size=(1, 1), padding="same",
-                                   activation=None, use_bias=False, kernel_initializer="he_uniform")
+                                   activation=None, use_bias=False, kernel_initializer="glorot_uniform")
         self.bn3 = layers.BatchNormalization()
 
     def call(self, x, training=None):
         out = self.conv1(x, training=training)
         out = self.bn1(out, training=training)
-        out = tf.nn.leaky_relu(out)
+        out = tf.nn.tanh(out)
         out = self.conv2(out, training=training)
         out = self.bn2(out, training=training)
-        out = tf.nn.leaky_relu(out)
+        out = tf.nn.tanh(out)
         out = self.conv3(out, training=training)
         out = self.bn3(out, training=training)
-        out = tf.nn.leaky_relu(out)
+        out = tf.nn.tanh(out)
         out += x
         return out
 
@@ -420,13 +420,13 @@ def mlp(
     layer_sizes,
     output_size,
     output_activation=layers.Activation('softmax'),
-    activation=layers.Activation('leaky_relu'),
+    activation=layers.Activation('tanh'),
     name=""
 ):
     sizes = layer_sizes + [output_size]
     mlp_layers = [layers.Input(shape=(input_size,))]
     for i in range(len(sizes)):
         act = activation if i < len(sizes) - 1 else output_activation
-        init = "he_uniform" if i < len(sizes) - 1 else "glorot_uniform"
+        init = "glorot_uniform" if i < len(sizes) - 1 else "glorot_uniform"
         mlp_layers += [layers.Dense(sizes[i], activation=None, name=f"{name}-dense-{i}", kernel_initializer=init), act]
     return tf.keras.Sequential(mlp_layers)

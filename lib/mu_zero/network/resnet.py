@@ -421,5 +421,5 @@ def mlp(
     mlp_layers = [layers.Input(shape=(input_size,))]
     for i in range(len(sizes)):
         act = activation if i < len(sizes) - 1 else output_activation
-        mlp_layers += [layers.Dense(sizes[i], activation=None, name=f"{name}-{i}"), act]
+        mlp_layers += [layers.Dense(sizes[i], activation=None, name=f"{name}-dense-{i}"), act]
     return tf.keras.Sequential(mlp_layers)

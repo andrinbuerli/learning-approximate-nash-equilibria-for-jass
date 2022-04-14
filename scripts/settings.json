@@ -50,26 +50,26 @@
  "network": {
   "action_space_size": 43,
   "fc_policy_layers": [
-   256, 256, 256
+   256
   ],
   "fc_reward_layers": [
-   256, 256, 256
+   256
   ],
   "fc_value_layers": [
-   256, 256, 256
+   256
   ],
   "feature_extractor": "cnn-full",
-  "num_blocks_representation": 4,
-  "fcn_blocks_representation": 2,
-  "num_blocks_dynamics": 4,
-  "fcn_blocks_dynamics": 2,
+  "num_blocks_representation": 16,
+  "fcn_blocks_representation": 0,
+  "num_blocks_dynamics": 16,
+  "fcn_blocks_dynamics": 0,
   "num_blocks_prediction": 1,
   "num_channels": 128,
   "path": null,
   "players": 4,
-  "reduced_channels_policy": 64,
-  "reduced_channels_reward": 64,
-  "reduced_channels_value": 64,
+  "reduced_channels_policy": 8,
+  "reduced_channels_reward": 8,
+  "reduced_channels_value": 8,
   "support_size": 157,
   "type": "resnet"
  }

@@ -108,7 +108,7 @@ class FileBasedReplayBufferFromFolder:
         batches = []
         logging.info("sampling from replay buffer..")
         for _ in range(nr_of_batches):
-            states, actions, rewards, probs, outcomes = [], [], [], [], []
+            states, actions, rewards, probs, outcomes, priorities = [], [], [], [], [], []
 
             if self.max_trajectory_length > self.min_trajectory_length:
                 sampled_trajectory_length = np.random.choice(
@@ -127,6 +127,8 @@ class FileBasedReplayBufferFromFolder:
 
                         trajectory = self._sample_trajectory(episode, sampled_trajectory_length)
 
+                        P_i = priority / total
+
                         priority -= 1
 
                         self.sum_tree.update(idx, priority)
@@ -137,7 +139,7 @@ class FileBasedReplayBufferFromFolder:
                         logging.warning(f"CAUGHT ERROR: {e}")
 
                 states.append(trajectory[0]), actions.append(trajectory[1]), rewards.append(trajectory[2])
-                probs.append(trajectory[3]), outcomes.append(trajectory[4])
+                probs.append(trajectory[3]), outcomes.append(trajectory[4]), priorities.append(P_i)
 
             batches.append((
                 np.stack(states, axis=0),
@@ -145,9 +147,10 @@ class FileBasedReplayBufferFromFolder:
                 np.stack(rewards, axis=0),
                 np.stack(probs, axis=0),
                 np.stack(outcomes, axis=0),
+                np.array(priorities)
             ))
 
-            del states, actions, rewards, probs, outcomes
+            del states, actions, rewards, probs, outcomes, priorities
 
         logging.info("sampling from replay buffer successful")
         return batches

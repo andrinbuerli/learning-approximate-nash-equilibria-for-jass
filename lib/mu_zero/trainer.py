@@ -137,13 +137,14 @@ class MuZeroTrainer:
 
     def train(self, batches):
         training_infos = list()
-        for states, actions, rewards, probs, outcomes in batches:
+        for states, actions, rewards, probs, outcomes, priorities in batches:
             info, absolute_reward_errors, absolute_value_errors, policy_kls, policy_ces, ls_entropies, ft = self.train_step(
                 tf.convert_to_tensor(states.astype("float32")),
                 tf.convert_to_tensor(actions.astype("int32")),
                 tf.convert_to_tensor(rewards.astype("int32")),
                 tf.convert_to_tensor(probs.astype("float32")),
-                tf.convert_to_tensor(outcomes.astype("int32")))
+                tf.convert_to_tensor(outcomes.astype("int32")),
+                tf.convert_to_tensor(priorities.astype("float32")),)
 
             reward_error = {
                 f"ARE/absolute_reward_error_{i}_steps_ahead": x for i, x in enumerate(absolute_reward_errors)
@@ -190,7 +191,7 @@ class MuZeroTrainer:
         tf.TensorSpec(shape=(None, None, 43), dtype=tf.float32),
         tf.TensorSpec(shape=(None, None, 2), dtype=tf.int32)
         ])
-    def train_step(self, states, next_actions, rewards_target, policies_target, outcomes_target):
+    def train_step(self, states, next_actions, rewards_target, policies_target, outcomes_target, priorities):
         batch_size = tf.shape(states)[0]
         trajectory_length = tf.shape(states)[1]
 
@@ -283,9 +284,11 @@ class MuZeroTrainer:
                 # ---------------Logging --------------- #
 
             loss = tf.reduce_mean(
-                self.reward_loss_weight * tf.reduce_sum(reward_loss, axis=-1, name="rewards_loss") +
-                self.value_loss_weight * tf.reduce_sum(value_loss, axis=-1, name="value_loss") +
-                self.policy_loss_weight * policy_loss, name="loss_mean")
+                (
+                        self.reward_loss_weight * tf.reduce_sum(reward_loss, axis=-1, name="rewards_loss") +
+                        self.value_loss_weight * tf.reduce_sum(value_loss, axis=-1, name="value_loss") +
+                        self.policy_loss_weight * policy_loss
+                 ) * 1 / priorities, name="loss_mean")
 
         gradients = tape.gradient(loss, self.network.trainable_variables)
 

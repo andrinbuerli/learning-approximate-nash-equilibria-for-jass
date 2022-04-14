@@ -68,7 +68,7 @@ def _calculate_batched_save_(network: AbstractNetwork, iterator, n_steps_ahead, 
         current_positions = current_positions - tf.stack((zeros, tf.cast(tf.reduce_sum(supervised_policy, axis=-1) == 0, tf.int32)), axis=1)
 
         if mdp_value:
-            current_states = tf.gather_nd(x, positions)
+            current_states = tf.gather_nd(x, current_positions)
             reshaped = tf.reshape(current_states, (-1,) + features.FEATURE_SHAPE)
             current_player = tf.reduce_max(reshaped[:, :, :, features.CH_PLAYER:features.CH_PLAYER + 4], axis=(1, 2))
             current_team = tf.argmax(current_player, axis=-1) % 2

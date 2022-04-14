@@ -273,7 +273,8 @@ class DynamicsNetwork(tf.keras.Model):
         self.fc_reward = [
                 mlp(
                 self.block_output_size_reward, fc_reward_layers, full_support_size,
-                output_activation=layers.Activation("softmax")
+                output_activation=layers.Activation("softmax"),
+                name="reward"
             ) for _ in range(players // 2)
         ]
 
@@ -330,12 +331,14 @@ class PredictionNetwork(tf.keras.Model):
         self.fc_value = [
             mlp(
                 self.block_output_size_value, fc_value_layers, full_support_size,
-                output_activation=layers.Activation("softmax")
+                output_activation=layers.Activation("softmax"),
+                name="value"
             ) for _ in range(players // 2)
         ]
         self.fc_policy = mlp(
             self.block_output_size_policy, fc_policy_layers, action_space_size,
-            output_activation=layers.Activation('softmax')
+            output_activation=layers.Activation('softmax'),
+            name="policy"
         )
 
     def call(self, x, training=None):
@@ -412,10 +415,11 @@ def mlp(
     output_size,
     output_activation=layers.Activation('softmax'),
     activation=layers.Activation('leaky_relu'),
+    name=""
 ):
     sizes = layer_sizes + [output_size]
     mlp_layers = [layers.Input(shape=(input_size,))]
     for i in range(len(sizes)):
         act = activation if i < len(sizes) - 1 else output_activation
-        mlp_layers += [layers.Dense(sizes[i], activation=None), act]
+        mlp_layers += [layers.Dense(sizes[i], activation=None, name=f"{name}-i"), act]
     return tf.keras.Sequential(mlp_layers)

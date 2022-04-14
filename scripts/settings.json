@@ -63,7 +63,7 @@
   "fcn_blocks_representation": 0,
   "num_blocks_dynamics": 16,
   "fcn_blocks_dynamics": 0,
-  "num_blocks_prediction": 1,
+  "num_blocks_prediction": 0,
   "num_channels": 128,
   "path": null,
   "players": 4,

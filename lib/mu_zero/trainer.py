@@ -192,7 +192,7 @@ class MuZeroTrainer:
         tf.TensorSpec(shape=(None, None, 2), dtype=tf.int32),
         tf.TensorSpec(shape=None, dtype=tf.float32)
         ])
-    def train_step(self, states, next_actions, rewards_target, policies_target, outcomes_target, priorities):
+    def train_step(self, states, next_actions, rewards_target, policies_target, outcomes_target, sample_weights):
         batch_size = tf.shape(states)[0]
         trajectory_length = tf.shape(states)[1]
 
@@ -284,12 +284,12 @@ class MuZeroTrainer:
                 latent_space_entropy = latent_space_entropy.write(i+1, entropy)
                 # ---------------Logging --------------- #
 
-            loss = tf.reduce_mean(
+            loss = tf.reduce_sum(
                 (
                         self.reward_loss_weight * tf.reduce_sum(reward_loss, axis=-1, name="rewards_loss") +
                         self.value_loss_weight * tf.reduce_sum(value_loss, axis=-1, name="value_loss") +
                         self.policy_loss_weight * policy_loss
-                 ) * 1 / priorities, name="loss_mean")
+                 ) * 1 / sample_weights, name="loss_mean")
 
         gradients = tape.gradient(loss, self.network.trainable_variables)
 

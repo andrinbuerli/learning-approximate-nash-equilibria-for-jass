@@ -127,7 +127,7 @@ class FileBasedReplayBufferFromFolder:
 
                         trajectory = self._sample_trajectory(episode, sampled_trajectory_length)
 
-                        P_i = priority / total
+                        P_i = (1/self.batch_size) * (priority / total)
 
                         priority -= 1
 
@@ -141,13 +141,16 @@ class FileBasedReplayBufferFromFolder:
                 states.append(trajectory[0]), actions.append(trajectory[1]), rewards.append(trajectory[2])
                 probs.append(trajectory[3]), outcomes.append(trajectory[4]), priorities.append(P_i)
 
+            priorities = np.array(priorities)
+            priorities = priorities / np.max(priorities) # only scale updates downwards
+
             batches.append((
                 np.stack(states, axis=0),
                 np.stack(actions, axis=0),
                 np.stack(rewards, axis=0),
                 np.stack(probs, axis=0),
                 np.stack(outcomes, axis=0),
-                np.array(priorities)
+                priorities
             ))
 
             del states, actions, rewards, probs, outcomes, priorities

@@ -108,7 +108,7 @@ class FileBasedReplayBufferFromFolder:
         batches = []
         logging.info("sampling from replay buffer..")
         for _ in range(nr_of_batches):
-            states, actions, rewards, probs, outcomes, priorities = [], [], [], [], [], []
+            states, actions, rewards, probs, outcomes, sample_weights = [], [], [], [], [], []
 
             if self.max_trajectory_length > self.min_trajectory_length:
                 sampled_trajectory_length = np.random.choice(
@@ -127,7 +127,9 @@ class FileBasedReplayBufferFromFolder:
 
                         trajectory = self._sample_trajectory(episode, sampled_trajectory_length)
 
-                        P_i = (1/self.batch_size) * (priority / total)
+
+                        P_i = priority / total
+                        w_i = (1/self.batch_size) * (1 / P_i)
 
                         priority -= 1
 
@@ -139,10 +141,10 @@ class FileBasedReplayBufferFromFolder:
                         logging.warning(f"CAUGHT ERROR: {e}")
 
                 states.append(trajectory[0]), actions.append(trajectory[1]), rewards.append(trajectory[2])
-                probs.append(trajectory[3]), outcomes.append(trajectory[4]), priorities.append(P_i)
+                probs.append(trajectory[3]), outcomes.append(trajectory[4]), sample_weights.append(w_i)
 
-            priorities = np.array(priorities)
-            priorities = priorities / np.max(priorities) # only scale updates downwards
+            sample_weights = np.array(sample_weights)
+            sample_weights = sample_weights / np.max(sample_weights) # only scale updates downwards
 
             batches.append((
                 np.stack(states, axis=0),
@@ -150,10 +152,10 @@ class FileBasedReplayBufferFromFolder:
                 np.stack(rewards, axis=0),
                 np.stack(probs, axis=0),
                 np.stack(outcomes, axis=0),
-                priorities
+                sample_weights
             ))
 
-            del states, actions, rewards, probs, outcomes, priorities
+            del states, actions, rewards, probs, outcomes, sample_weights
 
         logging.info("sampling from replay buffer successful")
         return batches

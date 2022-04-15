@@ -289,7 +289,7 @@ class MuZeroTrainer:
                         self.reward_loss_weight * tf.reduce_sum(reward_loss, axis=-1, name="rewards_loss") +
                         self.value_loss_weight * tf.reduce_sum(value_loss, axis=-1, name="value_loss") +
                         self.policy_loss_weight * policy_loss
-                 ) * 1 / sample_weights, name="loss_mean")
+                 ) * sample_weights, name="loss_mean")
 
         gradients = tape.gradient(loss, self.network.trainable_variables)
 

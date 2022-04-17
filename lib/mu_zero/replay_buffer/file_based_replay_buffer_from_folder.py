@@ -171,7 +171,7 @@ class FileBasedReplayBufferFromFolder:
     def restore(self):
         for file in self.episode_data_folder.glob("*"):
             self.sum_tree.add(data=file.name.split(".")[0],
-                              p=self.max_samples_per_episode // 2)
+                              p=self.max_samples_per_episode)
         logging.info(f"restored replay buffer ({self.sum_tree.filled_size}) from {self.episode_data_folder}")
 
     def save(self):

@@ -1,5 +1,5 @@
 {
- "timestamp": 1649334860,
+ "timestamp": 1649334850,
  "log": {
   "projectname": "jass-mu-zero",
   "entity": "andrinburli",
@@ -32,8 +32,8 @@
   "reward_loss_weight": 0.25,
   "policy_loss_weight": 1.0,
   "valid_policy_target": false,
-  "max_buffer_size": 20000,
-  "min_buffer_size": 20000,
+  "max_buffer_size": 80000,
+  "min_buffer_size": 80000,
   "max_samples_per_episode": 512,
   "min_non_zero_prob_samples": 10000,
   "port": 8080,

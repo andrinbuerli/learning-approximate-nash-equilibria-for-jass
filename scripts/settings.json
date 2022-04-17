@@ -37,7 +37,7 @@
   "max_samples_per_episode": 512,
   "min_non_zero_prob_samples": 10000,
   "port": 8080,
-  "store_model_weights_after": 10,
+  "store_model_weights_after": 100,
   "max_trajectory_length": 10,
   "min_trajectory_length": 10,
   "updates_per_step": 4,

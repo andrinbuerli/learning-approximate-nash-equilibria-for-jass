@@ -83,7 +83,8 @@ if __name__=="__main__":
         start_sampling=False,
         episode_data_folder=data_path / "episodes_data",
         max_samples_per_episode=worker_config.optimization.max_samples_per_episode,
-        min_non_zero_prob_samples=worker_config.optimization.min_non_zero_prob_samples)
+        min_non_zero_prob_samples=worker_config.optimization.min_non_zero_prob_samples,
+        use_per=worker_config.optimization.use_per)
 
     replay_buffer.restore()
 

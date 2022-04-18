@@ -28,6 +28,7 @@ class FileBasedReplayBufferFromFolder:
             episode_data_folder: Path,
             max_samples_per_episode: int,
             min_non_zero_prob_samples: int,
+            use_per: bool,
             max_updates=20,
             data_file_ending=".jass-data.pkl",
             episode_file_ending=".jass-episode.pkl",
@@ -40,6 +41,7 @@ class FileBasedReplayBufferFromFolder:
         (states, actions, rewards, probs, outcomes)
         """
 
+        self.use_per = use_per
         self.valid_policy_target = valid_policy_target
         self.clean_up_episodes = clean_up_episodes
         self.min_non_zero_prob_samples = min_non_zero_prob_samples
@@ -128,12 +130,16 @@ class FileBasedReplayBufferFromFolder:
                         trajectory = self._sample_trajectory(episode, sampled_trajectory_length)
 
 
-                        P_i = priority / total
-                        w_i = (1/self.batch_size) * (1 / P_i)
+                        if self.use_per:
+                            P_i = priority / total
+                            w_i = (1 / self.batch_size) * (1 / P_i)
 
-                        priority -= 1
+                            priority -= 1
 
-                        self.sum_tree.update(idx, priority)
+                            self.sum_tree.update(idx, priority)
+                        else:
+                            w_i = 1
+
                         if priority == 0:
                             self.zero_prob_sample_indices.append(idx)
                         break
@@ -144,7 +150,10 @@ class FileBasedReplayBufferFromFolder:
                 probs.append(trajectory[3]), outcomes.append(trajectory[4]), sample_weights.append(w_i)
 
             sample_weights = np.array(sample_weights)
-            sample_weights = sample_weights / np.max(sample_weights) # only scale updates downwards
+            if self.use_per:
+                sample_weights = sample_weights / np.max(sample_weights)  # only scale updates downwards
+            else:
+                sample_weights = sample_weights / self.batch_size
 
             batches.append((
                 np.stack(states, axis=0),

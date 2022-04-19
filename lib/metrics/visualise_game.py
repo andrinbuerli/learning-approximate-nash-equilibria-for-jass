@@ -19,8 +19,8 @@ def _make_plots_(network: AbstractNetwork, iterator, f_shape, l_shape, features)
 
     cum_rewards = [np.array([0, 0])]
 
-    all_rewards = [np.array([0, 0])]
-    all_reward_estimates = [np.array([0, 0])]
+    all_rewards = []
+    all_reward_estimates = []
 
     players = []
     kls = []

@@ -21,14 +21,14 @@
   "type": "mu-zero-mcts"
  },
  "optimization": {
-  "optimizer": "sgd",
+  "optimizer": "adam",
   "learning_rate": 0.001,
-  "adam_beta1": 0.5,
+  "adam_beta1": 0.9,
   "adam_beta2": 0.999,
   "adam_epsilon": 1e-07,
   "batch_size": 256,
   "data_folder": "../results",
-  "value_loss_weight": 0.25,
+  "value_loss_weight": 1.0,
   "reward_loss_weight": 1.0,
   "policy_loss_weight": 1.0,
   "valid_policy_target": false,

@@ -2,6 +2,7 @@ from pathlib import Path
 
 import numpy as np
 import tensorflow as tf
+import wandb
 from jass.features.feature_example_buffer import parse_feature_example
 from matplotlib import pyplot as plt
 
@@ -96,9 +97,9 @@ def _make_plots_(network: AbstractNetwork, states, y, f_shape, l_shape, features
     plt.legend(bbox_to_anchor=(1.1, 1))
 
     return {
-        f"Visualizations/reward": fig_reward,
-        f"Visualizations/value": fig_value,
-        f"Visualizations/policy": fig_kls
+        f"Visualizations/reward": wandb.Image(fig_reward),
+        f"Visualizations/value": wandb.Image(fig_value),
+        f"Visualizations/policy": wandb.Image(fig_kls)
     }
 
 

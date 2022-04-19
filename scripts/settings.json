@@ -53,13 +53,13 @@
  "network": {
   "action_space_size": 43,
   "fc_policy_layers": [
-   256
+   512, 512, 512
   ],
   "fc_reward_layers": [
-   256
+   512, 512, 512
   ],
   "fc_value_layers": [
-   256
+   512, 512, 512
   ],
   "feature_extractor": "cnn-full",
   "num_blocks_representation": 4,
@@ -70,9 +70,9 @@
   "num_channels": 256,
   "path": null,
   "players": 4,
-  "reduced_channels_policy": 64,
-  "reduced_channels_reward": 64,
-  "reduced_channels_value": 64,
+  "reduced_channels_policy": 128,
+  "reduced_channels_reward": 128,
+  "reduced_channels_value": 128,
   "support_size": 157,
   "type": "resnet"
  }

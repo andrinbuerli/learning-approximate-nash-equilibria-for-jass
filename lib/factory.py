@@ -100,7 +100,8 @@ def get_optimizer(config: WorkerConfig):
         return tfa.optimizers.SGDW(
             learning_rate=config.optimization.learning_rate,
             weight_decay=config.optimization.weight_decay,
-            nesterov=False)
+            momentum=config.optimization.adam_beta1,
+            nesterov=True)
 
     raise NotImplementedError(f"Optimizer {config.optimization.optimizer} is not implemented.")
 

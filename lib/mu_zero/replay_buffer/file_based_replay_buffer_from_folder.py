@@ -191,7 +191,7 @@ class FileBasedReplayBufferFromFolder:
             batches = self._sample_from_buffer(self.nr_of_batches)
             self.sample_queue.put(batches)
 
-            if self.sample_queue.qsize() > 10:
+            while self.sample_queue.qsize() > 10:
                 sleep(5)
 
     def update(self):

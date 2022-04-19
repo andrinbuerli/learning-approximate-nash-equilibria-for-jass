@@ -96,7 +96,7 @@ class FileBasedReplayBufferFromFolder:
             self.sampling_thread = Thread(target=self._sample_continuously_from_buffer)
             self.start_sampling()
 
-        logging.info("waiting for sample from replay buffer..")
+        logging.info(f"waiting for sample from replay buffer... Queue size: {self.sample_queue.qsize()}")
         return self.sample_queue.get()
 
     def _sample_from_buffer(self, nr_of_batches):

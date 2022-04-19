@@ -7,8 +7,6 @@ from pprint import pprint
 import tensorflow as tf
 from jass.features.labels_action_full import LabelSetActionFull
 
-from lib.metrics.visualise_game import GameVisualisation
-
 sys.path.append("../")
 
 from lib.log.wandb_logger import WandbLogger
@@ -22,6 +20,7 @@ from lib.environment.networking.worker_connector import WorkerConnector
 from lib.factory import get_network, get_features, get_optimizer
 from lib.log.console_logger import ConsoleLogger
 from lib.metrics.apao import APAO
+from lib.metrics.visualise_game import GameVisualisation
 from lib.metrics.metrics_manager import MetricsManager
 from lib.mu_zero.replay_buffer.file_based_replay_buffer_from_folder import FileBasedReplayBufferFromFolder
 from lib.mu_zero.trainer import MuZeroTrainer

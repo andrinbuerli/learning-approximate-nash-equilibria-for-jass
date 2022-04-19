@@ -119,9 +119,9 @@ class MuZeroResidualNetwork(AbstractNetwork):
     def initial_inference(self, observation, training=False):
         batch_size = tf.shape(observation)[0]
         if self.mask_private:
-            mask = tf.tile(tf.transpose(tf.reshape(tf.repeat(tf.range(45), 36), (45, 36)))[None], (batch_size, 1, 1))
-            mask = tf.math.logical_or(mask == FeaturesSetCppConv.CH_CARDS_VALID, mask == FeaturesSetCppConv.CH_TRUMP_VALID)
-            mask = tf.math.logical_or(mask, mask == FeaturesSetCppConv.CH_PUSH_VALID)
+            index_mask = tf.tile(tf.transpose(tf.reshape(tf.repeat(tf.range(45), 36), (45, 36)))[None], (batch_size, 1, 1))
+            mask = tf.math.logical_or(index_mask == FeaturesSetCppConv.CH_CARDS_VALID, index_mask == FeaturesSetCppConv.CH_TRUMP_VALID)
+            mask = tf.math.logical_or(mask, index_mask == FeaturesSetCppConv.CH_PUSH_VALID)
             mask = 1.0 - tf.cast(mask, tf.float32)
             observation *= tf.reshape(mask, (batch_size, -1))
 

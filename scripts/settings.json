@@ -35,7 +35,7 @@
   "use_per": false,
   "max_buffer_size": 20000,
   "min_buffer_size": 20000,
-  "max_samples_per_episode": 512,
+  "max_samples_per_episode": 32,
   "min_non_zero_prob_samples": 10000,
   "port": 8080,
   "store_model_weights_after": 10,

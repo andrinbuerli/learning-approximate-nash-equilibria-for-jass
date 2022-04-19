@@ -12,7 +12,8 @@ from lib.metrics.base_async_metric import BaseAsyncMetric
 from lib.mu_zero.network.network_base import AbstractNetwork
 from lib.mu_zero.network.support_conversion import support_to_scalar
 
-def _make_plots_(network: AbstractNetwork, states, y, f_shape, l_shape, features):
+def _make_plots_(network: AbstractNetwork, iterator, f_shape, l_shape, features):
+    states, y = next(iterator)
     states = tf.reshape(states, f_shape)
     y = tf.reshape(y, l_shape)
 
@@ -109,8 +110,8 @@ def _make_plots_(network: AbstractNetwork, states, y, f_shape, l_shape, features
 class GameVisualisation(BaseAsyncMetric):
 
     def get_params(self, thread_nr: int, network: AbstractNetwork, init_vars=None) -> []:
-        x, y = init_vars
-        return network, x, y,self.trajectory_feature_shape, \
+        interator = init_vars
+        return network, interator,self.trajectory_feature_shape, \
                self.trajectory_label_shape, self.worker_config.network.feature_extractor
 
     def init_dataset(self):
@@ -118,8 +119,7 @@ class GameVisualisation(BaseAsyncMetric):
         ds = ds.map(lambda x: parse_feature_example(x,
                           feature_length=self.trajectory_length*self.feature_length,
                           label_length=self.trajectory_length*self.label_length))
-        x, y = next(iter(ds))
-        return x, y
+        return iter(ds)
 
     def __init__(
             self,

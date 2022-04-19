@@ -79,7 +79,12 @@ def _make_plots_(network: AbstractNetwork, iterator, f_shape, l_shape, features)
     plt.plot(np.array(values)[:, 0], marker="x", label="pred 0", alpha=0.5, color="green")
     plt.plot(np.array(values)[:, 1], marker="x", label="pred 1", alpha=0.5, color="red")
 
-    outcome = (y[0, 43:45] * 157).numpy().astype(int)
+    beginning_team = players[0] % 2
+
+    if beginning_team == 0:
+        outcome = (y[0, 43:45] * 157).numpy().astype(int)
+    else:
+        outcome = (y[0, 43:45] * 157).numpy().astype(int)[::-1]
     plt.plot(outcome[0] - np.array(cum_rewards)[1:, 0], marker="o", label="value 0", alpha=0.5, color="green")
     plt.plot(outcome[1] - np.array(cum_rewards)[1:, 1], marker="o", label="value 1", alpha=0.5, color="red")
 

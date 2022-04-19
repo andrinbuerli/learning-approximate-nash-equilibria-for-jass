@@ -82,6 +82,7 @@ class OptimizationConfig(BaseConfig):
         self.iterations = 5
         self.use_per = False
         self.mask_private = False
+        self.mask_valid = False
         self.store_buffer = False
         self.log_n_steps_ahead = 3
         self.apa_n_games = 4

@@ -32,9 +32,11 @@ class MuZeroResidualNetwork(AbstractNetwork):
         support_size,
         players,
         mask_private,
+        mask_valid,
         network_path=None
     ):
         super().__init__()
+        self.mask_valid = mask_valid
         self.mask_private = mask_private
         self.num_blocks_representation = num_blocks_representation
         self.num_blocks_dynamics = num_blocks_dynamics
@@ -123,6 +125,12 @@ class MuZeroResidualNetwork(AbstractNetwork):
             mask = tf.math.logical_or(index_mask == FeaturesSetCppConv.CH_CARDS_VALID, index_mask == FeaturesSetCppConv.CH_TRUMP_VALID)
             mask = tf.math.logical_or(mask, index_mask == FeaturesSetCppConv.CH_PUSH_VALID)
             mask = tf.math.logical_or(mask, index_mask == FeaturesSetCppConv.CH_HAND)
+            mask = 1.0 - tf.cast(mask, tf.float32)
+            observation *= tf.reshape(mask, (batch_size, -1))
+        elif self.mask_valid:
+            index_mask = tf.tile(tf.transpose(tf.reshape(tf.repeat(tf.range(45), 36), (45, 36)))[None], (batch_size, 1, 1))
+            mask = tf.math.logical_or(index_mask == FeaturesSetCppConv.CH_CARDS_VALID, index_mask == FeaturesSetCppConv.CH_TRUMP_VALID)
+            mask = tf.math.logical_or(mask, index_mask == FeaturesSetCppConv.CH_PUSH_VALID)
             mask = 1.0 - tf.cast(mask, tf.float32)
             observation *= tf.reshape(mask, (batch_size, -1))
 

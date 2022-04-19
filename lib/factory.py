@@ -77,7 +77,8 @@ def get_network(config: WorkerConfig, network_path: str = None):
             support_size=config.network.support_size,
             players=config.network.players,
             network_path=network_path,
-            mask_private=config.optimization.mask_private
+            mask_private=config.optimization.mask_private,
+            mask_valid=config.optimization.mask_valid
         )
 
         return network

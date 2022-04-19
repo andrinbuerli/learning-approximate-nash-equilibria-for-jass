@@ -21,7 +21,7 @@
   "type": "mu-zero-mcts"
  },
  "optimization": {
-  "optimizer": "sgd",
+  "optimizer": "adam",
   "learning_rate": 0.01,
   "adam_beta1": 0.9,
   "adam_beta2": 0.999,

@@ -7,6 +7,8 @@ from pprint import pprint
 import tensorflow as tf
 from jass.features.labels_action_full import LabelSetActionFull
 
+from lib.metrics.visualise_game import GameVisualisation
+
 sys.path.append("../")
 
 from lib.log.wandb_logger import WandbLogger
@@ -128,6 +130,11 @@ if __name__=="__main__":
             worker_config=worker_config,
             network_path=str(network_path),
             n_steps_ahead=worker_config.optimization.log_n_steps_ahead
+        ),
+        GameVisualisation(
+            label_length=LabelSetActionFull.LABEL_LENGTH,
+            worker_config=worker_config,
+            network_path=str(network_path)
         )
     )
 

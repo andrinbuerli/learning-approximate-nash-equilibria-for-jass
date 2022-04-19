@@ -8,6 +8,7 @@ import numpy as np
 import tensorflow as tf
 from tensorflow.keras import layers
 
+from lib.jass.features.features_conv_cpp import FeaturesSetCppConv
 from lib.mu_zero.network.network_base import AbstractNetwork
 
 
@@ -30,9 +31,11 @@ class MuZeroResidualNetwork(AbstractNetwork):
         fc_policy_layers,
         support_size,
         players,
+        mask_private,
         network_path=None
     ):
         super().__init__()
+        self.mask_private = mask_private
         self.num_blocks_representation = num_blocks_representation
         self.num_blocks_dynamics = num_blocks_dynamics
         self.num_blocks_prediction = num_blocks_prediction
@@ -114,10 +117,17 @@ class MuZeroResidualNetwork(AbstractNetwork):
         return next_encoded_state_normalized, reward
 
     def initial_inference(self, observation, training=False):
+        batch_size = tf.shape(observation)[0]
+        if self.mask_private:
+            mask = tf.tile(tf.transpose(tf.reshape(tf.repeat(tf.range(45), 36), (45, 36)))[None], (batch_size, 1, 1))
+            mask = tf.math.logical_or(mask == FeaturesSetCppConv.CH_CARDS_VALID, mask == FeaturesSetCppConv.CH_TRUMP_VALID)
+            mask = tf.math.logical_or(mask, mask == FeaturesSetCppConv.CH_PUSH_VALID)
+            mask = 1.0 - tf.cast(mask, tf.float32)
+            observation *= tf.reshape(mask, (batch_size, -1))
+
         encoded_state = self.representation(observation, training=training)
         policy, value = self.prediction(encoded_state, training=training)
         # reward equal to 0 for consistency
-        batch_size = tf.shape(observation)[0]
         reward = tf.tile(tf.one_hot(0, depth=self.support_size)[None, None], [batch_size, self.players, 1])
         return (
             value,

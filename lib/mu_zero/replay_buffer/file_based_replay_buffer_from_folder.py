@@ -10,6 +10,7 @@ from time import sleep
 
 import numpy as np
 
+from lib.jass.features.features_conv_cpp import FeaturesSetCppConv
 from lib.mu_zero.replay_buffer.sum_tree import SumTree
 
 
@@ -256,7 +257,7 @@ class FileBasedReplayBufferFromFolder:
         assert (rewards.sum(axis=0) == outcomes[0]).all()
 
         if self.valid_policy_target:
-            valid_cards = states.reshape(-1, 36, 45)[:, :, 19]
+            valid_cards = states.reshape(-1, 36, 45)[:, :, FeaturesSetCppConv.CH_CARDS_VALID]
             valid_trumps = np.ones((states.shape[0], 7))
             valid_trumps[:, -1] *= states.reshape(-1, 36, 45)[:, 0, 44]
             valid_trumps *= states.reshape(-1, 36, 45)[:, 0, 43][:, None]

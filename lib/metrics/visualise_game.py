@@ -30,7 +30,7 @@ def _make_plots_(network: AbstractNetwork, iterator, f_shape, l_shape, features)
 
     prev_points = [0, 0]
     i = 0
-    while y[i, :43].numpy().max() > 0:
+    while y[i, :43].numpy().max() > 0 and i < 38:
         current_state = tf.reshape(states[i], features.FEATURE_SHAPE)
 
         valid_cards = tf.reshape(current_state[:, :, features.CH_CARDS_VALID], [36])

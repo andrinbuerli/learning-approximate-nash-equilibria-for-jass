@@ -28,7 +28,8 @@ def _make_plots_(network: AbstractNetwork, states, y, f_shape, l_shape, features
     value, reward, policy, encoded_state = network.initial_inference(states[0][None])
 
     prev_points = [0, 0]
-    for i in range(37):
+    i = 0
+    while y[i, :43].max() > 0:
         current_state = tf.reshape(states[i], features.FEATURE_SHAPE)
 
         valid_cards = tf.reshape(current_state[:, :, features.CH_CARDS_VALID], [36])
@@ -62,6 +63,7 @@ def _make_plots_(network: AbstractNetwork, states, y, f_shape, l_shape, features
         action = tf.math.argmax(y[i, :43])
         value, reward, policy, encoded_state = network.recurrent_inference(encoded_state, [[action]])
         all_reward_estimates.append(support_to_scalar(reward[0], min_value=0).numpy())
+        i += 1
 
     fig_kls = plt.figure()
     plt.plot(kls)

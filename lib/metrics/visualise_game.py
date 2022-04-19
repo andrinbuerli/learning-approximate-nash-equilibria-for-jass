@@ -54,6 +54,7 @@ def _make_plots_(network: AbstractNetwork, states, y, f_shape, l_shape, features
             current_points = current_points[::-1]
 
         rewards = current_points - prev_points
+        prev_points = current_points
 
         cum_rewards.append(cum_rewards[-1] + rewards)
         all_rewards.append(rewards)
@@ -75,7 +76,7 @@ def _make_plots_(network: AbstractNetwork, states, y, f_shape, l_shape, features
     plt.plot(np.array(values)[:, 0], marker="x", label="pred 0", alpha=0.5, color="green")
     plt.plot(np.array(values)[:, 1], marker="x", label="pred 1", alpha=0.5, color="red")
 
-    outcome = y[0, 45:]
+    outcome = (y[0, 43:45] * 157).numpy().astype(int)
     plt.plot(outcome[0] - np.array(cum_rewards)[:, 0], marker="o", label="value 0", alpha=0.5, color="green")
     plt.plot(outcome[1] - np.array(cum_rewards)[:, 1], marker="o", label="value 1", alpha=0.5, color="red")
 

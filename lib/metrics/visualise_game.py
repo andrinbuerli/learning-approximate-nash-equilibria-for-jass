@@ -153,15 +153,5 @@ class GameVisualisation(BaseAsyncMetric):
         super().__init__(worker_config, network_path, parallel_threads=1,
                          metric_method=_make_plots_, init_method=self.init_dataset)
 
-    def get_latest_result(self) -> dict:
-        while self.result_queue.qsize() > 0:
-            self._latest_result = self.result_queue.get()
-            return self._latest_result
-        return {
-            f"Visualizations/reward": None,
-            f"Visualizations/value": None,
-            f"Visualizations/policy": None
-        }
-
     def get_name(self):
         return f"save"

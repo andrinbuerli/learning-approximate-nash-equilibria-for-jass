@@ -31,8 +31,10 @@ class MuZeroTrainer:
             value_loss_weight: float = 1.0,
             reward_loss_weight: float = 1.0,
             store_weights:bool = True,
-            store_buffer:bool = False
+            store_buffer:bool = False,
+            grad_clip_norm: int = None
     ):
+        self.grad_clip_norm = grad_clip_norm
         self.config = config
         self.store_buffer = store_buffer
         self.store_weights = store_weights
@@ -292,6 +294,9 @@ class MuZeroTrainer:
                  ) * sample_weights, name="loss_mean")
 
         gradients = tape.gradient(loss, self.network.trainable_variables)
+
+        if self.grad_clip_norm is not None:
+            gradients = [tf.clip_by_norm(grad, clip_norm=self.grad_clip_norm) for grad in gradients]
 
         self.optimizer.apply_gradients(zip(gradients, self.network.trainable_variables))
 

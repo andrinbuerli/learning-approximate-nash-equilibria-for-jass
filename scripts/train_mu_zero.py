@@ -166,7 +166,8 @@ if __name__=="__main__":
         min_buffer_size=worker_config.optimization.min_buffer_size,
         updates_per_step=worker_config.optimization.updates_per_step,
         store_model_weights_after=worker_config.optimization.store_model_weights_after,
-        store_buffer=worker_config.optimization.store_buffer
+        store_buffer=worker_config.optimization.store_buffer,
+        grad_clip_norm=worker_config.optimization.grad_clip_norm
     )
 
     connector = WorkerConnector(

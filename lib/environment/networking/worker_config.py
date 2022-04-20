@@ -66,6 +66,7 @@ class OptimizationConfig(BaseConfig):
         self.policy_loss_weight = 1.0
         self.optimizer = "adam"  # or sgd
         self.learning_rate = 1e-4
+        self.grad_clip_norm = None
         self.weight_decay = 1e-4
         self.adam_beta1 = 0.9
         self.adam_beta2 = 0.999

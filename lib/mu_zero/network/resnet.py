@@ -93,9 +93,9 @@ class MuZeroResidualNetwork(AbstractNetwork):
 
         self._warmup()
 
-    def prediction(self, encoded_state, training=False):
+    def prediction(self, encoded_state, training=False, inc_player=False):
         policy, value, player = self.prediction_network(encoded_state, training=training)
-        if training:
+        if training or inc_player:
             return policy, value, player
         else:
             return policy, value
@@ -140,7 +140,7 @@ class MuZeroResidualNetwork(AbstractNetwork):
             observation *= tf.reshape(mask, (batch_size, -1))
 
         encoded_state = self.representation(observation, training=training)
-        policy, value, player = self.prediction(encoded_state, training=training)
+        policy, value, player = self.prediction(encoded_state, training=training, inc_player=True)
         # reward equal to 0 for consistency
         reward = tf.tile(tf.one_hot(0, depth=self.support_size)[None, None], [batch_size, self.players, 1])
         if training:
@@ -161,7 +161,7 @@ class MuZeroResidualNetwork(AbstractNetwork):
 
     def recurrent_inference(self, encoded_state, action, training=False):
         next_encoded_state, reward = self.dynamics(encoded_state, action, training=training)
-        policy, value, player = self.prediction(next_encoded_state, training=training)
+        policy, value, player = self.prediction(next_encoded_state, training=training, inc_player=True)
         if training:
             return value, reward, policy, player, next_encoded_state
         else:

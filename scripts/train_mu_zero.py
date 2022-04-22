@@ -162,6 +162,7 @@ if __name__=="__main__":
         value_loss_weight=worker_config.optimization.value_loss_weight,
         reward_loss_weight=worker_config.optimization.reward_loss_weight,
         policy_loss_weight=worker_config.optimization.policy_loss_weight,
+        player_loss_weight=worker_config.optimization.player_loss_weight,
         optimizer=optimizer,
         min_buffer_size=worker_config.optimization.min_buffer_size,
         updates_per_step=worker_config.optimization.updates_per_step,

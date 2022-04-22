@@ -74,6 +74,7 @@ def get_network(config: WorkerConfig, network_path: str = None):
             fc_reward_layers=config.network.fc_reward_layers,
             fc_value_layers=config.network.fc_value_layers,
             fc_policy_layers=config.network.fc_policy_layers,
+            fc_player_layers=config.network.fc_player_layers,
             support_size=config.network.support_size,
             players=config.network.players,
             network_path=network_path,

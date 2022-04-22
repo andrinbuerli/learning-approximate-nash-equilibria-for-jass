@@ -29,6 +29,7 @@ class MuZeroResidualNetwork(AbstractNetwork):
         fc_reward_layers,
         fc_value_layers,
         fc_policy_layers,
+        fc_player_layers,
         support_size,
         players,
         mask_private,
@@ -82,6 +83,7 @@ class MuZeroResidualNetwork(AbstractNetwork):
                 reduced_channels_policy=reduced_channels_policy,
                 fc_value_layers=fc_value_layers,
                 fc_policy_layers=fc_policy_layers,
+                fc_player_layers=fc_player_layers,
                 full_support_size=self.support_size,
                 block_output_size_value=block_output_size_value,
                 block_output_size_policy=block_output_size_policy,
@@ -92,8 +94,11 @@ class MuZeroResidualNetwork(AbstractNetwork):
         self._warmup()
 
     def prediction(self, encoded_state, training=False):
-        policy, value = self.prediction_network(encoded_state, training=training)
-        return policy, value
+        policy, value, player = self.prediction_network(encoded_state, training=training)
+        if training:
+            return policy, value, player
+        else:
+            return policy, value
 
     def representation(self, observation, training=False):
         encoded_state = self.representation_network(observation, training=training)
@@ -135,20 +140,32 @@ class MuZeroResidualNetwork(AbstractNetwork):
             observation *= tf.reshape(mask, (batch_size, -1))
 
         encoded_state = self.representation(observation, training=training)
-        policy, value = self.prediction(encoded_state, training=training)
+        policy, value, player = self.prediction(encoded_state, training=training)
         # reward equal to 0 for consistency
         reward = tf.tile(tf.one_hot(0, depth=self.support_size)[None, None], [batch_size, self.players, 1])
-        return (
-            value,
-            reward,
-            policy,
-            encoded_state,
-        )
+        if training:
+            return (
+                value,
+                reward,
+                policy,
+                player,
+                encoded_state,
+            )
+        else:
+            return (
+                value,
+                reward,
+                policy,
+                encoded_state,
+            )
 
     def recurrent_inference(self, encoded_state, action, training=False):
         next_encoded_state, reward = self.dynamics(encoded_state, action, training=training)
-        policy, value = self.prediction(next_encoded_state, training=training)
-        return value, reward, policy, next_encoded_state
+        policy, value, player = self.prediction(next_encoded_state, training=training)
+        if training:
+            return value, reward, policy, player, next_encoded_state
+        else:
+            return value, reward, policy, next_encoded_state
 
     def save(self, path):
         path = Path(path)
@@ -333,6 +350,7 @@ class PredictionNetwork(tf.keras.Model):
         num_channels,
         reduced_channels_value,
         reduced_channels_policy,
+        fc_player_layers,
         fc_value_layers,
         fc_policy_layers,
         full_support_size,
@@ -351,8 +369,11 @@ class PredictionNetwork(tf.keras.Model):
                                            activation=None, use_bias=False, kernel_initializer="glorot_uniform")
         self.conv1x1_policy = layers.Conv2D(filters=reduced_channels_policy, kernel_size=(1, 1), padding="same",
                                            activation=None, use_bias=False, kernel_initializer="glorot_uniform")
+        self.conv1x1_player = layers.Conv2D(filters=1, kernel_size=(1, 1), padding="same",
+                                           activation=None, use_bias=False, kernel_initializer="glorot_uniform")
         self.block_output_size_value = block_output_size_value
         self.block_output_size_policy = block_output_size_policy
+        self.block_output_size_player = observation_shape[0] * observation_shape[1] * 1
         self.fc_value = [
             mlp(
                 self.block_output_size_value, fc_value_layers, full_support_size,
@@ -364,6 +385,11 @@ class PredictionNetwork(tf.keras.Model):
             self.block_output_size_policy, fc_policy_layers, action_space_size,
             output_activation=layers.Activation('softmax'),
             name="policy"
+        )
+        self.fc_player = mlp(
+            self.block_output_size_player, fc_player_layers, players,
+            output_activation=layers.Activation('softmax'),
+            name="player"
         )
 
     def call(self, x, training=None):
@@ -378,7 +404,10 @@ class PredictionNetwork(tf.keras.Model):
         policy = tf.nn.tanh(self.conv1x1_policy(x, training=training))
         policy = tf.reshape(policy, (-1, self.block_output_size_policy))
         policy = self.fc_policy(policy, training=training)
-        return policy, value
+        player = tf.nn.tanh(self.conv1x1_player(x, training=training))
+        player = tf.reshape(player, (-1, self.block_output_size_player))
+        player = self.fc_player(player, training=training)
+        return policy, value, player
 
 
 def conv2x3(out_channels, strides=(1, 1), padding='same'):

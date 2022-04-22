@@ -53,6 +53,7 @@ class NetworkConfig(BaseConfig):
         self.fc_reward_layers = [256]
         self.fc_value_layers = [256]
         self.fc_policy_layers = [256]
+        self.fc_player_layers = [256]
         self.support_size = 157
         self.players = 4
         self.feature_extractor = features
@@ -64,6 +65,7 @@ class OptimizationConfig(BaseConfig):
         self.value_loss_weight = 1.0
         self.reward_loss_weight = 1.0
         self.policy_loss_weight = 1.0
+        self.player_loss_weight = 1.0
         self.optimizer = "adam"  # or sgd
         self.learning_rate = 1e-4
         self.grad_clip_norm = None

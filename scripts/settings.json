@@ -56,7 +56,7 @@
   "fc_player_layers": [
    18
   ],
-  "policy_layers": [
+  "fc_policy_layers": [
    256, 256, 256
   ],
   "fc_reward_layers": [

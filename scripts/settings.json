@@ -54,7 +54,7 @@
  "network": {
   "action_space_size": 43,
   "fc_player_layers": [
-   256
+   18
   ],
   "policy_layers": [
    256, 256, 256

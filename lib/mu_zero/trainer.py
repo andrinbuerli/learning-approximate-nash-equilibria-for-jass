@@ -238,7 +238,7 @@ class MuZeroTrainer:
             # Scale gradient by the number of unroll steps (See paper appendix Training)
             player_loss = self.scale_gradient(factor=1 / trajectory_length)(player_ce)
 
-            current_hand = tf.reshape(reshaped_state[:, :, :, FeaturesSetCppConv.CH_PLAYER:FeaturesSetCppConv.CH_HAND], (-1, 36))
+            current_hand = tf.reshape(reshaped_state[:, :, :, FeaturesSetCppConv.CH_HAND], (-1, 36))
             hand_bce = self.cross_entropy(current_hand, hand)
             # Scale gradient by the number of unroll steps (See paper appendix Training)
             hand_loss = self.scale_gradient(factor=1 / trajectory_length)(hand_bce)
@@ -289,8 +289,7 @@ class MuZeroTrainer:
                 # Scale gradient by the number of unroll steps (See paper appendix Training)
                 player_loss += self.scale_gradient(factor=1 / trajectory_length)(player_ce)
 
-                current_hand = tf.reshape(
-                    reshaped_state[:, :, :, FeaturesSetCppConv.CH_PLAYER:FeaturesSetCppConv.CH_HAND], (-1, 36))
+                current_hand = tf.reshape(reshaped_state[:, :, :, FeaturesSetCppConv.CH_HAND], (-1, 36))
                 hand_bce = self.binary_cross_entropy(current_hand, hand)
                 # Scale gradient by the number of unroll steps (See paper appendix Training)
                 hand_loss += self.scale_gradient(factor=1 / trajectory_length)(hand_bce)

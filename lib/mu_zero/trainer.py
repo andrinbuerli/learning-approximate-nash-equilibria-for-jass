@@ -29,6 +29,7 @@ class MuZeroTrainer:
             updates_per_step: int,
             store_model_weights_after: int,
             player_loss_weight: float = 1.0,
+            hand_loss_weight: float = 1.0,
             policy_loss_weight: float = 1.0,
             value_loss_weight: float = 1.0,
             reward_loss_weight: float = 1.0,
@@ -36,6 +37,7 @@ class MuZeroTrainer:
             store_buffer:bool = False,
             grad_clip_norm: int = None
     ):
+        self.hand_loss_weight = hand_loss_weight
         self.player_loss_weight = player_loss_weight
         self.grad_clip_norm = grad_clip_norm
         self.config = config
@@ -143,7 +145,8 @@ class MuZeroTrainer:
     def train(self, batches):
         training_infos = list()
         for states, actions, rewards, probs, outcomes, priorities in batches:
-            info, absolute_reward_errors, absolute_value_errors, policy_kls, policy_ces, ls_entropies, player_ces, ft = self.train_step(
+            info, absolute_reward_errors, absolute_value_errors, policy_kls, policy_ces, ls_entropies, \
+            player_ces, hand_ces, ft = self.train_step(
                 tf.convert_to_tensor(states.astype("float32")),
                 tf.convert_to_tensor(actions.astype("int32")),
                 tf.convert_to_tensor(rewards.astype("int32")),
@@ -171,6 +174,10 @@ class MuZeroTrainer:
                 f"PlayerCE/player_ce_{i}_steps_ahead": x for i, x in enumerate(player_ces)
             }
 
+            hand_ces = {
+                f"HBCE/hand_bce_{i}_steps_ahead": x for i, x in enumerate(hand_ces)
+            }
+
             ls_entropies = {
                 f"LSE/latent_space_entropy_{i}_steps_ahead": x for i, x in enumerate(ls_entropies)
             }
@@ -181,7 +188,7 @@ class MuZeroTrainer:
 
             training_infos.append({
                 **info, **reward_error, **value_error, **policy_kls, **policy_ces, **ls_entropies,
-                **train_input_dict, **player_ces
+                **train_input_dict, **player_ces, **hand_ces
             })
 
             del info, absolute_reward_errors, absolute_value_errors, policy_kls, policy_ces
@@ -209,6 +216,7 @@ class MuZeroTrainer:
         policy_kls = tf.TensorArray(tf.float32, size=trajectory_length, dynamic_size=False, clear_after_read=True)
         policy_ces = tf.TensorArray(tf.float32, size=trajectory_length, dynamic_size=False, clear_after_read=True)
         player_ces = tf.TensorArray(tf.float32, size=trajectory_length, dynamic_size=False, clear_after_read=True)
+        hand_bces = tf.TensorArray(tf.float32, size=trajectory_length, dynamic_size=False, clear_after_read=True)
         absolute_value_errors = tf.TensorArray(tf.float32, size=trajectory_length, dynamic_size=False, clear_after_read=True)
         absolute_reward_errors = tf.TensorArray(tf.float32, size=trajectory_length, dynamic_size=False, clear_after_read=True)
         latent_space_entropy = tf.TensorArray(tf.float32, size=trajectory_length, dynamic_size=False, clear_after_read=True)
@@ -218,17 +226,23 @@ class MuZeroTrainer:
 
         with tf.GradientTape() as tape:
             initial_states = states[:, 0]
-            value, reward, policy_estimate, player, encoded_states = self.network.initial_inference(
+            value, reward, policy_estimate, player, hand, encoded_states = self.network.initial_inference(
                 initial_states, training=True)
 
             reward_support_size = tf.shape(reward)[-1]
             outcome_support_size = tf.shape(value)[-1]
 
-            current_player = tf.reshape(states[:, 0], (-1,) + FeaturesSetCppConv.FEATURE_SHAPE)\
-                [:, 0, 0, FeaturesSetCppConv.CH_PLAYER:FeaturesSetCppConv.CH_PLAYER+4]
+            reshaped_state = tf.reshape(states[:, 0], (-1,) + FeaturesSetCppConv.FEATURE_SHAPE)
+            current_player = reshaped_state[:, 0, 0, FeaturesSetCppConv.CH_PLAYER:FeaturesSetCppConv.CH_PLAYER+4]
             player_ce = self.cross_entropy(current_player, player)
             # Scale gradient by the number of unroll steps (See paper appendix Training)
             player_loss = self.scale_gradient(factor=1 / trajectory_length)(player_ce)
+
+            current_hand = tf.reshape(reshaped_state[:, :, :, FeaturesSetCppConv.CH_PLAYER:FeaturesSetCppConv.CH_HAND], (-1, 36))
+            hand_bce = self.cross_entropy(current_hand, hand)
+            # Scale gradient by the number of unroll steps (See paper appendix Training)
+            hand_loss = self.scale_gradient(factor=1 / trajectory_length)(hand_bce)
+
 
             reward_loss = tf.zeros((batch_size, 4), dtype=tf.float32) # zero reward predicted for initial inference
 
@@ -250,6 +264,8 @@ class MuZeroTrainer:
 
             player_ces = player_ces.write(0, tf.reduce_mean(player_loss, name="player_ces"))
 
+            hand_bces = hand_bces.write(0, tf.reduce_mean(hand_loss, name="hand_bces"))
+
             expected_value = support_to_scalar_per_player(value, min_value=0, nr_players=4)
             absolute_value_errors = absolute_value_errors.write(0, tf.reduce_mean(tf.abs(expected_value - tf.cast(outcomes_target[:, 0], tf.float32)), name="val_mae"))
             absolute_reward_errors = absolute_reward_errors.write(0, 0)
@@ -261,17 +277,23 @@ class MuZeroTrainer:
 
             for i in tf.range(trajectory_length - 1):
                 next_action = tf.reshape(next_actions[:, i], [-1, 1])
-                value, reward, policy_estimate, player, encoded_states = self.network.recurrent_inference(
+                value, reward, policy_estimate, player, hand, encoded_states = self.network.recurrent_inference(
                     encoded_states, next_action, training=True)
 
                 # Scale the gradient at the start of the dynamics function (See paper appendix Training)
                 encoded_states = self.scale_gradient(factor=1/2)(encoded_states)
 
-                current_player = tf.reshape(states[:, (i+1)], (-1,) + FeaturesSetCppConv.FEATURE_SHAPE) \
-                    [:, 0, 0, FeaturesSetCppConv.CH_PLAYER:FeaturesSetCppConv.CH_PLAYER + 4]
+                reshaped_state = tf.reshape(states[:, (i + 1)], (-1,) + FeaturesSetCppConv.FEATURE_SHAPE)
+                current_player = reshaped_state[:, 0, 0, FeaturesSetCppConv.CH_PLAYER:FeaturesSetCppConv.CH_PLAYER + 4]
                 player_ce = self.cross_entropy(current_player, player)
                 # Scale gradient by the number of unroll steps (See paper appendix Training)
                 player_loss += self.scale_gradient(factor=1 / trajectory_length)(player_ce)
+
+                current_hand = tf.reshape(
+                    reshaped_state[:, :, :, FeaturesSetCppConv.CH_PLAYER:FeaturesSetCppConv.CH_HAND], (-1, 36))
+                hand_bce = self.binary_cross_entropy(current_hand, hand)
+                # Scale gradient by the number of unroll steps (See paper appendix Training)
+                hand_loss += self.scale_gradient(factor=1 / trajectory_length)(hand_bce)
 
                 # predicted reward is associated with action at t-1 therefore index i is used
                 # rather than i+1 as for policy and value
@@ -301,6 +323,8 @@ class MuZeroTrainer:
 
                 player_ces = player_ces.write(i+1, tf.reduce_mean(player_ce, name="player_ces"))
 
+                hand_bces = hand_bces.write(i+1, tf.reduce_mean(hand_bce, name="hand_bces"))
+
                 expected_value = support_to_scalar_per_player(value, min_value=0, nr_players=4)
                 absolute_value_errors = absolute_value_errors.write(i+1, tf.reduce_mean(tf.abs(expected_value - tf.cast(outcomes_target[:, i+1], tf.float32)), name="val_mae"))
                 expected_reward = support_to_scalar_per_player(reward, min_value=0, nr_players=4)
@@ -315,7 +339,8 @@ class MuZeroTrainer:
                         self.reward_loss_weight * tf.reduce_sum(reward_loss, axis=-1, name="rewards_loss") +
                         self.value_loss_weight * tf.reduce_sum(value_loss, axis=-1, name="value_loss") +
                         self.policy_loss_weight * policy_loss +
-                        self.player_loss_weight * player_loss
+                        self.player_loss_weight * player_loss +
+                        self.hand_loss_weight * hand_loss
                  ) * sample_weights, name="loss_mean")
 
         gradients = tape.gradient(loss, self.network.trainable_variables)
@@ -339,11 +364,12 @@ class MuZeroTrainer:
             "training/value_loss": tf.reduce_mean(tf.reduce_sum(value_loss, axis=-1)),
             "training/policy_loss": tf.reduce_mean(policy_loss),
             "training/player_loss": tf.reduce_mean(player_loss),
+            "training/hand_loss": tf.reduce_mean(hand_loss),
             "training/squared_weights_sum": squared_weights_sum,
             "training/loss": loss,
             **gradient_hists
         }, absolute_reward_errors.stack(), absolute_value_errors.stack(), policy_kls.stack(), policy_ces.stack(),\
-               latent_space_entropy.stack(), player_ces.stack(), mean_features
+               latent_space_entropy.stack(), player_ces.stack(), hand_bces.stack(), mean_features
 
     @staticmethod
     def calculate_LSE(batch_size, encoded_states):
@@ -365,6 +391,16 @@ class MuZeroTrainer:
         cross_entropy = -tf.reduce_sum(target * tf.math.log(estimate), axis=-1)
 
         return cross_entropy
+
+    def binary_cross_entropy(self, target, estimate):
+        target = tf.cast(target, dtype=tf.float32)
+        # clipping of output for ce is important, if not done, will result in exploding gradients
+        estimate = self.clip_probability_dist(estimate)
+        binary_cross_entropy = -tf.reduce_sum(
+            target * tf.math.log(estimate) + (1 - target) * tf.math.log(1 - estimate),
+            axis=-1)
+
+        return binary_cross_entropy
 
     @staticmethod
     def scale_gradient(factor):

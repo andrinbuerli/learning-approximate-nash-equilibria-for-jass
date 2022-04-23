@@ -31,6 +31,7 @@
   "value_loss_weight": 0.2,
   "reward_loss_weight": 4.0,
   "player_loss_weight": 4.0,
+  "hand_loss_weight": 0.1,
   "policy_loss_weight": 1.0,
   "valid_policy_target": false,
   "use_per": false,
@@ -53,6 +54,9 @@
  },
  "network": {
   "action_space_size": 43,
+  "fc_hand_layers": [
+   36
+  ],
   "fc_player_layers": [
    18
   ],

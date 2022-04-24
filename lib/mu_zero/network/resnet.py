@@ -274,14 +274,13 @@ class RepresentationNetwork(tf.keras.Model):
         x = self.bn(x, training=training)
         x = tf.nn.tanh(x)
 
-        state = x
         for block in self.resblocks:
             x = block(x, training=training)
 
         for block in self.resblocks_fcn:
             x = block(x, training=training)
 
-        return state
+        return x
 
 
 class DynamicsNetwork(tf.keras.Model):
@@ -327,13 +326,13 @@ class DynamicsNetwork(tf.keras.Model):
         x = self.bn(x, training=training)
         x = tf.nn.tanh(x)
 
-        state = x
         for block in self.resblocks:
             x = block(x, training=training)
 
         for block in self.resblocks_fcn:
             x = block(x, training=training)
 
+        state = x
         x = tf.nn.tanh(self.conv1x1_reward(state, training=training))
         x = tf.reshape(x, (-1, self.block_output_size_reward))
         reward = tf.tile(tf.stack(([fc(x) for fc in self.fc_reward]), axis=1), [1, 2, 1])

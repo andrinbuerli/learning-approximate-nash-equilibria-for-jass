@@ -260,11 +260,11 @@ class MuZeroTrainer:
             policy_kl_divergence_per_sample = tf.reduce_sum(
                 policy_target * tf.math.log(policy_target / self.clip_probability_dist(policy_estimate)), axis=1)
             policy_kls = policy_kls.write(0, tf.reduce_mean(policy_kl_divergence_per_sample, name="kl_mean"))
-            policy_ces = policy_ces.write(0, tf.reduce_mean(value_loss, name="p_loss"))
+            policy_ces = policy_ces.write(0, tf.reduce_mean(player_ce, name="p_loss"))
 
             player_ces = player_ces.write(0, tf.reduce_mean(player_loss, name="player_ces"))
 
-            hand_bces = hand_bces.write(0, tf.reduce_mean(hand_loss, name="hand_bces"))
+            hand_bces = hand_bces.write(0, tf.reduce_mean(hand_bce, name="hand_bces"))
 
             expected_value = support_to_scalar_per_player(value, min_value=0, nr_players=4)
             absolute_value_errors = absolute_value_errors.write(0, tf.reduce_mean(tf.abs(expected_value - tf.cast(outcomes_target[:, 0], tf.float32)), name="val_mae"))

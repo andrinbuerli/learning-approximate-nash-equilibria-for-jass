@@ -105,7 +105,8 @@ class MuZeroResidualNetwork(AbstractNetwork):
     def representation(self, observation, training=False):
         encoded_state = self.representation_network(observation, training=training)
 
-        encoded_state_normalized = self._scale_encoded_state(encoded_state)
+        #encoded_state_normalized = self._scale_encoded_state(encoded_state)
+        encoded_state_normalized = encoded_state
         return encoded_state_normalized
 
     def dynamics(self, encoded_state, action, training=False):
@@ -121,7 +122,8 @@ class MuZeroResidualNetwork(AbstractNetwork):
 
         # Scale encoded state between [0, 1] (See appendix paper Training)
         # calculate extremas over the spatial dimensions for each channel
-        next_encoded_state_normalized = self._scale_encoded_state(next_encoded_state)
+        #next_encoded_state_normalized = self._scale_encoded_state(next_encoded_state)
+        next_encoded_state_normalized = next_encoded_state
 
         return next_encoded_state_normalized, reward
 

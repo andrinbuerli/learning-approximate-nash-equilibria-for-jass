@@ -279,8 +279,6 @@ class RepresentationNetwork(tf.keras.Model):
         for block in self.resblocks_fcn:
             x = block(x, training=training)
 
-        state = x + state # overall residual connection
-
         return state
 
 
@@ -333,9 +331,6 @@ class DynamicsNetwork(tf.keras.Model):
 
         for block in self.resblocks_fcn:
             x = block(x, training=training)
-
-
-        state = x + state # overall residual connection
 
         x = tf.nn.tanh(self.conv1x1_reward(state, training=training))
         x = tf.reshape(x, (-1, self.block_output_size_reward))

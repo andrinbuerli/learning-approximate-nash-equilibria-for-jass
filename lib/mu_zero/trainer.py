@@ -146,7 +146,7 @@ class MuZeroTrainer:
         training_infos = list()
         for states, actions, rewards, probs, outcomes, priorities in batches:
             info, absolute_reward_errors, absolute_value_errors, policy_kls, policy_ces, ls_entropies, \
-            player_ces, hand_ces, ft = self.train_step(
+            player_ces, hand_ces, policy_entropy, estimated_policy_entropy, ft = self.train_step(
                 tf.convert_to_tensor(states.astype("float32")),
                 tf.convert_to_tensor(actions.astype("int32")),
                 tf.convert_to_tensor(rewards.astype("int32")),
@@ -170,6 +170,14 @@ class MuZeroTrainer:
                 f"PCE/policy_ce_{i}_steps_ahead": x for i, x in enumerate(policy_ces)
             }
 
+            policy_entropy = {
+                f"TPE/policy_entropy_{i}_steps_ahead": x for i, x in enumerate(policy_entropy)
+            }
+
+            estimated_policy_entropy = {
+                f"EPE/estimated_policy_entropy_{i}_steps_ahead": x for i, x in enumerate(estimated_policy_entropy)
+            }
+
             player_ces = {
                 f"PlayerCE/player_ce_{i}_steps_ahead": x for i, x in enumerate(player_ces)
             }
@@ -188,7 +196,7 @@ class MuZeroTrainer:
 
             training_infos.append({
                 **info, **reward_error, **value_error, **policy_kls, **policy_ces, **ls_entropies,
-                **train_input_dict, **player_ces, **hand_ces
+                **train_input_dict, **player_ces, **hand_ces, **policy_entropy, **estimated_policy_entropy
             })
 
             del info, absolute_reward_errors, absolute_value_errors, policy_kls, policy_ces
@@ -215,6 +223,8 @@ class MuZeroTrainer:
 
         policy_kls = tf.TensorArray(tf.float32, size=trajectory_length, dynamic_size=False, clear_after_read=True)
         policy_ces = tf.TensorArray(tf.float32, size=trajectory_length, dynamic_size=False, clear_after_read=True)
+        policy_entropy = tf.TensorArray(tf.float32, size=trajectory_length, dynamic_size=False, clear_after_read=True)
+        estimated_policy_entropy = tf.TensorArray(tf.float32, size=trajectory_length, dynamic_size=False, clear_after_read=True)
         player_ces = tf.TensorArray(tf.float32, size=trajectory_length, dynamic_size=False, clear_after_read=True)
         hand_bces = tf.TensorArray(tf.float32, size=trajectory_length, dynamic_size=False, clear_after_read=True)
         absolute_value_errors = tf.TensorArray(tf.float32, size=trajectory_length, dynamic_size=False, clear_after_read=True)
@@ -261,6 +271,11 @@ class MuZeroTrainer:
                 policy_target * tf.math.log(policy_target / self.clip_probability_dist(policy_estimate)), axis=1)
             policy_kls = policy_kls.write(0, tf.reduce_mean(policy_kl_divergence_per_sample, name="kl_mean"))
             policy_ces = policy_ces.write(0, tf.reduce_mean(player_ce, name="p_loss"))
+
+            policy_entropy = policy_entropy.write(
+                0, -tf.reduce_sum(policy_target * tf.math.log(policy_target), axis=1))
+            estimated_policy_entropy = estimated_policy_entropy.write(
+                0, -tf.reduce_sum(policy_estimate * tf.math.log(policy_estimate), axis=1))
 
             player_ces = player_ces.write(0, tf.reduce_mean(player_loss, name="player_ces"))
 
@@ -320,6 +335,11 @@ class MuZeroTrainer:
                 policy_kls = policy_kls.write(i+1, tf.reduce_mean(policy_kl_divergence_per_sample, name="kl_mean"))
                 policy_ces = policy_ces.write(i+1, tf.reduce_mean(policy_ce, name="ce_mean"))
 
+                policy_entropy = policy_entropy.write(
+                    i+1, -tf.reduce_sum(policy_target * tf.math.log(policy_target), axis=1))
+                estimated_policy_entropy = estimated_policy_entropy.write(
+                    i+1, -tf.reduce_sum(policy_estimate * tf.math.log(policy_estimate), axis=1))
+
                 player_ces = player_ces.write(i+1, tf.reduce_mean(player_ce, name="player_ces"))
 
                 hand_bces = hand_bces.write(i+1, tf.reduce_mean(hand_bce, name="hand_bces"))
@@ -368,7 +388,8 @@ class MuZeroTrainer:
             "training/loss": loss,
             **gradient_hists
         }, absolute_reward_errors.stack(), absolute_value_errors.stack(), policy_kls.stack(), policy_ces.stack(),\
-               latent_space_entropy.stack(), player_ces.stack(), hand_bces.stack(), mean_features
+               latent_space_entropy.stack(), player_ces.stack(), hand_bces.stack(), policy_entropy.stack(),\
+               estimated_policy_entropy.stack(), mean_features
 
     @staticmethod
     def calculate_LSE(batch_size, encoded_states):

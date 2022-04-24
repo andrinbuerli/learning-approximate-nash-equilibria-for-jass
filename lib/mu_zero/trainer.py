@@ -273,9 +273,9 @@ class MuZeroTrainer:
             policy_ces = policy_ces.write(0, tf.reduce_mean(player_ce, name="p_loss"))
 
             policy_entropy = policy_entropy.write(
-                0, -tf.reduce_sum(policy_target * tf.math.log(policy_target), axis=1))
+                0, -tf.reduce_mean(tf.reduce_sum(policy_target * tf.math.log(policy_target), axis=1)))
             estimated_policy_entropy = estimated_policy_entropy.write(
-                0, -tf.reduce_sum(policy_estimate * tf.math.log(policy_estimate), axis=1))
+                0, -tf.reduce_mean(tf.reduce_sum(policy_estimate * tf.math.log(policy_estimate), axis=1)))
 
             player_ces = player_ces.write(0, tf.reduce_mean(player_loss, name="player_ces"))
 
@@ -336,9 +336,9 @@ class MuZeroTrainer:
                 policy_ces = policy_ces.write(i+1, tf.reduce_mean(policy_ce, name="ce_mean"))
 
                 policy_entropy = policy_entropy.write(
-                    i+1, -tf.reduce_sum(policy_target * tf.math.log(policy_target), axis=1))
+                    i+1, -tf.reduce_mean(tf.reduce_sum(policy_target * tf.math.log(policy_target), axis=1)))
                 estimated_policy_entropy = estimated_policy_entropy.write(
-                    i+1, -tf.reduce_sum(policy_estimate * tf.math.log(policy_estimate), axis=1))
+                    i+1, -tf.reduce_mean(tf.reduce_sum(policy_estimate * tf.math.log(policy_estimate), axis=1)))
 
                 player_ces = player_ces.write(i+1, tf.reduce_mean(player_ce, name="player_ces"))
 

@@ -2,8 +2,6 @@ import math
 
 import tensorflow as tf
 
-pi = tf.constant(math.pi, dtype=tf.float32)
-
 def support_to_scalar(distribution, min_value):
     """
     Transform a categorical representation to a scalar
@@ -41,6 +39,7 @@ def scalar_to_support(scalar_m, support_size, min_value, dldl=False):
     tf.debugging.assert_integer(scalar_m)
 
     if dldl:
+        pi = tf.constant(math.pi, dtype=tf.float32)
         rng = tf.range(support_size, dtype=tf.float32)
         rng = tf.tile(rng[None, None, :], (1, 4, 1))
 

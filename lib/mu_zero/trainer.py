@@ -278,7 +278,7 @@ class MuZeroTrainer:
             value_H = self.entropy(value)
             value_entropy = value_H
 
-            reward_entropy = 0.0
+            reward_entropy = tf.zeros((batch_size, 4), dtype=tf.float32) # zero reward predicted for initial inference
 
             policy_ce = self.cross_entropy(policies_target[:, 0], policy_estimate)
             # Scale gradient by the number of unroll steps (See paper appendix Training)

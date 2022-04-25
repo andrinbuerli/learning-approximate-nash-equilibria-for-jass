@@ -79,4 +79,6 @@ RUN adduser user --uid 1000
 RUN adduser user sudo
 USER user
 
+ENV XLA_PYTHON_CLIENT_MEM_FRACTION=.7
+
 ENTRYPOINT ["sh", "/entrypoint.sh"]

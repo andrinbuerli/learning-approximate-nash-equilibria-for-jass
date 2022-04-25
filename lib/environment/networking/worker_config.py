@@ -68,6 +68,8 @@ class OptimizationConfig(BaseConfig):
         self.policy_loss_weight = 1.0
         self.player_loss_weight = 1.0
         self.hand_loss_weight = 1.0
+        self.value_entropy_weight = 1.0
+        self.reward_entropy_weight = 1.0
         self.optimizer = "adam"  # or sgd
         self.learning_rate = 1e-4
         self.grad_clip_norm = None

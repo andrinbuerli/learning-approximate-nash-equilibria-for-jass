@@ -35,10 +35,12 @@ class MuZeroTrainer:
             reward_loss_weight: float = 1.0,
             value_entropy_weight: float = 1.0,
             reward_entropy_weight: float = 1.0,
+            dldl: bool = False,
             store_weights:bool = True,
             store_buffer:bool = False,
             grad_clip_norm: int = None
     ):
+        self.dldl = dldl
         self.reward_entropy_weight = reward_entropy_weight
         self.value_entropy_weight = value_entropy_weight
         self.hand_loss_weight = hand_loss_weight
@@ -270,7 +272,8 @@ class MuZeroTrainer:
 
             reward_loss = tf.zeros((batch_size, 4), dtype=tf.float32) # zero reward predicted for initial inference
 
-            value_target_distribution = scalar_to_support(outcomes_target[:, 0], support_size=outcome_support_size, min_value=0)
+            value_target_distribution = scalar_to_support(
+                outcomes_target[:, 0], support_size=outcome_support_size, min_value=0, dldl=self.dldl)
             value_ce = self.cross_entropy(value_target_distribution, value)
             # Scale gradient by the number of unroll steps (See paper appendix Training)
             value_loss = self.scale_gradient(factor=1/trajectory_length)(value_ce)
@@ -337,8 +340,9 @@ class MuZeroTrainer:
                 # Scale gradient by the number of unroll steps (See paper appendix Training)
                 reward_loss += self.scale_gradient(factor=1/trajectory_length)(reward_ce)
 
-                value_target_distribution = scalar_to_support(outcomes_target[:, i+1], support_size=outcome_support_size,
-                                                              min_value=0)
+                value_target_distribution = scalar_to_support(
+                    outcomes_target[:, i+1], support_size=outcome_support_size,
+                    min_value=0, dldl=self.dldl)
                 value_ce = self.cross_entropy(value_target_distribution, value)
                 # Scale gradient by the number of unroll steps (See paper appendix Training)
                 value_loss += self.scale_gradient(factor=1/trajectory_length)(value_ce)

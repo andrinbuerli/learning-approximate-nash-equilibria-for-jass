@@ -1,4 +1,8 @@
+import math
+
 import tensorflow as tf
+
+pi = tf.constant(math.pi, dtype=tf.float32)
 
 def support_to_scalar(distribution, min_value):
     """
@@ -26,7 +30,7 @@ def support_to_scalar_per_player(distribution, min_value, nr_players):
         support_to_scalar(tf.reshape(distribution, (-1, distribution.shape[-1])), min_value=min_value),
         (-1, nr_players))
 
-def scalar_to_support(scalar_m, support_size, min_value, augment=False):
+def scalar_to_support(scalar_m, support_size, min_value, dldl=False):
     """
     Transform a scalar to a categorical representation
     Only discrete values are assumed
@@ -36,23 +40,21 @@ def scalar_to_support(scalar_m, support_size, min_value, augment=False):
 
     tf.debugging.assert_integer(scalar_m)
 
-    scalar_m = tf.clip_by_value(tf.cast(scalar_m, tf.int32), clip_value_min=min_value,
-                                clip_value_max=min_value + (support_size - 1))
-    scalar_l = tf.clip_by_value(tf.cast(scalar_m - 1, tf.int32), clip_value_min=min_value,
-                                clip_value_max=min_value + (support_size - 1))
-    scalar_h = tf.clip_by_value(tf.cast(scalar_m + 1, tf.int32), clip_value_min=min_value,
-                                clip_value_max=min_value + (support_size - 1))
+    if dldl:
+        rng = tf.range(support_size, dtype=tf.float32)
+        rng = tf.tile(rng[None, None, :], (1, 4, 1))
 
-    distribution_m = tf.one_hot(scalar_m, depth=support_size)
-    distribution_l = tf.one_hot(scalar_l, depth=support_size)
-    distribution_h = tf.one_hot(scalar_h, depth=support_size)
+        sigma = tf.maximum(tf.cast(scalar_m / 4, tf.float32), 1)[:, :, None]
+        norm_factor = 1 / (tf.math.sqrt(2 * pi) * sigma)
+        scalar_m = tf.cast(scalar_m[:, :, None], tf.float32)
+        distribution = norm_factor * tf.exp(-(rng - scalar_m) ** 2 / (2 * sigma ** 2))
 
-    # make support non-one hot!
-    shape = tf.shape(distribution_m)
-    if augment:
-        rand = tf.random.uniform((shape[0], shape[1], 1), minval=0, maxval=0.4)
+        distribution /= tf.reduce_sum(distribution, axis=-1, keepdims=True)
     else:
-        rand = 0.0
-    distribution = (rand / 2) * distribution_l + (1 - rand) * distribution_m + (rand / 2) * distribution_h
+        scalar_m = tf.clip_by_value(tf.cast(scalar_m, tf.int32), clip_value_min=min_value,
+                                    clip_value_max=min_value + (support_size - 1))
+
+        distribution_m = tf.one_hot(scalar_m, depth=support_size)
+        distribution = distribution_m
 
     return distribution

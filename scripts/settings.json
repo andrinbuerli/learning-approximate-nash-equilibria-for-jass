@@ -35,6 +35,7 @@
   "reward_entropy_weight": 0.1,
   "hand_loss_weight": 0.1,
   "policy_loss_weight": 1.0,
+  "dldl": true,
   "valid_policy_target": false,
   "use_per": false,
   "mask_private": false,

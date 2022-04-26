@@ -109,8 +109,8 @@ class MuZeroResidualNetwork(AbstractNetwork):
     def representation(self, observation, training=False):
         encoded_state = self.representation_network(observation, training=training)
 
-        #encoded_state_normalized = self._scale_encoded_state(encoded_state)
-        encoded_state_normalized = encoded_state
+        encoded_state_normalized = self._scale_encoded_state(encoded_state)
+        #encoded_state_normalized = encoded_state
         return encoded_state_normalized
 
     def dynamics(self, encoded_state, action, training=False):
@@ -129,8 +129,8 @@ class MuZeroResidualNetwork(AbstractNetwork):
 
         # Scale encoded state between [0, 1] (See appendix paper Training)
         # calculate extremas over the spatial dimensions for each channel
-        #next_encoded_state_normalized = self._scale_encoded_state(next_encoded_state)
-        next_encoded_state_normalized = next_encoded_state
+        next_encoded_state_normalized = self._scale_encoded_state(next_encoded_state)
+        #next_encoded_state_normalized = next_encoded_state
 
         return next_encoded_state_normalized, reward
 
@@ -235,13 +235,24 @@ TOTAL: {sum([representation_params, dynamics_params, prediction_params]):,} trai
     def _scale_encoded_state(self, encoded_state):
         # Scale encoded state between [0, 1] (See appendix paper Training)
         # calculate extremas over the spatial dimensions for each channel
-        minimas = tf.reduce_min(encoded_state, axis=(1, 2), keepdims=True)
-        maximas = tf.reduce_max(encoded_state, axis=(1, 2), keepdims=True)
-        scale_encoded_state = maximas - minimas
-        scale_encoded_state = tf.maximum(scale_encoded_state, 1e-5)
-        encoded_state_normalized = (
-                                           encoded_state - minimas
-                                   ) / scale_encoded_state
+
+        if self.fully_connected:
+            minimas = tf.reduce_min(encoded_state, axis=(-1), keepdims=True)
+            maximas = tf.reduce_max(encoded_state, axis=(-1), keepdims=True)
+            scale_encoded_state = maximas - minimas
+            scale_encoded_state = tf.maximum(scale_encoded_state, 1e-5)
+            encoded_state_normalized = (
+                                               encoded_state - minimas
+                                       ) / scale_encoded_state
+        else:
+            minimas = tf.reduce_min(encoded_state, axis=(1, 2), keepdims=True)
+            maximas = tf.reduce_max(encoded_state, axis=(1, 2), keepdims=True)
+            scale_encoded_state = maximas - minimas
+            scale_encoded_state = tf.maximum(scale_encoded_state, 1e-5)
+            encoded_state_normalized = (
+                                               encoded_state - minimas
+                                       ) / scale_encoded_state
+
         return encoded_state_normalized
 
     def _warmup(self):

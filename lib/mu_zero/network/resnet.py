@@ -35,9 +35,11 @@ class MuZeroResidualNetwork(AbstractNetwork):
         players,
         mask_private,
         mask_valid,
+        fully_connected,
         network_path=None
     ):
         super().__init__()
+        self.fully_connected = fully_connected
         self.mask_valid = mask_valid
         self.mask_private = mask_private
         self.num_blocks_representation = num_blocks_representation
@@ -59,8 +61,8 @@ class MuZeroResidualNetwork(AbstractNetwork):
                 observation_shape=observation_shape,
                 num_blocks=num_blocks_representation,
                 num_blocks_fully_connected=fcn_blocks_representation,
-                num_channels=num_channels)
-
+                num_channels=num_channels,
+                fully_connected=fully_connected)
             self.dynamics_network = DynamicsNetwork(
                 observation_shape=observation_shape,
                 action_space_size=action_space_size,
@@ -72,6 +74,7 @@ class MuZeroResidualNetwork(AbstractNetwork):
                 fc_reward_layers=fc_reward_layers,
                 full_support_size=self.support_size,
                 block_output_size_reward=block_output_size_reward,
+                fully_connected=fully_connected
             )
 
             self.prediction_network = PredictionNetwork(
@@ -89,6 +92,7 @@ class MuZeroResidualNetwork(AbstractNetwork):
                 full_support_size=self.support_size,
                 block_output_size_value=block_output_size_value,
                 block_output_size_policy=block_output_size_policy,
+                fully_connected=fully_connected
             )
         else:
             self.load(network_path, from_graph=True)
@@ -105,25 +109,28 @@ class MuZeroResidualNetwork(AbstractNetwork):
     def representation(self, observation, training=False):
         encoded_state = self.representation_network(observation, training=training)
 
-        encoded_state_normalized = self._scale_encoded_state(encoded_state)
-        #encoded_state_normalized = encoded_state
+        #encoded_state_normalized = self._scale_encoded_state(encoded_state)
+        encoded_state_normalized = encoded_state
         return encoded_state_normalized
 
     def dynamics(self, encoded_state, action, training=False):
         # Stack encoded_state with a game specific one hot encoded action (See paper appendix Network Architecture)
-        action_one_hot = tf.reshape(
-            tf.tile(
-                tf.one_hot(action, depth=self.action_space_size),
-                (1, encoded_state.shape[1] * encoded_state.shape[2], 1)),
-            (-1, encoded_state.shape[1], encoded_state.shape[2], self.action_space_size))
+        if self.fully_connected:
+            action_one_hot = tf.reshape(tf.one_hot(action, depth=self.action_space_size), (-1, self.action_space_size))
+        else:
+            action_one_hot = tf.reshape(
+                tf.tile(
+                    tf.one_hot(action, depth=self.action_space_size),
+                    (1, encoded_state.shape[1] * encoded_state.shape[2], 1)),
+                (-1, encoded_state.shape[1], encoded_state.shape[2], self.action_space_size))
 
         x = tf.concat((encoded_state, action_one_hot), axis=-1)
         next_encoded_state, reward = self.dynamics_network(x, training=training)
 
         # Scale encoded state between [0, 1] (See appendix paper Training)
         # calculate extremas over the spatial dimensions for each channel
-        next_encoded_state_normalized = self._scale_encoded_state(next_encoded_state)
-        #next_encoded_state_normalized = next_encoded_state
+        #next_encoded_state_normalized = self._scale_encoded_state(next_encoded_state)
+        next_encoded_state_normalized = next_encoded_state
 
         return next_encoded_state_normalized, reward
 
@@ -239,9 +246,15 @@ TOTAL: {sum([representation_params, dynamics_params, prediction_params]):,} trai
 
     def _warmup(self):
         encoded_state = self.representation(np.random.uniform(0, 1, (1,) + tuple(self.observation_shape)).reshape(1, -1))
-        assert encoded_state.shape == (1, self.observation_shape[0], self.observation_shape[1], self.num_channels)
+        if not self.fully_connected:
+            assert encoded_state.shape == (1, self.observation_shape[0], self.observation_shape[1], self.num_channels)
+        else:
+            assert encoded_state.shape == (1, self.num_channels)
         encoded_next_state, reward = self.dynamics(encoded_state, action=np.array([[1]]))
-        assert encoded_next_state.shape == (1, self.observation_shape[0], self.observation_shape[1], self.num_channels)
+        if not self.fully_connected:
+            assert encoded_next_state.shape == (1, self.observation_shape[0], self.observation_shape[1], self.num_channels)
+        else:
+            assert encoded_next_state.shape == (1, self.num_channels)
         assert reward.shape == (1, self.players, self.support_size)
         policy, value = self.prediction(encoded_next_state)
         assert policy.shape == (1, self.action_space_size)
@@ -257,20 +270,24 @@ class RepresentationNetwork(tf.keras.Model):
         observation_shape,
         num_blocks,
         num_blocks_fully_connected,
-        num_channels
+        num_channels,
+        fully_connected
     ):
         super().__init__()
 
+        self.fully_connected = fully_connected
         self.observation_shape = observation_shape
-        self.conv = conv2x3(num_channels)
+        self.layer0 = conv2x3(num_channels) if not fully_connected else dense(num_channels)
         self.bn = layers.BatchNormalization()
-        self.resblocks = [ResidualBlock(num_channels) for _ in range(num_blocks)]
-        self.resblocks_fcn = [ResidualFullyConnectedBlock(num_channels) for _ in range(num_blocks_fully_connected)]
+        self.resblocks = [ResidualBlock(num_channels, fully_connected) for _ in range(num_blocks)]
+        self.resblocks_fcn = [ResidualFullyConnectedBlock(num_channels, fully_connected) for _ in range(num_blocks_fully_connected)]
 
     def call(self, x, training=None):
-        x = tf.reshape(x, (-1, self.observation_shape[0], self.observation_shape[1], self.observation_shape[2]))
 
-        x = self.conv(x, training=training)
+        if not self.fully_connected:
+            x = tf.reshape(x, (-1, self.observation_shape[0], self.observation_shape[1], self.observation_shape[2]))
+
+        x = self.layer0(x, training=training)
         x = self.bn(x, training=training)
         x = tf.nn.tanh(x)
 
@@ -296,21 +313,23 @@ class DynamicsNetwork(tf.keras.Model):
         fc_reward_layers,
         full_support_size,
         block_output_size_reward,
+        fully_connected
     ):
         super().__init__()
+        self.fully_connected = fully_connected
         self.action_space_size = action_space_size
         self.players = players
         self.full_support_size = full_support_size
         self.observation_shape = observation_shape
         self.num_channels = num_channels
-        self.conv = conv2x3(num_channels)
+        self.layer0 = conv2x3(num_channels) if not fully_connected else dense(num_channels)
         self.bn = layers.BatchNormalization()
-        self.resblocks = [ResidualBlock(num_channels) for _ in range(num_blocks)]
-        self.resblocks_fcn = [ResidualFullyConnectedBlock(num_channels) for _ in range(num_blocks_fully_connected)]
+        self.resblocks = [ResidualBlock(num_channels, fully_connected) for _ in range(num_blocks)]
+        self.resblocks_fcn = [ResidualFullyConnectedBlock(num_channels, fully_connected) for _ in range(num_blocks_fully_connected)]
 
         self.conv1x1_reward =  layers.Conv2D(filters=reduced_channels_reward, kernel_size=(1, 1), padding="same",
-                                             activation=None, use_bias=False, kernel_initializer="glorot_uniform")
-        self.block_output_size_reward = block_output_size_reward
+                                             activation=None, use_bias=False, kernel_initializer="glorot_uniform") if not fully_connected else dense(fc_reward_layers[0])
+        self.block_output_size_reward = block_output_size_reward if not fully_connected else fc_reward_layers[0]
         self.fc_reward = [
                 mlp(
                 self.block_output_size_reward, fc_reward_layers, full_support_size,
@@ -320,9 +339,11 @@ class DynamicsNetwork(tf.keras.Model):
         ]
 
     def call(self, x, training=None):
-        x = tf.reshape(x, (-1, self.observation_shape[0], self.observation_shape[1], self.num_channels + self.action_space_size))
 
-        x = self.conv(x, training=training)
+        if not self.fully_connected:
+            x = tf.reshape(x, (-1, self.observation_shape[0], self.observation_shape[1], self.num_channels + self.action_space_size))
+
+        x = self.layer0(x, training=training)
         x = self.bn(x, training=training)
         x = tf.nn.tanh(x)
 
@@ -356,27 +377,33 @@ class PredictionNetwork(tf.keras.Model):
         full_support_size,
         block_output_size_value,
         block_output_size_policy,
+        fully_connected
     ):
         super().__init__()
+        self.fully_connected = fully_connected
         self.players = players
         self.full_support_size = full_support_size
         self.observation_shape = observation_shape
         self.num_channels = num_channels
-        self.resblocks = [ResidualBlock(num_channels) for _ in range(num_blocks)]
+        self.resblocks = [ResidualBlock(num_channels, fully_connected) for _ in range(num_blocks)]
 
 
         self.conv1x1_value = layers.Conv2D(filters=reduced_channels_value, kernel_size=(1, 1), padding="same",
-                                           activation=None, use_bias=False, kernel_initializer="glorot_uniform")
+                                           activation=None, use_bias=False, kernel_initializer="glorot_uniform")\
+                                if not fully_connected else dense(fc_value_layers[0])
         self.conv1x1_policy = layers.Conv2D(filters=reduced_channels_policy, kernel_size=(1, 1), padding="same",
-                                           activation=None, use_bias=False, kernel_initializer="glorot_uniform")
+                                           activation=None, use_bias=False, kernel_initializer="glorot_uniform")\
+                                if not fully_connected else dense(fc_policy_layers[0])
         self.conv1x1_player = layers.Conv2D(filters=1, kernel_size=(1, 1), padding="same",
-                                           activation=None, use_bias=False, kernel_initializer="glorot_uniform")
+                                           activation=None, use_bias=False, kernel_initializer="glorot_uniform")\
+                                if not fully_connected else dense(fc_player_layers[0])
         self.conv1x1_hand = layers.Conv2D(filters=1, kernel_size=(1, 1), padding="same",
-                                           activation=None, use_bias=False, kernel_initializer="glorot_uniform")
-        self.block_output_size_value = block_output_size_value
-        self.block_output_size_policy = block_output_size_policy
-        self.block_output_size_player = observation_shape[0] * observation_shape[1] * 1
-        self.block_output_size_hand = observation_shape[0] * observation_shape[1] * 1
+                                           activation=None, use_bias=False, kernel_initializer="glorot_uniform")\
+                                if not fully_connected else dense(fc_hand_layers[0])
+        self.block_output_size_value = block_output_size_value if not fully_connected else fc_value_layers[0]
+        self.block_output_size_policy = block_output_size_policy if not fully_connected else fc_policy_layers[0]
+        self.block_output_size_player = observation_shape[0] * observation_shape[1] * 1 if not fully_connected else fc_player_layers[0]
+        self.block_output_size_hand = observation_shape[0] * observation_shape[1] * 1 if not fully_connected else fc_hand_layers[0]
         self.fc_value = [
             mlp(
                 self.block_output_size_value, fc_value_layers, full_support_size,
@@ -401,7 +428,9 @@ class PredictionNetwork(tf.keras.Model):
         )
 
     def call(self, x, training=None):
-        x = tf.reshape(x, (-1, self.observation_shape[0], self.observation_shape[1], self.num_channels))
+
+        if not self.fully_connected:
+            x = tf.reshape(x, (-1, self.observation_shape[0], self.observation_shape[1], self.num_channels))
 
         for block in self.resblocks:
             x = block(x, training=training)
@@ -429,45 +458,49 @@ def conv4x9(out_channels, strides=(1, 1), padding='valid'):
     return layers.Conv2D(filters=out_channels, kernel_size=(4, 9), strides=strides,
                          padding=padding, activation=None, use_bias=False, kernel_initializer="glorot_uniform")
 
+def dense(out_channels):
+    return layers.Dense(units=out_channels, activation=None, use_bias=True, kernel_initializer="glorot_uniform")
 
 # Residual block
 class ResidualBlock(tf.keras.Model):
-    def __init__(self, num_channels):
+    def __init__(self, num_channels, fully_connected):
         super().__init__()
-        self.conv1 = conv2x3(num_channels)
+        self.layer1 = conv2x3(num_channels) if not fully_connected else dense(num_channels)
         self.bn1 = layers.BatchNormalization()
-        self.conv2 = conv2x3(num_channels)
+        self.layer2 = conv2x3(num_channels) if not fully_connected else dense(num_channels)
         self.bn2 = layers.BatchNormalization()
+        self.dense = dense
 
     def call(self, x, training=None):
-        out = self.conv1(x, training=training)
+        out = self.layer1(x, training=training)
         out = self.bn1(out, training=training)
         out = tf.nn.tanh(out)
-        out = self.conv2(out, training=training)
+        out = self.layer2(out, training=training)
         out = self.bn2(out, training=training)
         out = tf.nn.tanh(out)
         out += x
         return out
 
 class ResidualFullyConnectedBlock(tf.keras.Model):
-    def __init__(self, num_channels):
+    def __init__(self, num_channels, fully_connected):
         super().__init__()
-        self.conv1 = conv2x3(num_channels // 2)
+        self.layer1 = conv2x3(num_channels // 2) if not fully_connected else dense(num_channels // 2)
         self.bn1 = layers.BatchNormalization()
-        self.conv2 = conv4x9(num_channels // 2)
+        self.layer2 = conv4x9(num_channels // 2) if not fully_connected else dense(num_channels // 2)
         self.bn2 = layers.BatchNormalization()
-        self.conv3 = layers.Conv2D(filters=num_channels, kernel_size=(1, 1), padding="same",
-                                   activation=None, use_bias=False, kernel_initializer="glorot_uniform")
+        self.layer3 = layers.Conv2D(filters=num_channels, kernel_size=(1, 1), padding="same",
+                                    activation=None, use_bias=False, kernel_initializer="glorot_uniform") \
+                    if not fully_connected else dense(num_channels)
         self.bn3 = layers.BatchNormalization()
 
     def call(self, x, training=None):
-        out = self.conv1(x, training=training)
+        out = self.layer1(x, training=training)
         out = self.bn1(out, training=training)
         out = tf.nn.tanh(out)
-        out = self.conv2(out, training=training)
+        out = self.layer2(out, training=training)
         out = self.bn2(out, training=training)
         out = tf.nn.tanh(out)
-        out = self.conv3(out, training=training)
+        out = self.layer3(out, training=training)
         out = self.bn3(out, training=training)
         out = tf.nn.tanh(out)
         out += x

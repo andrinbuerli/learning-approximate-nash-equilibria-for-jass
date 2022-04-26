@@ -80,7 +80,8 @@ def get_network(config: WorkerConfig, network_path: str = None):
             players=config.network.players,
             network_path=network_path,
             mask_private=config.optimization.mask_private,
-            mask_valid=config.optimization.mask_valid
+            mask_valid=config.optimization.mask_valid,
+            fully_connected=config.network.fully_connected
         )
 
         return network

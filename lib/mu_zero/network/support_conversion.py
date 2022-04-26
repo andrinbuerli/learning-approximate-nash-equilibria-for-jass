@@ -40,16 +40,23 @@ def scalar_to_support(scalar_m, support_size, min_value, dldl=False):
 
     if dldl:
         pi = tf.constant(math.pi, dtype=tf.float32)
-        rng = tf.range(support_size, dtype=tf.float32)
+        rng = tf.range(3*support_size, dtype=tf.float32) - tf.cast(support_size, tf.float32)
         rng = tf.tile(rng[None, None, :], (1, 4, 1))
 
         points_left_in_game = tf.reduce_sum(scalar_m, axis=1) // 2
-        sigma = tf.maximum(tf.cast(points_left_in_game / 4, tf.float32), 1)[:, None, None]
+        sigma = tf.maximum(tf.cast(points_left_in_game / 10, tf.float32), 1)[:, None, None]
         norm_factor = 1 / (tf.math.sqrt(2 * pi) * sigma)
-        scalar_m = tf.cast(scalar_m[:, :, None], tf.float32)
-        distribution = norm_factor * tf.exp(-(rng - scalar_m) ** 2 / (2 * sigma ** 2))
+        mu = tf.cast(scalar_m[:, :, None], tf.float32)
+        distribution = norm_factor * tf.exp(-(rng - mu) ** 2 / (2 * sigma ** 2))
+        dist = distribution[:, :, support_size: 2*support_size]
+        dist += tf.reduce_sum(distribution[:, :, :support_size], axis=-1)[:, :, None] \
+                * tf.one_hot(0, depth=support_size)[None, None, :]
+        dist += tf.reduce_sum(distribution[:, :, 2 * support_size:], axis=-1)[:, :, None] \
+                * tf.one_hot(support_size - 1, depth=support_size)[None, None, :]
 
-        distribution /= tf.reduce_sum(distribution, axis=-1, keepdims=True)
+        tf.debugging.assert_less(tf.reduce_sum(dist, axis=-1) - 1, 1e-2)
+
+        return dist
     else:
         scalar_m = tf.clip_by_value(tf.cast(scalar_m, tf.int32), clip_value_min=min_value,
                                     clip_value_max=min_value + (support_size - 1))

@@ -40,6 +40,7 @@ class BaseConfig:
 class NetworkConfig(BaseConfig):
     def __init__(self, features: FeaturesSetCpp):
         self.type=""
+        self.fully_connected = False
         self.action_space_size = 43
         self.num_blocks_representation = 2
         self.fcn_blocks_representation = 1

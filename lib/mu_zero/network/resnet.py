@@ -279,6 +279,7 @@ class RepresentationNetwork(tf.keras.Model):
         self.observation_shape = observation_shape
         self.layer0 = conv2x3(num_channels) if not fully_connected else dense(num_channels)
         self.bn = layers.BatchNormalization()
+        self.ln = layers.LayerNormalization()
         self.resblocks = [ResidualBlock(num_channels, fully_connected) for _ in range(num_blocks)]
         self.resblocks_fcn = [ResidualFullyConnectedBlock(num_channels, fully_connected) for _ in range(num_blocks_fully_connected)]
 
@@ -296,6 +297,8 @@ class RepresentationNetwork(tf.keras.Model):
 
         for block in self.resblocks_fcn:
             x = block(x, training=training)
+
+        x = self.ln(x, training=training)
 
         return x
 
@@ -327,6 +330,8 @@ class DynamicsNetwork(tf.keras.Model):
         self.resblocks = [ResidualBlock(num_channels, fully_connected) for _ in range(num_blocks)]
         self.resblocks_fcn = [ResidualFullyConnectedBlock(num_channels, fully_connected) for _ in range(num_blocks_fully_connected)]
 
+        self.ln = layers.LayerNormalization()
+
         self.conv1x1_reward =  layers.Conv2D(filters=reduced_channels_reward, kernel_size=(1, 1), padding="same",
                                              activation=None, use_bias=False, kernel_initializer="glorot_uniform") if not fully_connected else dense(fc_reward_layers[0])
         self.block_output_size_reward = block_output_size_reward if not fully_connected else fc_reward_layers[0]
@@ -353,7 +358,10 @@ class DynamicsNetwork(tf.keras.Model):
         for block in self.resblocks_fcn:
             x = block(x, training=training)
 
+        x = self.ln(x, training=training)
+
         state = x
+
         x = tf.nn.tanh(self.conv1x1_reward(state, training=training))
         x = tf.reshape(x, (-1, self.block_output_size_reward))
         reward = tf.tile(tf.stack(([fc(x) for fc in self.fc_reward]), axis=1), [1, 2, 1])

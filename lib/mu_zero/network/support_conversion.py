@@ -43,7 +43,8 @@ def scalar_to_support(scalar_m, support_size, min_value, dldl=False):
         rng = tf.range(support_size, dtype=tf.float32)
         rng = tf.tile(rng[None, None, :], (1, 4, 1))
 
-        sigma = tf.maximum(tf.cast(scalar_m / 4, tf.float32), 1)[:, :, None]
+        points_left_in_game = tf.reduce_sum(scalar_m, axis=1) // 2
+        sigma = tf.maximum(tf.cast(points_left_in_game / 4, tf.float32), 1)[:, None, None]
         norm_factor = 1 / (tf.math.sqrt(2 * pi) * sigma)
         scalar_m = tf.cast(scalar_m[:, :, None], tf.float32)
         distribution = norm_factor * tf.exp(-(rng - scalar_m) ** 2 / (2 * sigma ** 2))

@@ -343,9 +343,10 @@ class DynamicsNetwork(tf.keras.Model):
 
         self.ln = layers.LayerNormalization()
 
-        self.conv1x1_reward =  layers.Conv2D(filters=reduced_channels_reward, kernel_size=(1, 1), padding="same",
-                                             activation=None, use_bias=False, kernel_initializer="glorot_uniform") if not fully_connected else dense(fc_reward_layers[0])
-        self.block_output_size_reward = block_output_size_reward if not fully_connected else fc_reward_layers[0]
+        if not fully_connected:
+            self.conv1x1_reward =  layers.Conv2D(filters=reduced_channels_reward, kernel_size=(1, 1), padding="same",
+                                                 activation=None, use_bias=False, kernel_initializer="glorot_uniform")
+        self.block_output_size_reward = block_output_size_reward if not fully_connected else num_channels
         self.fc_reward = [
                 mlp(
                 self.block_output_size_reward, fc_reward_layers, full_support_size,
@@ -373,7 +374,8 @@ class DynamicsNetwork(tf.keras.Model):
 
         state = x
 
-        x = tf.nn.tanh(self.conv1x1_reward(state, training=training))
+        if not self.fully_connected:
+            x = tf.nn.tanh(self.conv1x1_reward(state, training=training))
         x = tf.reshape(x, (-1, self.block_output_size_reward))
         reward = tf.tile(tf.stack(([fc(x) for fc in self.fc_reward]), axis=1), [1, 2, 1])
         return state, reward
@@ -406,23 +408,22 @@ class PredictionNetwork(tf.keras.Model):
         self.num_channels = num_channels
         self.resblocks = [ResidualBlock(num_channels, fully_connected) for _ in range(num_blocks)]
 
-
-        self.conv1x1_value = layers.Conv2D(filters=reduced_channels_value, kernel_size=(1, 1), padding="same",
-                                           activation=None, use_bias=False, kernel_initializer="glorot_uniform")\
-                                if not fully_connected else dense(fc_value_layers[0])
-        self.conv1x1_policy = layers.Conv2D(filters=reduced_channels_policy, kernel_size=(1, 1), padding="same",
-                                           activation=None, use_bias=False, kernel_initializer="glorot_uniform")\
-                                if not fully_connected else dense(fc_policy_layers[0])
-        self.conv1x1_player = layers.Conv2D(filters=1, kernel_size=(1, 1), padding="same",
-                                           activation=None, use_bias=False, kernel_initializer="glorot_uniform")\
-                                if not fully_connected else dense(fc_player_layers[0])
-        self.conv1x1_hand = layers.Conv2D(filters=1, kernel_size=(1, 1), padding="same",
-                                           activation=None, use_bias=False, kernel_initializer="glorot_uniform")\
-                                if not fully_connected else dense(fc_hand_layers[0])
-        self.block_output_size_value = block_output_size_value if not fully_connected else fc_value_layers[0]
-        self.block_output_size_policy = block_output_size_policy if not fully_connected else fc_policy_layers[0]
-        self.block_output_size_player = observation_shape[0] * observation_shape[1] * 1 if not fully_connected else fc_player_layers[0]
-        self.block_output_size_hand = observation_shape[0] * observation_shape[1] * 1 if not fully_connected else fc_hand_layers[0]
+        if not self.fully_connected:
+            self.conv1x1_value = layers.Conv2D(filters=reduced_channels_value, kernel_size=(1, 1), padding="same",
+                                               activation=None, use_bias=False, kernel_initializer="glorot_uniform")
+        if not self.fully_connected:
+            self.conv1x1_policy = layers.Conv2D(filters=reduced_channels_policy, kernel_size=(1, 1), padding="same",
+                                               activation=None, use_bias=False, kernel_initializer="glorot_uniform")
+        if not self.fully_connected:
+            self.conv1x1_player = layers.Conv2D(filters=1, kernel_size=(1, 1), padding="same",
+                                               activation=None, use_bias=False, kernel_initializer="glorot_uniform")
+        if not self.fully_connected:
+            self.conv1x1_hand = layers.Conv2D(filters=1, kernel_size=(1, 1), padding="same",
+                                               activation=None, use_bias=False, kernel_initializer="glorot_uniform")
+        self.block_output_size_value = block_output_size_value if not fully_connected else num_channels
+        self.block_output_size_policy = block_output_size_policy if not fully_connected else num_channels
+        self.block_output_size_player = observation_shape[0] * observation_shape[1] * 1 if not fully_connected else num_channels
+        self.block_output_size_hand = observation_shape[0] * observation_shape[1] * 1 if not fully_connected else num_channels
         self.fc_value = [
             mlp(
                 self.block_output_size_value, fc_value_layers, full_support_size,
@@ -454,16 +455,16 @@ class PredictionNetwork(tf.keras.Model):
         for block in self.resblocks:
             x = block(x, training=training)
 
-        value = tf.nn.tanh(self.conv1x1_value(x, training=training))
+        value = tf.nn.tanh(self.conv1x1_value(x, training=training)) if not self.fully_connected else x
         value = tf.reshape(value, (-1, self.block_output_size_value))
         value = tf.tile(tf.stack(([fc(value) for fc in self.fc_value]), axis=1), [1, 2, 1])
-        policy = tf.nn.tanh(self.conv1x1_policy(x, training=training))
+        policy = tf.nn.tanh(self.conv1x1_policy(x, training=training)) if not self.fully_connected else x
         policy = tf.reshape(policy, (-1, self.block_output_size_policy))
         policy = self.fc_policy(policy, training=training)
-        player = tf.nn.tanh(self.conv1x1_player(x, training=training))
+        player = tf.nn.tanh(self.conv1x1_player(x, training=training)) if not self.fully_connected else x
         player = tf.reshape(player, (-1, self.block_output_size_player))
         player = self.fc_player(player, training=training)
-        hand = tf.nn.tanh(self.conv1x1_hand(x, training=training))
+        hand = tf.nn.tanh(self.conv1x1_hand(x, training=training)) if not self.fully_connected else x
         hand = tf.reshape(hand, (-1, self.block_output_size_hand))
         hand = self.fc_hand(hand, training=training)
         return policy, value, player, hand

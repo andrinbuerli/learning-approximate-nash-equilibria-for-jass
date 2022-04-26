@@ -65,13 +65,13 @@
    18
   ],
   "fc_policy_layers": [
-   256
+   256, 256, 256
   ],
   "fc_reward_layers": [
-   256
+   256, 256, 256
   ],
   "fc_value_layers": [
-   256
+   256, 256, 256
   ],
   "feature_extractor": "cnn-full",
   "num_blocks_representation": 16,

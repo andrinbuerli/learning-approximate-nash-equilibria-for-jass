@@ -172,7 +172,8 @@ if __name__=="__main__":
         store_model_weights_after=worker_config.optimization.store_model_weights_after,
         store_buffer=worker_config.optimization.store_buffer,
         grad_clip_norm=worker_config.optimization.grad_clip_norm,
-        dldl=worker_config.optimization.dldl
+        dldl=worker_config.optimization.dldl,
+        value_mse=worker_config.optimization.value_mse
     )
 
     connector = WorkerConnector(

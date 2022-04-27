@@ -38,8 +38,10 @@ class MuZeroTrainer:
             dldl: bool = False,
             store_weights:bool = True,
             store_buffer:bool = False,
-            grad_clip_norm: int = None
+            grad_clip_norm: int = None,
+            value_mse: bool = False
     ):
+        self.value_mse = value_mse
         self.dldl = dldl
         self.reward_entropy_weight = reward_entropy_weight
         self.value_entropy_weight = value_entropy_weight
@@ -272,9 +274,13 @@ class MuZeroTrainer:
 
             reward_loss = tf.zeros((batch_size, 4), dtype=tf.float32) # zero reward predicted for initial inference
 
-            value_target_distribution = scalar_to_support(
-                outcomes_target[:, 0], support_size=outcome_support_size, min_value=0, dldl=self.dldl)
-            value_ce = self.cross_entropy(value_target_distribution, value)
+            expected_value = support_to_scalar_per_player(value, min_value=0, nr_players=4)
+            if self.value_mse:
+                value_ce = (expected_value - tf.cast(outcomes_target[:, 0], tf.float32))**2
+            else:
+                value_target_distribution = scalar_to_support(
+                    outcomes_target[:, 0], support_size=outcome_support_size, min_value=0, dldl=self.dldl)
+                value_ce = self.cross_entropy(value_target_distribution, value)
             # Scale gradient by the number of unroll steps (See paper appendix Training)
             value_loss = self.scale_gradient(factor=1/trajectory_length)(value_ce)
 
@@ -304,7 +310,6 @@ class MuZeroTrainer:
 
             hand_bces = hand_bces.write(0, tf.reduce_mean(hand_bce, name="hand_bces"))
 
-            expected_value = support_to_scalar_per_player(value, min_value=0, nr_players=4)
             absolute_value_errors = absolute_value_errors.write(0, tf.reduce_mean(tf.abs(expected_value - tf.cast(outcomes_target[:, 0], tf.float32)), name="val_mae"))
             absolute_reward_errors = absolute_reward_errors.write(0, 0)
 
@@ -340,10 +345,14 @@ class MuZeroTrainer:
                 # Scale gradient by the number of unroll steps (See paper appendix Training)
                 reward_loss += self.scale_gradient(factor=1/trajectory_length)(reward_ce)
 
-                value_target_distribution = scalar_to_support(
-                    outcomes_target[:, i+1], support_size=outcome_support_size,
-                    min_value=0, dldl=self.dldl)
-                value_ce = self.cross_entropy(value_target_distribution, value)
+                expected_value = support_to_scalar_per_player(value, min_value=0, nr_players=4)
+                if self.value_mse:
+                    value_ce = (expected_value - tf.cast(outcomes_target[:, i+1], tf.float32)) ** 2
+                else:
+                    value_target_distribution = scalar_to_support(
+                        outcomes_target[:, i+1], support_size=outcome_support_size,
+                        min_value=0, dldl=self.dldl)
+                    value_ce = self.cross_entropy(value_target_distribution, value)
                 # Scale gradient by the number of unroll steps (See paper appendix Training)
                 value_loss += self.scale_gradient(factor=1/trajectory_length)(value_ce)
 
@@ -372,7 +381,6 @@ class MuZeroTrainer:
 
                 hand_bces = hand_bces.write(i+1, tf.reduce_mean(hand_bce, name="hand_bces"))
 
-                expected_value = support_to_scalar_per_player(value, min_value=0, nr_players=4)
                 absolute_value_errors = absolute_value_errors.write(i+1, tf.reduce_mean(tf.abs(expected_value - tf.cast(outcomes_target[:, i+1], tf.float32)), name="val_mae"))
                 expected_reward = support_to_scalar_per_player(reward, min_value=0, nr_players=4)
                 absolute_reward_errors = absolute_reward_errors.write(i+1, tf.reduce_mean(tf.abs(expected_reward - tf.cast(rewards_target[:, i], tf.float32)), name="reard_mae"))

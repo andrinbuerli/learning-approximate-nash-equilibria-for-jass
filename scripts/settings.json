@@ -28,7 +28,7 @@
   "adam_epsilon": 1e-07,
   "batch_size": 256,
   "data_folder": "../results",
-  "value_loss_weight": 0.1,
+  "value_loss_weight": 0.001,
   "reward_loss_weight": 4.0,
   "player_loss_weight": 4.0,
   "value_entropy_weight": 0.00,

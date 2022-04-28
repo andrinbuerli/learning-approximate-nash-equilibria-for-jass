@@ -67,7 +67,7 @@ class LatentNodeSelectionPolicy:
                     with node.lock:
                         with child.lock:
                             child.visits += virtual_loss
-                            child.value, child.reward, child.prior, child.hidden_state = \
+                            child.value, child.reward, child.prior, child.predicted_player, child.hidden_state = \
                                 self.network.recurrent_inference(node.hidden_state, np.array([[child.action]]))
                             self._expand_node(child, observation)
                 break
@@ -87,7 +87,7 @@ class LatentNodeSelectionPolicy:
             assert (node.valid_actions >= 0).all(), 'Error in valid actions'
 
             features = self.feature_extractor.convert_to_features(observation, rule)[None]
-            node.value, node.reward, node.prior, node.hidden_state = self.network.initial_inference(features)
+            node.value, node.reward, node.prior, node.predicted_player, node.hidden_state = self.network.initial_inference(features)
             self._expand_node(node, root_obs=observation)
 
             valid_idxs = np.where(node.valid_actions)[0]
@@ -102,9 +102,9 @@ class LatentNodeSelectionPolicy:
         exploration_term = P_s_a * prior_weight
 
         if child.visits > 0:
-            q = (child.value_sum[child.player] / child.visits)
+            q = (child.value_sum[child.parent.predicted_player.argmax()] / child.visits)
             assert len(child.reward.shape) == 1, f'shape: {child.reward.shape}'
-            q_value = (child.reward[child.player] + self.discount * q) \
+            q_value = (child.reward[child.parent.predicted_player.argmax()] + self.discount * q) \
                 if self.mdp_value else q
             q_normed = child.parent.stats.normalize(q_value)
             #logging.info(q_normed)
@@ -114,8 +114,10 @@ class LatentNodeSelectionPolicy:
         return q_normed + exploration_term
 
     def _expand_node(self, node: Node, root_obs: jasscpp.GameObservationCpp):
-        node.value, node.reward, node.prior = \
-            [x.numpy().squeeze() for x in [node.value, node.reward, node.prior]]
+        node.value, node.reward, node.prior, node.predicted_player = \
+            [x.numpy().squeeze() for x in [node.value, node.reward, node.prior, node.predicted_player]]
+
+        #assert node.next_player == node.predicted_player.argmax()
 
         node.value = support_to_scalar(distribution=node.value, min_value=0).numpy()
         node.reward = support_to_scalar(distribution=node.reward, min_value=0).numpy()

@@ -67,8 +67,8 @@ class LatentNodeSelectionPolicy:
                     with node.lock:
                         with child.lock:
                             child.visits += virtual_loss
-                            child.value, child.reward, child.prior, child.predicted_player, child.hidden_state = \
-                                self.network.recurrent_inference(node.hidden_state, np.array([[child.action]]))
+                            child.value, child.reward, child.prior, child.predicted_player, _, child.hidden_state = \
+                                self.network.recurrent_inference(node.hidden_state, np.array([[child.action]]), all_preds=True)
                             self._expand_node(child, observation)
                 break
 
@@ -87,7 +87,8 @@ class LatentNodeSelectionPolicy:
             assert (node.valid_actions >= 0).all(), 'Error in valid actions'
 
             features = self.feature_extractor.convert_to_features(observation, rule)[None]
-            node.value, node.reward, node.prior, node.predicted_player, node.hidden_state = self.network.initial_inference(features)
+            node.value, node.reward, node.prior, node.predicted_player, _, node.hidden_state =\
+                self.network.initial_inference(features, all_preds=True)
             self._expand_node(node, root_obs=observation)
 
             valid_idxs = np.where(node.valid_actions)[0]

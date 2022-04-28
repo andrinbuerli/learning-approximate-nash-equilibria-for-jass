@@ -177,7 +177,7 @@ class MuZeroResidualNetwork(AbstractNetwork):
         if training or all_preds:
             return value, reward, policy, player, hand, next_encoded_state
         else:
-            return value, reward, policy, player, next_encoded_state
+            return value, reward, policy, next_encoded_state
 
     def save(self, path):
         path = Path(path)

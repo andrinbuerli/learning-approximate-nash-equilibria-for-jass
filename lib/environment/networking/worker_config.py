@@ -56,6 +56,7 @@ class NetworkConfig(BaseConfig):
         self.fc_policy_layers = [256]
         self.fc_player_layers = [256]
         self.fc_hand_layers = [256]
+        self.fc_terminal_state_layers = [256]
         self.support_size = 157
         self.players = 4
         self.feature_extractor = features
@@ -71,6 +72,7 @@ class OptimizationConfig(BaseConfig):
         self.hand_loss_weight = 1.0
         self.value_entropy_weight = 1.0
         self.reward_entropy_weight = 1.0
+        self.is_terminal_loss_weight = 1.0
         self.optimizer = "adam"  # or sgd
         self.learning_rate = 1e-4
         self.grad_clip_norm = None

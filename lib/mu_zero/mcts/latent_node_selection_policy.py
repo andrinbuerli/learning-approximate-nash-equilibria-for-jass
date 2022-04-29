@@ -61,7 +61,7 @@ class LatentNodeSelectionPolicy:
                 c.avail += 1
 
             not_expanded = child.prior is None
-            is_terminal_state = child.next_player == -1
+            is_terminal_state = False # child.next_player == -1
             if not_expanded or is_terminal_state:
                 if not_expanded:
                     with node.lock:
@@ -128,37 +128,42 @@ class LatentNodeSelectionPolicy:
         # add edges for all children
         for action in node.missing_actions(node.valid_actions):
             # add one child edge
-            if action < TRUMP_FULL_OFFSET:
-                nr_played_cards = len(node.cards_played)
-                next_state_is_at_start_of_trick = (nr_played_cards + 1) % 4 == 0
+            node.add_child(
+                action=action,
+                next_player=-1,
+                pushed=-1,
+                trump=-1)
+            #if action < TRUMP_FULL_OFFSET:
+            #    nr_played_cards = len(node.cards_played)
+            #    next_state_is_at_start_of_trick = (nr_played_cards + 1) % 4 == 0
 
-                if next_state_is_at_start_of_trick:
-                    next_player_in_game = self._get_start_trick_next_player(action, node, root_obs)
-                else:
-                    next_player_in_game = next_player[node.next_player]
+            #    if next_state_is_at_start_of_trick:
+            #        next_player_in_game = self._get_start_trick_next_player(action, node, root_obs)
+            #    else:
+            #        next_player_in_game = next_player[node.next_player]
 
-                node.add_child(
-                    action=action,
-                    next_player=next_player_in_game,
-                    cards_played=list(node.cards_played + [action]))
-            else:
-                trump = -1
-                pushed = None
-                if action == TRUMP_FULL_P:  # PUSH
-                    next_player_in_game = (node.next_player + 2) % 4
-                    pushed = True
-                else:  # TRUMP
-                    if node.pushed:
-                        next_player_in_game = (node.next_player + 2) % 4
-                    else:
-                        next_player_in_game = node.next_player
-                    trump = action - 36
+            #    node.add_child(
+            #        action=action,
+            #        next_player=next_player_in_game,
+            #        cards_played=list(node.cards_played + [action]))
+            #else:
+            #    trump = -1
+            #    pushed = None
+            #    if action == TRUMP_FULL_P:  # PUSH
+            #        next_player_in_game = (node.next_player + 2) % 4
+            #        pushed = True
+            #    else:  # TRUMP
+            #        if node.pushed:
+            #            next_player_in_game = (node.next_player + 2) % 4
+            #        else:
+            #            next_player_in_game = node.next_player
+            #        trump = action - 36
 
-                node.add_child(
-                    action=action,
-                    next_player=next_player_in_game,
-                    pushed=pushed,
-                    trump=trump) # mask push if played
+            #    node.add_child(
+            #        action=action,
+            #        next_player=next_player_in_game,
+            #        pushed=pushed,
+            #        trump=trump) # mask push if played
 
     def _get_start_trick_next_player(self, action, node, root_obs):
         assert node.trump > -1

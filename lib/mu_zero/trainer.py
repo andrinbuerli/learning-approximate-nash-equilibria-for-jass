@@ -35,12 +35,14 @@ class MuZeroTrainer:
             reward_loss_weight: float = 1.0,
             value_entropy_weight: float = 1.0,
             reward_entropy_weight: float = 1.0,
+            is_terminal_loss_weight: float = 1.0,
             dldl: bool = False,
             store_weights:bool = True,
             store_buffer:bool = False,
             grad_clip_norm: int = None,
             value_mse: bool = False
     ):
+        self.is_terminal_loss_weight = is_terminal_loss_weight
         self.value_mse = value_mse
         self.dldl = dldl
         self.reward_entropy_weight = reward_entropy_weight
@@ -153,8 +155,8 @@ class MuZeroTrainer:
     def train(self, batches):
         training_infos = list()
         for states, actions, rewards, probs, outcomes, priorities in batches:
-            info, absolute_reward_errors, absolute_value_errors, policy_kls, policy_ces, ls_entropies, \
-            player_ces, hand_ces, policy_entropy, estimated_policy_entropy, value_entropies, reward_entropies, ft = self.train_step(
+            info, absolute_reward_errors, absolute_value_errors, policy_kls, policy_ces, ls_entropies, player_ces, \
+            hand_ces, policy_entropy, estimated_policy_entropy, value_entropies, reward_entropies, is_terminal_ces, ft = self.train_step(
                 tf.convert_to_tensor(states.astype("float32")),
                 tf.convert_to_tensor(actions.astype("int32")),
                 tf.convert_to_tensor(rewards.astype("int32")),
@@ -186,6 +188,10 @@ class MuZeroTrainer:
                 f"PCE/policy_ce_{i}_steps_ahead": x for i, x in enumerate(policy_ces)
             }
 
+            is_terminal_ces = {
+                f"ITBCE/is_terminal_bce_{i}_steps_ahead": x for i, x in enumerate(is_terminal_ces)
+            }
+
             policy_entropy = {
                 f"TPE/policy_entropy_{i}_steps_ahead": x for i, x in enumerate(policy_entropy)
             }
@@ -213,7 +219,7 @@ class MuZeroTrainer:
             training_infos.append({
                 **info, **reward_error, **value_error, **policy_kls, **policy_ces, **ls_entropies,
                 **train_input_dict, **player_ces, **hand_ces, **policy_entropy, **estimated_policy_entropy,
-                **value_entropies, **reward_entropies
+                **value_entropies, **reward_entropies, **is_terminal_ces
             })
 
             del info, absolute_reward_errors, absolute_value_errors, policy_kls, policy_ces
@@ -249,13 +255,15 @@ class MuZeroTrainer:
         latent_space_entropy = tf.TensorArray(tf.float32, size=trajectory_length, dynamic_size=False, clear_after_read=True)
         reward_entropies = tf.TensorArray(tf.float32, size=trajectory_length, dynamic_size=False, clear_after_read=True)
         value_entropies = tf.TensorArray(tf.float32, size=trajectory_length, dynamic_size=False, clear_after_read=True)
+        is_terminal_ces = tf.TensorArray(tf.float32, size=trajectory_length, dynamic_size=False, clear_after_read=True)
 
         rewards_target = tf.tile(rewards_target, [1, 1, 2])
         outcomes_target = tf.tile(outcomes_target, [1, 1, 2])
 
         with tf.GradientTape() as tape:
             initial_states = states[:, 0]
-            value, reward, policy_estimate, player, hand, encoded_states = self.network.initial_inference(
+            post_terminal_states = tf.cast(tf.reduce_sum(initial_states, axis=-1) == 0, tf.float32)
+            value, reward, policy_estimate, player, hand, is_terminal, encoded_states = self.network.initial_inference(
                 initial_states, training=True)
 
             reward_support_size = tf.shape(reward)[-1]
@@ -268,9 +276,13 @@ class MuZeroTrainer:
             player_loss = self.scale_gradient(factor=1 / trajectory_length)(player_ce)
 
             current_hand = tf.reshape(reshaped_state[:, :, :, FeaturesSetCppConv.CH_HAND], (-1, 36))
-            hand_bce = self.cross_entropy(current_hand, hand)
+            hand_bce = self.binary_cross_entropy(current_hand, hand)
             # Scale gradient by the number of unroll steps (See paper appendix Training)
             hand_loss = self.scale_gradient(factor=1 / trajectory_length)(hand_bce)
+
+            is_terminal_bce = self.binary_cross_entropy(post_terminal_states, is_terminal)
+            # Scale gradient by the number of unroll steps (See paper appendix Training)
+            is_terminal_loss = self.scale_gradient(factor=1 / trajectory_length)(is_terminal_bce)
 
             reward_loss = tf.zeros((batch_size, 4), dtype=tf.float32) # zero reward predicted for initial inference
 
@@ -308,6 +320,8 @@ class MuZeroTrainer:
 
             player_ces = player_ces.write(0, tf.reduce_mean(player_loss, name="player_ces"))
 
+            is_terminal_ces = is_terminal_ces.write(0, tf.reduce_mean(is_terminal_bce, name="is_terminal_bce"))
+
             hand_bces = hand_bces.write(0, tf.reduce_mean(hand_bce, name="hand_bces"))
 
             absolute_value_errors = absolute_value_errors.write(0, tf.reduce_mean(tf.abs(expected_value - tf.cast(outcomes_target[:, 0], tf.float32)), name="val_mae"))
@@ -320,7 +334,8 @@ class MuZeroTrainer:
 
             for i in tf.range(trajectory_length - 1):
                 next_action = tf.reshape(next_actions[:, i], [-1, 1])
-                value, reward, policy_estimate, player, hand, encoded_states = self.network.recurrent_inference(
+                post_terminal_states = tf.cast(tf.reduce_sum(policies_target[:, i+1], axis=-1) == 0, tf.float32)
+                value, reward, policy_estimate, player, hand, is_terminal, encoded_states = self.network.recurrent_inference(
                     encoded_states, next_action, training=True)
 
                 # Scale the gradient at the start of the dynamics function (See paper appendix Training)
@@ -337,11 +352,19 @@ class MuZeroTrainer:
                 # Scale gradient by the number of unroll steps (See paper appendix Training)
                 hand_loss += self.scale_gradient(factor=1 / trajectory_length)(hand_bce)
 
+                is_terminal_bce = self.binary_cross_entropy(post_terminal_states, is_terminal)
+                # Scale gradient by the number of unroll steps (See paper appendix Training)
+                is_terminal_loss += self.scale_gradient(factor=1 / trajectory_length)(is_terminal_bce)
+
                 # predicted reward is associated with action at t-1 therefore index i is used
                 # rather than i+1 as for policy and value
-                reward_target_distribution = scalar_to_support(rewards_target[:, i], support_size=reward_support_size,
-                                                               min_value=0)
-                reward_ce = self.cross_entropy(reward_target_distribution, reward)
+                expected_reward = support_to_scalar_per_player(reward, min_value=0, nr_players=4)
+                if self.value_mse:
+                    reward_ce = (expected_reward - tf.cast(rewards_target[:, i], tf.float32)) ** 2
+                else:
+                    reward_target_distribution = scalar_to_support(rewards_target[:, i], support_size=reward_support_size,
+                                                                   min_value=0)
+                    reward_ce = self.cross_entropy(reward_target_distribution, reward)
                 # Scale gradient by the number of unroll steps (See paper appendix Training)
                 reward_loss += self.scale_gradient(factor=1/trajectory_length)(reward_ce)
 
@@ -362,7 +385,6 @@ class MuZeroTrainer:
                 reward_H = self.entropy(reward)
                 reward_entropy += reward_H
 
-                post_terminal_states = tf.cast(tf.reduce_sum(policies_target[:, i+1], axis=-1) == 0, tf.float32)
                 policy_ce = self.cross_entropy(policies_target[:, i+1], policy_estimate) * (1 - post_terminal_states)
                 # Scale gradient by the number of unroll steps (See paper appendix Training)
                 policy_loss += self.scale_gradient(factor=1/trajectory_length)(policy_ce)
@@ -379,10 +401,11 @@ class MuZeroTrainer:
 
                 player_ces = player_ces.write(i+1, tf.reduce_mean(player_ce, name="player_ces"))
 
+                is_terminal_ces = is_terminal_ces.write(i+1, tf.reduce_mean(is_terminal_bce, name="is_terminal_bce"))
+
                 hand_bces = hand_bces.write(i+1, tf.reduce_mean(hand_bce, name="hand_bces"))
 
                 absolute_value_errors = absolute_value_errors.write(i+1, tf.reduce_mean(tf.abs(expected_value - tf.cast(outcomes_target[:, i+1], tf.float32)), name="val_mae"))
-                expected_reward = support_to_scalar_per_player(reward, min_value=0, nr_players=4)
                 absolute_reward_errors = absolute_reward_errors.write(i+1, tf.reduce_mean(tf.abs(expected_reward - tf.cast(rewards_target[:, i], tf.float32)), name="reard_mae"))
 
                 value_entropies = value_entropies.write(i+1, tf.reduce_mean(value_H))
@@ -400,7 +423,8 @@ class MuZeroTrainer:
                         self.player_loss_weight * player_loss +
                         self.hand_loss_weight * hand_loss +
                         self.value_entropy_weight * tf.reduce_sum(value_entropy, axis=-1) +
-                        self.reward_entropy_weight * tf.reduce_sum(reward_entropy, axis=-1)
+                        self.reward_entropy_weight * tf.reduce_sum(reward_entropy, axis=-1) +
+                        self.is_terminal_loss_weight * is_terminal_loss
                  ) * sample_weights, name="loss_mean")
 
         gradients = tape.gradient(loss, self.network.trainable_variables)
@@ -427,12 +451,14 @@ class MuZeroTrainer:
             "training/reward_entropy": tf.reduce_mean(tf.reduce_sum(reward_entropy, axis=-1)),
             "training/value_entropy": tf.reduce_mean(tf.reduce_sum(value_entropy, axis=-1)),
             "training/hand_loss": tf.reduce_mean(hand_loss),
+            "training/is_terminal_loss": tf.reduce_mean(is_terminal_loss),
             "training/squared_weights_sum": squared_weights_sum,
             "training/loss": loss,
             **gradient_hists
         }, absolute_reward_errors.stack(), absolute_value_errors.stack(), policy_kls.stack(), policy_ces.stack(),\
                latent_space_entropy.stack(), player_ces.stack(), hand_bces.stack(), policy_entropy.stack(),\
-               estimated_policy_entropy.stack(), value_entropies.stack(), reward_entropies.stack(), mean_features
+               estimated_policy_entropy.stack(), value_entropies.stack(), reward_entropies.stack(),\
+               is_terminal_ces.stack(), mean_features
 
     def entropy(self, policy):
         return -tf.reduce_sum(policy * tf.math.log(policy), axis=-1)

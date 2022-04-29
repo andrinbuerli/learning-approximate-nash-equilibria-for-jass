@@ -30,6 +30,7 @@ class MuZeroResidualNetwork(AbstractNetwork):
         fc_value_layers,
         fc_policy_layers,
         fc_hand_layers,
+        fc_terminal_state_layers,
         fc_player_layers,
         support_size,
         players,
@@ -87,6 +88,7 @@ class MuZeroResidualNetwork(AbstractNetwork):
                 reduced_channels_policy=reduced_channels_policy,
                 fc_value_layers=fc_value_layers,
                 fc_hand_layers=fc_hand_layers,
+                fc_terminal_state_layers=fc_terminal_state_layers,
                 fc_policy_layers=fc_policy_layers,
                 fc_player_layers=fc_player_layers,
                 full_support_size=self.support_size,
@@ -100,9 +102,9 @@ class MuZeroResidualNetwork(AbstractNetwork):
         self._warmup()
 
     def prediction(self, encoded_state, training=False, inc_player=False):
-        policy, value, player, hand = self.prediction_network(encoded_state, training=training)
+        policy, value, player, hand, is_terminal = self.prediction_network(encoded_state, training=training)
         if training or inc_player:
-            return policy, value, player, hand
+            return policy, value, player, hand, is_terminal
         else:
             return policy, value
 
@@ -151,7 +153,7 @@ class MuZeroResidualNetwork(AbstractNetwork):
             observation *= tf.reshape(mask, (batch_size, -1))
 
         encoded_state = self.representation(observation, training=training)
-        policy, value, player, hand = self.prediction(encoded_state, training=training, inc_player=True)
+        policy, value, player, hand, is_terminal = self.prediction(encoded_state, training=training, inc_player=True)
         # reward equal to 0 for consistency
         reward = tf.tile(tf.one_hot(0, depth=self.support_size)[None, None], [batch_size, self.players, 1])
         if training or all_preds:
@@ -161,6 +163,7 @@ class MuZeroResidualNetwork(AbstractNetwork):
                 policy,
                 player,
                 hand,
+                is_terminal,
                 encoded_state,
             )
         else:
@@ -173,9 +176,9 @@ class MuZeroResidualNetwork(AbstractNetwork):
 
     def recurrent_inference(self, encoded_state, action, training=False, all_preds=False):
         next_encoded_state, reward = self.dynamics(encoded_state, action, training=training)
-        policy, value, player, hand = self.prediction(next_encoded_state, training=training, inc_player=True)
+        policy, value, player, hand, is_terminal = self.prediction(next_encoded_state, training=training, inc_player=True)
         if training or all_preds:
-            return value, reward, policy, player, hand, next_encoded_state
+            return value, reward, policy, player, hand, is_terminal, next_encoded_state
         else:
             return value, reward, policy, next_encoded_state
 
@@ -392,6 +395,7 @@ class PredictionNetwork(tf.keras.Model):
         reduced_channels_value,
         reduced_channels_policy,
         fc_hand_layers,
+        fc_terminal_state_layers,
         fc_player_layers,
         fc_value_layers,
         fc_policy_layers,
@@ -420,10 +424,14 @@ class PredictionNetwork(tf.keras.Model):
         if not self.fully_connected:
             self.conv1x1_hand = layers.Conv2D(filters=1, kernel_size=(1, 1), padding="same",
                                                activation=None, use_bias=False, kernel_initializer="glorot_uniform")
+        if not self.fully_connected:
+            self.conv1x1_terminal_state = layers.Conv2D(filters=1, kernel_size=(1, 1), padding="same",
+                                               activation=None, use_bias=False, kernel_initializer="glorot_uniform")
         self.block_output_size_value = block_output_size_value if not fully_connected else num_channels
         self.block_output_size_policy = block_output_size_policy if not fully_connected else num_channels
         self.block_output_size_player = observation_shape[0] * observation_shape[1] * 1 if not fully_connected else num_channels
         self.block_output_size_hand = observation_shape[0] * observation_shape[1] * 1 if not fully_connected else num_channels
+        self.block_output_size_terminal_state = observation_shape[0] * observation_shape[1] * 1 if not fully_connected else num_channels
         self.fc_value = [
             mlp(
                 self.block_output_size_value, fc_value_layers, full_support_size,
@@ -446,6 +454,11 @@ class PredictionNetwork(tf.keras.Model):
             output_activation=layers.Activation('sigmoid'),
             name="hand"
         )
+        self.fc_terminal_state = mlp(
+            self.block_output_size_terminal_state, fc_terminal_state_layers, 1,
+            output_activation=layers.Activation('sigmoid'),
+            name="terminal_state"
+        )
 
     def call(self, x, training=None):
 
@@ -458,16 +471,24 @@ class PredictionNetwork(tf.keras.Model):
         value = tf.nn.tanh(self.conv1x1_value(x, training=training)) if not self.fully_connected else x
         value = tf.reshape(value, (-1, self.block_output_size_value))
         value = tf.tile(tf.stack(([fc(value) for fc in self.fc_value]), axis=1), [1, 2, 1])
+
         policy = tf.nn.tanh(self.conv1x1_policy(x, training=training)) if not self.fully_connected else x
         policy = tf.reshape(policy, (-1, self.block_output_size_policy))
         policy = self.fc_policy(policy, training=training)
+
         player = tf.nn.tanh(self.conv1x1_player(x, training=training)) if not self.fully_connected else x
         player = tf.reshape(player, (-1, self.block_output_size_player))
         player = self.fc_player(player, training=training)
+
         hand = tf.nn.tanh(self.conv1x1_hand(x, training=training)) if not self.fully_connected else x
         hand = tf.reshape(hand, (-1, self.block_output_size_hand))
         hand = self.fc_hand(hand, training=training)
-        return policy, value, player, hand
+
+        is_terminal = tf.nn.tanh(self.conv1x1_terminal_state(x, training=training)) if not self.fully_connected else x
+        is_terminal = tf.reshape(is_terminal, (-1, self.block_output_size_terminal_state))
+        is_terminal = self.fc_terminal_state(is_terminal, training=training)
+
+        return policy, value, player, hand, is_terminal
 
 
 def conv2x3(out_channels, strides=(1, 1), padding='same'):

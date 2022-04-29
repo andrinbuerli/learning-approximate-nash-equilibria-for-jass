@@ -166,6 +166,7 @@ if __name__=="__main__":
         hand_loss_weight=worker_config.optimization.hand_loss_weight,
         value_entropy_weight=worker_config.optimization.value_entropy_weight,
         reward_entropy_weight=worker_config.optimization.reward_entropy_weight,
+        is_terminal_loss_weight=worker_config.optimization.is_terminal_loss_weight,
         optimizer=optimizer,
         min_buffer_size=worker_config.optimization.min_buffer_size,
         updates_per_step=worker_config.optimization.updates_per_step,

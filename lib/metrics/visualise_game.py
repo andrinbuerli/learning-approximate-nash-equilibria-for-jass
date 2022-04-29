@@ -91,6 +91,7 @@ def _make_plots_(network: AbstractNetwork, iterator, f_shape, l_shape, features)
 
     fig_player_kls = plt.figure()
     plt.plot(player_kls)
+    legend = [True, True, True, True]
     for i, (player_kl, player) in enumerate(zip(player_kls, players)):
         plt.scatter(i, player_kl, c=colors[player], label=f"player {player}" if legend[player] else None)
         legend[player] = False
@@ -98,6 +99,7 @@ def _make_plots_(network: AbstractNetwork, iterator, f_shape, l_shape, features)
 
     fig_hand_kls = plt.figure()
     plt.plot(hand_kls)
+    legend = [True, True, True, True]
     for i, (hand_kl, player) in enumerate(zip(hand_kls, players)):
         plt.scatter(i, hand_kl, c=colors[player], label=f"player {player}" if legend[player] else None)
         legend[player] = False

@@ -28,7 +28,7 @@ def _make_plots_(network: AbstractNetwork, iterator, f_shape, l_shape, features)
     hand_kls = []
     values = []
 
-    value, reward, policy, player, hand, encoded_state = network.initial_inference(states[0][None], all_preds=True)
+    value, reward, policy, player, hand, is_terminal, encoded_state = network.initial_inference(states[0][None], all_preds=True)
 
     prev_points = [0, 0]
     i = 0
@@ -77,7 +77,7 @@ def _make_plots_(network: AbstractNetwork, iterator, f_shape, l_shape, features)
 
         action = tf.math.argmax(y[i, :43])
         all_reward_estimates.append(support_to_scalar(reward[0], min_value=0).numpy())
-        value, reward, policy, player, hand, encoded_state = network.recurrent_inference(encoded_state, [[action]], all_preds=True)
+        value, reward, policy, player, hand, is_terminal, encoded_state = network.recurrent_inference(encoded_state, [[action]], all_preds=True)
         i += 1
 
     fig_policy_kls = plt.figure()

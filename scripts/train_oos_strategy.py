@@ -6,8 +6,9 @@ import sys
 import time
 from pathlib import Path
 
+import jasscpp
 from jass.game.game_state import GameState
-from jass.game.game_state_util import state_for_trump_from_complete_game, state_from_complete_game
+from jass.game.game_state_util import state_for_trump_from_complete_game
 
 sys.path.append("../")
 import numpy as np
@@ -46,9 +47,9 @@ if __name__ == "__main__":
 
     config.network.feature_extractor = get_features(config.network.feature_extractor)
     feature_extractor = config.network.feature_extractor
-    network = get_network(config)
+    # network = get_network(config)
 
-    network.load(base_path / "latest_network.pd", from_graph=True)
+    # network.load(base_path / "latest_network.pd", from_graph=True)
 
     params = {
         "timestamp": time.time(),
@@ -57,7 +58,10 @@ if __name__ == "__main__":
             "epsilon": 0.4,
             "gamma": 0.01,
             "action_space": 43,
-            "players": 4
+            "players": 4,
+            "chance_sampling": False,
+            "asserts": True,
+            "iterations_per_chance_sample": 1
         },
         "log": {
             "projectname": "jass-oos",
@@ -114,48 +118,54 @@ if __name__ == "__main__":
     prev_obs = None
     while not sim.is_done():
 
-        # obs = jasscpp.observation_from_state(sim.state, -1)
-        # valid_actions = oos.rule.get_full_valid_actions_from_obs(obs)
+        obs = jasscpp.observation_from_state(sim.state, -1)
+        valid_actions = oos.rule.get_full_valid_actions_from_obs(obs)
 
-        obs = sim.state
+        #obs = sim.state
         key = oos.get_infostate_key_from_obs(obs)
 
         features = feature_extractor.convert_to_features(sim.state, oos.rule)
-        value, reward, policy, encoded_state = network.initial_inference(features[None])
-
+        #value, reward, policy, encoded_state = network.initial_inference(features[None])
+        #oos.reset()
         for _ in range(100):
             oos.immediate_regrets = []
-            oos.run_iterations(obs, 10)
+            iterations = 100
+            start = time.time()
+            immediate_regrets, xs, ls, us, w_Ts = oos.run_iterations(obs, iterations)
 
-            r, prob, imr, v = oos.information_sets[key]
-            r_positive = np.maximum(r, 0)
-            normed_regret_positive = ((r_positive - r_positive.min()) / (r_positive.max() - r_positive.min()))\
-                                     * (1 - np.isclose(r, 0))
+            logging.info(f"{(time.time()-start)/iterations} seconds per iteration")
 
-            r_negative = np.minimum(r, 0)
-            normed_regret_negative = ((r_negative - r_negative.min()) / (r_negative.max() - r_negative.min()) - 1) \
-                                      * (1 - np.isclose(r, 0))
+            r, prob, imr, v, (s_m, s_sum, num) = oos.information_sets[key]
 
-            normed_regret = normed_regret_positive + normed_regret_negative
-
-            fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 5))
-            ax1.bar(range(len(r)), normed_regret, label="cum. regret", alpha=0.5)
-            normed_strategy = (prob - prob.min()) / (prob.max() - prob.min())
-            ax1.bar(range(len(r)), normed_strategy, label="avg strategy", alpha=0.5)
+            fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(15, 5))
+            ax1.bar(range(len(r)), r, label="cum. regret", alpha=0.5)
             ax1.legend()
-            ax2.bar(range(len(r)), policy[0].numpy(), label="network estimate")
+            ax2.bar(range(len(r)), prob, label="avg strategy", alpha=0.5)
             ax2.legend()
+            #ax3.bar(range(len(r)), policy[0].numpy(), label="network estimate")
+            #ax3.legend()
+            imr = np.array(immediate_regrets)
             logger.log({
-                **{f"immediate_regrets-move{move}/a{i}": x for i,x in enumerate(np.array(oos.immediate_regrets).mean(axis=0))},
-                f"immediate_regrets-move{move}/positive_mean": np.maximum(np.array(oos.immediate_regrets), 0).mean(),
+                **{f"immediate_regrets-move{move}/a{i}": x for i,x in enumerate(imr.mean(axis=0))},
+                f"immediate_regrets-move{move}/positive_mean": imr[imr > 0].mean() if (imr > 0).size > 0 else 0,
+                f"immediate_regrets-move{move}/positive_min": imr[imr > 0].min() if (imr > 0).size > 0 else 0,
+                f"immediate_regrets-move{move}/positive_max": imr[imr > 0].max() if (imr > 0).size > 0 else 0,
+                f"immediate_regrets-move{move}/mean": imr.mean(),
+                f"stats-move{move}/x-mean": np.mean(xs),
+                f"stats-move{move}/l-mean": np.mean(ls),
+                f"stats-move{move}/u-mean": np.mean(us),
+                f"stats-move{move}/w_T-mean": np.mean(w_Ts),
+                f"stats-move{move}/s_0": s_sum / max(num, 1),
+                f"stats-move{move}/s_sum": s_sum,
+                f"stats-move{move}/num": num,
                 "touched_information_sets": len(oos.information_sets),
                 f"stats-move{move}/policy": wandb.Image(plt),
             })
             plt.clf()
 
-        prob = oos.get_average_stragety(key)
+        prob = oos.get_average_strategy(key)
 
-        a = np.random.choice(range(43), p=prob)
+        a = np.flatnonzero(valid_actions)[0]
         sim.perform_action_full(a)
         move += 1
         prev_obs = obs

@@ -28,10 +28,11 @@ class AgentOnlineOutcomeSampling(RememberingAgent):
                  players=4,
                  log=False,
                  chance_sampling=True,
+                 cheating_mode=False,
                  temperature=1.0):
         super().__init__(temperature=temperature)
 
-        self.cheating_mode = False
+        self.cheating_mode = cheating_mode
 
         if chance_sampling:
             self.iterations = iterations * chance_samples
@@ -53,7 +54,7 @@ class AgentOnlineOutcomeSampling(RememberingAgent):
         self.search.run_iterations(obs, self.iterations)
 
         key = self.search.get_infostate_key_from_obs(obs)
-        prob = self.search.get_average_stragety(key)
+        prob = self.search.get_average_strategy(key)
 
         # valid_actions = self.search.rule.get_full_valid_actions_from_obs(obs)
         # prob *= valid_actions

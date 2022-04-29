@@ -56,6 +56,7 @@ class Arena:
                  nr_games_to_play: int,
                  dealing_card_strategy: DealingCardStrategy = None,
                  log: bool = False,
+                 log_callback=None,
                  check_move_validity=True,
                  save_filename=None,
                  cheating_mode=False,
@@ -73,6 +74,7 @@ class Arena:
             save_filename: True if results should be save
             cheating_mode: True if agents will receive the full game state
         """
+        self.log_callback = log_callback
         self.reset_agents = reset_agents
         self.store_trajectory_inc_raw_game_state = store_trajectory_inc_raw_game_state
         self.feature_extractor = feature_extractor
@@ -326,11 +328,13 @@ class Arena:
                 total = (self.points_team_0[:self.nr_games_played] + self.points_team_1[:self.nr_games_played])
                 points_0 = (self.points_team_0[:self.nr_games_played]) / total
                 points_1 = (self.points_team_1[:self.nr_games_played]) / total
-
-                pbar.set_postfix({
+                data = {
                     "t0": points_0.mean(),
                     "t1": points_1.mean()
-                })
+                }
+                if self.log_callback is not None:
+                    self.log_callback(data)
+                pbar.set_postfix(data)
 
             dealer = next_player[dealer]
         if self._save_games:

@@ -47,7 +47,7 @@ class OOS:
         else:
             return self.get_infostate_key(m)
 
-    def get_average_stragety(self, informationset_key: str):
+    def get_average_strategy(self, informationset_key: str):
         _, avg_strategy, _, valid_actions, _ = self.information_sets[informationset_key]
         strategy_sum = avg_strategy.sum()
 
@@ -64,9 +64,15 @@ class OOS:
         immediate_regrets, xs, ls, us, w_Ts = [], [], [], [], []
 
         w_T = self.calculate_weighting_factor(m)
+        m_key = self.get_infostate_key_from_obs(m)
+
+        # In order for I(m) to be present in information sets dict
+        force_targeted_mode = m_key not in self.information_sets or targeted_mode_init
 
         for _ in range(iterations):
-            self.run_iteration(immediate_regrets, ls, m, targeted_mode_init, us, w_T, w_Ts, xs)
+            self.run_iteration(immediate_regrets, ls, m, force_targeted_mode, us, w_T, w_Ts, xs)
+            if force_targeted_mode:
+                force_targeted_mode = m_key not in self.information_sets or targeted_mode_init
 
         if self.log:
             return immediate_regrets, xs, ls, us, w_Ts
@@ -84,11 +90,14 @@ class OOS:
                 state.player = next_player[m.dealer]
                 state.hands = hands
                 x, l, u = self.recurse(
-                    m, state,
-                    [(1 if team[j] == i_team else prob_untargeted * 1) for j in range(self.players)],
-                    [prob_untargeted * 1 for _ in range(self.players)],
-                    prob_targeted * w_T, prob_untargeted * w_T,
-                    i_team, targeted_mode)
+                    m=m,
+                    h=state,
+                    pi_i=1,
+                    pi_o=prob_untargeted * 1,
+                    s_1=prob_targeted * w_T,
+                    s_2=prob_untargeted * w_T,
+                    i_team=i_team,
+                    targeted_mode=targeted_mode)
 
                 if self.log:
                     xs.append(x), ls.append(l), us.append(u), w_Ts.append(w_T)
@@ -123,8 +132,8 @@ class OOS:
 
         :param m: known history in ongoing game
         :param h: history in game sample
-        :param pi_i: strategy reach probability for update player
-        :param pi_o: strategy reach probability for opponent players
+        :param pi_i: strategy reach probability for update team
+        :param pi_o: strategy reach probability for opposing team
         :param s_1: overall probability that current sample is generated in targeted mode
         :param s_2: overall probability that current sample is generated in untargeted mode
         :param i_team: update player
@@ -165,15 +174,10 @@ class OOS:
             self.add_information_set(infoset_key, valid_actions)
             x, l, u = self.playout(h, a, current_strategy[a], (self.delta * s_1 + (1 - self.delta) * s_2) / valid_actions.sum())
         else:
-            pi_i_prime =  [current_strategy[a] * pi_ii if player == h.player else pi_ii for player, pi_ii in enumerate(pi_i)]
-            pi_o_prime = [current_strategy[a] * pi_oi if player != h.player else pi_oi for player, pi_oi in enumerate(pi_o)]
+            pi_i_prime =  current_strategy[a] * pi_i if team[h.player] == i_team else pi_i
+            pi_o_prime = current_strategy[a] * pi_o if team[h.player] != i_team else pi_o
 
-            h_tmp = h #copy_state(h)
-            game = GameSimCpp()
-            game.state = h
-            game.perform_action_full(a)
-            h_prime = game.state
-            h = h_tmp
+            h_prime = self.apply_action(a, h)
             x, l, u = self.recurse(m, h_prime, pi_i_prime, pi_o_prime, s_1_prime, s_2_prime, i_team, targeted_mode)
 
         c = x
@@ -183,7 +187,7 @@ class OOS:
         for v_a in valid_actions_list:
             if team[h.player] == i_team:
                 u_i = self.get_utility_for(u, i_team)
-                W = u_i * pi_o[h.player] / l
+                W = u_i * pi_o / l
                 if v_a == a:
                     imm_regrets[v_a] = (c - x) * W
                 else:
@@ -192,8 +196,7 @@ class OOS:
                 regret[v_a] = regret[v_a] + imm_regrets[v_a]
             else:
                 pi_i_I = (self.delta * s_1 + (1 - self.delta) * s_2)
-                avg_strategy[v_a] = avg_strategy[v_a] \
-                                    + (pi_i[h.player] / pi_i_I) * current_strategy[v_a]
+                avg_strategy[v_a] = avg_strategy[v_a] + (pi_o / pi_i_I) * current_strategy[v_a]
 
         # only update s_sum if h is in current subgame
         if (m.trump == -1 and h.trump > -1) or (m.forehand == -1 and h.forehand > -1) or m.nr_played_cards < h.nr_played_cards:
@@ -203,6 +206,13 @@ class OOS:
         self.information_sets[infoset_key] = (regret, avg_strategy, imm_regrets, valid_actions, (s_m, s_sum, num))
 
         return x, l, u
+
+    def apply_action(self, a, h):
+        game = GameSimCpp()
+        game.state = h
+        game.perform_action_full(a)
+        h_prime = game.state
+        return h_prime
 
     def calculate_weighting_factor(self, m):
         m_key = self.get_infostate_key_from_obs(m)
@@ -233,7 +243,7 @@ class OOS:
                         a = TRUMP_FULL_P
                         key = self.get_infostate_key(game.state)
                         if key in self.information_sets:
-                            p_a = self.get_average_stragety(key)[a]
+                            p_a = self.get_average_strategy(key)[a]
                         else:
                             p_a = 1 / game.get_valid_actions().sum()
                         game.perform_action_full(a)
@@ -243,7 +253,7 @@ class OOS:
                         a = m.trump + TRUMP_FULL_OFFSET
                         key = self.get_infostate_key(game.state)
                         if key in self.information_sets:
-                            p_a = self.get_average_stragety(key)[a]
+                            p_a = self.get_average_strategy(key)[a]
                         else:
                             p_a = 1 / game.get_valid_actions().sum()
                         game.perform_action_full(a)
@@ -255,7 +265,7 @@ class OOS:
 
                     key = self.get_infostate_key(game.state)
                     if key in self.information_sets:
-                        p_a = self.get_average_stragety(key)[c]
+                        p_a = self.get_average_strategy(key)[c]
                     else:
                         p_a = 1 / game.get_valid_actions().sum()
 
@@ -304,7 +314,7 @@ class OOS:
                 key = self.get_infostate_key(game.state)
                 if key not in self.information_sets:
                     self.add_information_set(key, game.get_valid_actions())
-                p_a = self.get_average_stragety(key)[a]
+                p_a = self.get_average_strategy(key)[a]
                 p *= p_a
                 game.perform_action_full(a)
 
@@ -313,7 +323,7 @@ class OOS:
             if key not in self.information_sets:
                 self.add_information_set(key, game.get_valid_actions())
             game.perform_action_full(a)
-            p_a = self.get_average_stragety(key)[a]
+            p_a = self.get_average_strategy(key)[a]
             p *= p_a
         for c in m.tricks.reshape(-1):
             if c == -1:
@@ -324,7 +334,7 @@ class OOS:
                 self.add_information_set(key, game.get_valid_actions())
 
             game.perform_action_full(c)
-            p_a = self.get_average_stragety(key)[c]
+            p_a = self.get_average_strategy(key)[c]
             p *= p_a
 
     def add_information_set(self, informationset_key, valid_actions):

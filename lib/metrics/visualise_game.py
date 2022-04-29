@@ -23,15 +23,19 @@ def _make_plots_(network: AbstractNetwork, iterator, f_shape, l_shape, features)
     all_reward_estimates = []
 
     players = []
-    kls = []
+    policy_kls = []
+    player_kls = []
+    hand_kls = []
     values = []
 
-    value, reward, policy, encoded_state = network.initial_inference(states[0][None])
+    value, reward, policy, player, hand, encoded_state = network.initial_inference(states[0][None], all_preds=True)
 
     prev_points = [0, 0]
     i = 0
     while i < 38 and y[i, :43].numpy().max() > 0:
         current_state = tf.reshape(states[i], features.FEATURE_SHAPE)
+
+        current_player = tf.math.argmax(current_state[0, 0, features.CH_PLAYER:features.CH_PLAYER + 4])
 
         valid_cards = tf.reshape(current_state[:, :, features.CH_CARDS_VALID], [36])
         trump_valid = tf.reduce_max(current_state[:, :, features.CH_TRUMP_VALID])
@@ -41,11 +45,22 @@ def _make_plots_(network: AbstractNetwork, iterator, f_shape, l_shape, features)
             np.repeat(trump_valid, 6),
             [push_valid]
         ], axis=-1).numpy()
-        kl = (valid_actions * np.log(valid_actions / policy[0].numpy() + 1e-7)).sum()
-        kls.append(kl)
+        policy_kl = (valid_actions * np.log(valid_actions / policy[0].numpy() + 1e-7)).sum()
+        policy_kls.append(policy_kl)
+
+        player_kl = np.log(1 / player[0][current_player].numpy() + 1e-7)
+        player_kls.append(player_kl)
+
+
+        true_hand = current_state[:, :, features.CH_HAND].numpy().reshape(-1)
+
+        true_hand_dist = true_hand / true_hand.sum()
+        pred_hand_dist = hand[0].numpy() / hand[0].numpy().sum()
+        hand_kl = (true_hand_dist * np.log(true_hand_dist / pred_hand_dist + 1e-7)).sum()
+        hand_kls.append(hand_kl)
+
         values.append(support_to_scalar(value[0], min_value=0).numpy())
 
-        current_player = tf.math.argmax(current_state[0, 0, features.CH_PLAYER:features.CH_PLAYER + 4])
         players.append(current_player)
         current_team = current_player % 2
         current_points = tf.cast(current_state[0, 0, features.CH_POINTS_OWN:(features.CH_POINTS_OPP + 1)] * 157, tf.int32)
@@ -63,15 +78,29 @@ def _make_plots_(network: AbstractNetwork, iterator, f_shape, l_shape, features)
 
         action = tf.math.argmax(y[i, :43])
         all_reward_estimates.append(support_to_scalar(reward[0], min_value=0).numpy())
-        value, reward, policy, encoded_state = network.recurrent_inference(encoded_state, [[action]])
+        value, reward, policy, player, hand, encoded_state = network.recurrent_inference(encoded_state, [[action]], all_preds=True)
         i += 1
 
-    fig_kls = plt.figure()
-    plt.plot(kls)
+    fig_policy_kls = plt.figure()
+    plt.plot(policy_kls)
     colors = ["red", "blue", "green", "violet"]
     legend = [True, True, True, True]
-    for i, (kl, player) in enumerate(zip(kls, players)):
-        plt.scatter(i, kl, c=colors[player], label=f"player {player}" if legend[player] else None)
+    for i, (policy_kl, player) in enumerate(zip(policy_kls, players)):
+        plt.scatter(i, policy_kl, c=colors[player], label=f"player {player}" if legend[player] else None)
+        legend[player] = False
+    plt.legend()
+
+    fig_player_kls = plt.figure()
+    plt.plot(player_kls)
+    for i, (player_kl, player) in enumerate(zip(player_kls, players)):
+        plt.scatter(i, player_kl, c=colors[player], label=f"player {player}" if legend[player] else None)
+        legend[player] = False
+    plt.legend()
+
+    fig_hand_kls = plt.figure()
+    plt.plot(hand_kls)
+    for i, (hand_kl, player) in enumerate(zip(hand_kls, players)):
+        plt.scatter(i, hand_kl, c=colors[player], label=f"player {player}" if legend[player] else None)
         legend[player] = False
     plt.legend()
 
@@ -108,7 +137,9 @@ def _make_plots_(network: AbstractNetwork, iterator, f_shape, l_shape, features)
     return {
         f"Visualizations/reward": wandb.Image(fig_reward),
         f"Visualizations/value": wandb.Image(fig_value),
-        f"Visualizations/policy": wandb.Image(fig_kls)
+        f"Visualizations/policy": wandb.Image(fig_policy_kls),
+        f"Visualizations/player": wandb.Image(fig_player_kls),
+        f"Visualizations/hand": wandb.Image(fig_hand_kls)
     }
 
 
@@ -123,7 +154,7 @@ class GameVisualisation(BaseAsyncMetric):
         ds = tf.data.TFRecordDataset(self.tf_record_files)
         ds = ds.map(lambda x: parse_feature_example(x,
                           feature_length=self.trajectory_length*self.feature_length,
-                          label_length=self.trajectory_length*self.label_length))
+                          label_length=self.trajectory_length*self.label_length)).repeat()
         return iter(ds)
 
     def __init__(

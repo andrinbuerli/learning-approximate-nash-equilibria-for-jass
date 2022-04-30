@@ -34,7 +34,7 @@
   "player_loss_weight": 10.0,
   "value_entropy_weight": 0.00,
   "reward_entropy_weight": 0.00,
-  "hand_loss_weight": 0.1,
+  "hand_loss_weight": 1.0,
   "policy_loss_weight": 1.0,
   "dldl": false,
   "valid_policy_target": false,

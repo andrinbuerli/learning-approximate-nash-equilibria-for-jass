@@ -490,7 +490,7 @@ class MuZeroTrainer:
         target = tf.cast(target, dtype=tf.float32)
         # clipping of output for ce is important, if not done, will result in exploding gradients
         estimate = self.clip_probability_dist(estimate)
-        binary_cross_entropy = -tf.reduce_sum(
+        binary_cross_entropy = -tf.reduce_mean(
             target * tf.math.log(estimate) + (1 - target) * tf.math.log(1 - estimate),
             axis=-1)
 

@@ -78,6 +78,7 @@ class OptimizationConfig(BaseConfig):
         self.grad_clip_norm = None
         self.dldl = False
         self.value_mse = False
+        self.reward_mse = False
         self.weight_decay = 1e-4
         self.adam_beta1 = 0.9
         self.adam_beta2 = 0.999

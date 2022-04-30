@@ -40,8 +40,10 @@ class MuZeroTrainer:
             store_weights:bool = True,
             store_buffer:bool = False,
             grad_clip_norm: int = None,
-            value_mse: bool = False
+            value_mse: bool = False,
+            reward_mse: bool = False
     ):
+        self.reward_mse = reward_mse
         self.is_terminal_loss_weight = is_terminal_loss_weight
         self.value_mse = value_mse
         self.dldl = dldl
@@ -280,7 +282,7 @@ class MuZeroTrainer:
             # Scale gradient by the number of unroll steps (See paper appendix Training)
             hand_loss = self.scale_gradient(factor=1 / trajectory_length)(hand_bce)
 
-            is_terminal_bce = self.binary_cross_entropy(post_terminal_states, is_terminal)
+            is_terminal_bce = self.binary_cross_entropy(post_terminal_states[:, None], is_terminal)
             # Scale gradient by the number of unroll steps (See paper appendix Training)
             is_terminal_loss = self.scale_gradient(factor=1 / trajectory_length)(is_terminal_bce)
 
@@ -352,14 +354,14 @@ class MuZeroTrainer:
                 # Scale gradient by the number of unroll steps (See paper appendix Training)
                 hand_loss += self.scale_gradient(factor=1 / trajectory_length)(hand_bce)
 
-                is_terminal_bce = self.binary_cross_entropy(post_terminal_states, is_terminal)
+                is_terminal_bce = self.binary_cross_entropy(post_terminal_states[:, None], is_terminal)
                 # Scale gradient by the number of unroll steps (See paper appendix Training)
                 is_terminal_loss += self.scale_gradient(factor=1 / trajectory_length)(is_terminal_bce)
 
                 # predicted reward is associated with action at t-1 therefore index i is used
                 # rather than i+1 as for policy and value
                 expected_reward = support_to_scalar_per_player(reward, min_value=0, nr_players=4)
-                if self.value_mse:
+                if self.reward_mse:
                     reward_ce = (expected_reward - tf.cast(rewards_target[:, i], tf.float32)) ** 2
                 else:
                     reward_target_distribution = scalar_to_support(rewards_target[:, i], support_size=reward_support_size,

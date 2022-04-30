@@ -41,7 +41,7 @@ def scalar_to_support(scalar_m, support_size, min_value, dldl=False):
     if dldl:
         pi = tf.constant(math.pi, dtype=tf.float32)
         rng = tf.range(3*support_size, dtype=tf.float32) - tf.cast(support_size, tf.float32)
-        rng = tf.tile(rng[None, None, :], (1, 4, 1))
+        rng = tf.tile(rng[None, None, :], (1, tf.shape(scalar_m)[1], 1))
 
         points_left_in_game = tf.reduce_sum(scalar_m, axis=1) // 2
         sigma = tf.maximum(tf.cast(points_left_in_game / 10, tf.float32), 1)[:, None, None]

@@ -102,7 +102,7 @@ class LatentNodeSelectionPolicy:
                     self.c_1 + np.log((child.avail + self.c_2 + 1) / self.c_2))
         exploration_term = P_s_a * prior_weight
 
-        if child.visits > 0:
+        if child.prior is not None:
             q = (child.value_sum[child.parent.predicted_player.argmax()] / child.visits)
             assert len(child.reward.shape) == 1, f'shape: {child.reward.shape}'
             q_value = (child.reward[child.parent.predicted_player.argmax()] + self.discount * q) \
@@ -123,7 +123,8 @@ class LatentNodeSelectionPolicy:
         node.value = support_to_scalar(distribution=node.value, min_value=0).numpy()
         node.reward = support_to_scalar(distribution=node.reward, min_value=0).numpy()
 
-        [node.stats.update(v) for v in node.value]
+        #[node.stats.update(v) for v in node.value]
+        #node.stats.update(node.value[node.parent.predicted_player.argmax()])
 
         # add edges for all children
         for action in node.missing_actions(node.valid_actions):

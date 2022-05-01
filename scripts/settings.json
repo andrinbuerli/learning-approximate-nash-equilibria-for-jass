@@ -61,29 +61,17 @@
  "network": {
   "fully_connected": false,
   "action_space_size": 43,
-  "fc_hand_layers": [
-   36
-  ],
-  "fc_terminal_state_layers": [
-   18
-  ],
-  "fc_player_layers": [
-   18
-  ],
-  "fc_policy_layers": [
-   256, 256, 256
-  ],
-  "fc_reward_layers": [
-   256, 256, 256
-  ],
-  "fc_value_layers": [
-   256, 256, 256
-  ],
+  "fc_hand_layers": [ ],
+  "fc_terminal_state_layers": [ ],
+  "fc_player_layers": [ ],
+  "fc_policy_layers": [ 256 ],
+  "fc_reward_layers": [ 256 ],
+  "fc_value_layers": [ 256 ],
   "feature_extractor": "cnn-full",
-  "num_blocks_representation": 4,
-  "fcn_blocks_representation": 2,
-  "num_blocks_dynamics": 4,
-  "fcn_blocks_dynamics": 2,
+  "num_blocks_representation": 16,
+  "fcn_blocks_representation": 0,
+  "num_blocks_dynamics": 16,
+  "fcn_blocks_dynamics": 0,
   "num_blocks_prediction": 0,
   "num_channels": 128,
   "path": null,

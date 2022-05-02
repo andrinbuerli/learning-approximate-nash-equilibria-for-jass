@@ -104,9 +104,10 @@ class LatentNodeSelectionPolicy:
         exploration_term = P_s_a * prior_weight
 
         if child.prior is not None:
-            q = (child.value_sum[child.parent.predicted_player.argmax()] / child.visits)
+            next_player = child.next_player # child.parent.predicted_player.argmax()
+            q = (child.value_sum[next_player] / child.visits)
             assert len(child.reward.shape) == 1, f'shape: {child.reward.shape}'
-            q_value = (child.reward[child.parent.predicted_player.argmax()] + self.discount * q) \
+            q_value = (child.reward[next_player] + self.discount * q) \
                 if self.mdp_value else q
             q_normed = child.parent.stats.normalize(q_value)
             #logging.info(q_normed)

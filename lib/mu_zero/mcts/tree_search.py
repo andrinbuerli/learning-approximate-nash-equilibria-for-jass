@@ -96,7 +96,8 @@ class ALPV_MCTS:
             if node.is_root():
                 node.stats.update(value[node.next_player])
             else:
-                node.stats.update(value[node.parent.predicted_player.argmax()])
+                player = node.parent.next_player # node.parent.predicted_player.argmax()
+                node.stats.update(value[player])
 
             if node.is_root():
                 break

@@ -70,7 +70,8 @@ class LatentNodeSelectionPolicy:
             for c in children:
                 c.avail += 1
 
-            not_expanded = child.prior is None
+            with child.lock:
+                not_expanded = child.prior is None
             is_terminal_state = child.next_player == -1
             #is_terminal_state = child.parent.is_post_terminal is not None and child.is_post_terminal > 0.5
             if not_expanded or is_terminal_state:

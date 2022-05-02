@@ -70,21 +70,18 @@ class LatentNodeSelectionPolicy:
             for c in children:
                 c.avail += 1
 
+            # is_terminal_state = child.parent.is_post_terminal is not None and child.is_post_terminal > 0.5
+            is_terminal_state = child.next_player == -1
             with node.lock:
                 with child.lock:
                     not_expanded = child.prior is None
-
-            is_terminal_state = child.next_player == -1
-            #is_terminal_state = child.parent.is_post_terminal is not None and child.is_post_terminal > 0.5
-            if not_expanded or is_terminal_state:
-                if not_expanded:
-                    with node.lock:
-                        with child.lock:
+                    if not_expanded or is_terminal_state:
+                        if not_expanded:
                             child.visits += virtual_loss
                             child.value, child.reward, child.prior, child.predicted_player, _, child.is_post_terminal, child.hidden_state = \
                                 self.network.recurrent_inference(node.hidden_state, np.array([[child.action]]), all_preds=True)
                             self._expand_node(child, observation)
-                break
+                        break
 
             node = child
 

@@ -133,7 +133,8 @@ if __name__=="__main__":
         GameVisualisation(
             label_length=LabelSetActionFull.LABEL_LENGTH,
             worker_config=worker_config,
-            network_path=str(network_path)
+            network_path=str(network_path),
+            mdp_value=worker_config.agent.mdp_value
         )
     )
 

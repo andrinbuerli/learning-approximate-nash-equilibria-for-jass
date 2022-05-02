@@ -12,7 +12,7 @@ from lib.metrics.base_async_metric import BaseAsyncMetric
 from lib.mu_zero.network.network_base import AbstractNetwork
 from lib.mu_zero.network.support_conversion import support_to_scalar
 
-def _make_plots_(network: AbstractNetwork, iterator, f_shape, l_shape, features):
+def _make_plots_(network: AbstractNetwork, iterator, f_shape, l_shape, features, mdp_value):
     states, y = next(iterator)
     states = tf.reshape(states, f_shape)
     y = tf.reshape(y, l_shape)
@@ -106,8 +106,9 @@ def _make_plots_(network: AbstractNetwork, iterator, f_shape, l_shape, features)
     plt.legend()
 
     fig_value = plt.figure()
-    plt.plot(np.array(values)[:, 0], marker="x", label="pred 0", alpha=0.5, color="green")
-    plt.plot(np.array(values)[:, 1], marker="x", label="pred 1", alpha=0.5, color="red")
+    values = np.array(values)
+    plt.plot(values[:, 0], marker="x", label="pred 0", alpha=0.5, color="green")
+    plt.plot(values[:, 1], marker="x", label="pred 1", alpha=0.5, color="red")
 
     beginning_team = players[0] % 2
 
@@ -115,8 +116,13 @@ def _make_plots_(network: AbstractNetwork, iterator, f_shape, l_shape, features)
         outcome = (y[0, 43:45] * 157).numpy().astype(int)
     else:
         outcome = (y[0, 43:45] * 157).numpy().astype(int)[::-1]
-    plt.plot(outcome[0] - np.array(cum_rewards)[1:, 0], marker="o", label="value 0", alpha=0.5, color="green")
-    plt.plot(outcome[1] - np.array(cum_rewards)[1:, 1], marker="o", label="value 1", alpha=0.5, color="red")
+
+    if mdp_value:
+        plt.plot(outcome[0] - np.array(cum_rewards)[1:, 0], marker="o", label="value 0", alpha=0.5, color="green")
+        plt.plot(outcome[1] - np.array(cum_rewards)[1:, 1], marker="o", label="value 1", alpha=0.5, color="red")
+    else:
+        plt.plot(np.repeat(outcome[0], values.shape[0]), marker="o", label="value 0", alpha=0.5, color="green")
+        plt.plot(np.repeat(outcome[1], values.shape[0]), marker="o", label="value 1", alpha=0.5, color="red")
 
     plt.legend()
     plt.xlabel("Moves")
@@ -149,7 +155,7 @@ class GameVisualisation(BaseAsyncMetric):
     def get_params(self, thread_nr: int, network: AbstractNetwork, init_vars=None) -> []:
         interator = init_vars
         return network, interator,self.trajectory_feature_shape, \
-               self.trajectory_label_shape, self.worker_config.network.feature_extractor
+               self.trajectory_label_shape, self.worker_config.network.feature_extractor, self.mdp_value
 
     def init_dataset(self):
         ds = tf.data.TFRecordDataset(self.tf_record_files)
@@ -163,9 +169,11 @@ class GameVisualisation(BaseAsyncMetric):
             label_length: int,
             worker_config: WorkerConfig,
             network_path: str,
+            mdp_value: bool,
             trajectory_length: int = 38,
             tf_record_files: [str] = None):
 
+        self.mdp_value = mdp_value
         cheating_mode = type(worker_config.network.feature_extractor) == FeaturesSetCppConvCheating
 
         file_ending = "*.perfect.tfrecord" if cheating_mode else "*.imperfect.tfrecord"

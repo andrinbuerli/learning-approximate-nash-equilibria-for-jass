@@ -9,6 +9,7 @@ import sys
 import time
 from multiprocessing import Queue, Pipe
 from pathlib import Path
+from pprint import pprint
 
 import numpy as np
 import psutil
@@ -61,6 +62,8 @@ if __name__ == "__main__":
     config = WorkerConfig()
     config.load(response.content)
     config.network.feature_extractor = get_features(config.network.feature_extractor)
+
+    pprint(config.to_json())
 
     tmp_dir = Path(__file__).parent / "tmp"
     network_path = tmp_dir / str(config.timestamp) / "latest_model.pd"

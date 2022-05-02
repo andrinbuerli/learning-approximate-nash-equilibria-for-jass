@@ -54,8 +54,18 @@ class LatentNodeSelectionPolicy:
 
             assert len(children) > 0, f'Error no children for valid actions {valid_actions}, {vars(node)}'
 
-            with node.lock: # ensures that node and children not currently locked, i.e. being expanded
-                child = max(children, key=lambda x: self._puct(x))
+            #with node.lock: # ensures that node and children not currently locked, i.e. being expanded
+            exploration = np.array([self._exploration_term(x) for x in children])
+            exploitation = np.array([self._exploitation_term(x) for x in children])
+
+            max_exploitation = exploitation.max()
+            min_exploitation = exploitation.min()
+
+            exploitation = (exploitation - min_exploitation) / np.max([(max_exploitation - min_exploitation), 1])
+
+            puct = exploitation + exploration
+            i_max = np.argmax(puct)
+            child = children[i_max]
 
             for c in children:
                 c.avail += 1
@@ -96,25 +106,26 @@ class LatentNodeSelectionPolicy:
             eta = np.random.dirichlet(self.dirichlet_alpha[:len(valid_idxs)])
             node.prior[valid_idxs] = (1 - self.dirichlet_eps) * node.prior[valid_idxs] + self.dirichlet_eps * eta
 
-
-    def _puct(self, child: Node):
+    def _exploration_term(self, child: Node):
         P_s_a = child.parent.prior[child.action]
         prior_weight = (np.sqrt(child.avail) / (1 + child.visits)) * (
                     self.c_1 + np.log((child.avail + self.c_2 + 1) / self.c_2))
         exploration_term = P_s_a * prior_weight
 
-        if child.prior is not None:
-            next_player = child.next_player # child.parent.predicted_player.argmax()
+        return exploration_term
+
+    def _exploitation_term(self, child: Node):
+        if child.visits > 0:
+            next_player = child.parent.next_player # child.parent.predicted_player.argmax()
             q = (child.value_sum[next_player] / child.visits)
             assert len(child.reward.shape) == 1, f'shape: {child.reward.shape}'
             q_value = (child.reward[next_player] + self.discount * q) \
                 if self.mdp_value else q
-            q_normed = child.parent.stats.normalize(q_value)
             #logging.info(q_normed)
         else:
-            q_normed = 0
+            q_value = 0
 
-        return q_normed + exploration_term
+        return q_value
 
     def _expand_node(self, node: Node, root_obs: jasscpp.GameObservationCpp):
         node.value, node.reward, node.prior, node.predicted_player, node.is_post_terminal = \

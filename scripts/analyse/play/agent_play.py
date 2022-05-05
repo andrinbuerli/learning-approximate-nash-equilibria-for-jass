@@ -32,7 +32,7 @@ if __name__=="__main__":
     parser.add_argument(f'--iterations', default=20)
     args = parser.parse_args()
 
-    base_path = Path(__file__).resolve().parent.parent.parent / "results" / args.run
+    base_path = Path(__file__).resolve().parent.parent.parent.parent / "results" / args.run
 
     config = WorkerConfig()
     config.load_from_json(base_path / "worker_config.json")

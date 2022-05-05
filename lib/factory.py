@@ -1,3 +1,7 @@
+from pathlib import Path
+
+import numpy as np
+
 from lib.cfr.agent_online_outcome_sampling import AgentOnlineOutcomeSampling
 from lib.environment.networking.worker_config import WorkerConfig
 from lib.jass.agent.agent import CppAgent
@@ -7,7 +11,7 @@ from lib.jass.features.features_cpp_conv_cheating import FeaturesSetCppConvCheat
 from lib.jass.features.features_set_cpp import FeaturesSetCpp
 
 
-def get_agent(config: WorkerConfig, network, greedy=False) -> CppAgent:
+def get_agent(config: WorkerConfig, network, greedy=False, force_local=False) -> CppAgent:
     if config.agent.type == "mu-zero-mcts":
         from lib.mu_zero.mcts.agent_mu_zero_mcts import AgentMuZeroMCTS
         return AgentMuZeroMCTS(
@@ -37,13 +41,43 @@ def get_agent(config: WorkerConfig, network, greedy=False) -> CppAgent:
             temperature=1.0,
             cheating_mode=False)
     elif config.agent.type == "dmcts":
-        return AgentByNetworkCpp(url="http://baselines:9898/dmcts")
+        if force_local:
+            import jassmlcpp
+            return jassmlcpp.agent.JassAgentDMCTSFullCpp(
+                hand_distribution_policy=jassmlcpp.mcts.RandomHandDistributionPolicyCpp(),
+                node_selection_policy=jassmlcpp.mcts.UCTPolicyFullCpp(exploration=np.sqrt(2)),
+                reward_calculation_policy=jassmlcpp.mcts.RandomRolloutPolicyFullCpp(),
+                nr_determinizations=config.agent.nr_determinizations,
+                nr_iterations=config.agent.iterations,
+                threads_to_use=config.agent.threads_to_use
+            )
+        else:
+            return AgentByNetworkCpp(url="http://baselines:9898/dmcts")
     if config.agent.type == "mcts":
-        return AgentByNetworkCpp(url="http://baselines:9899/mcts", cheating=True)
+        if force_local:
+            import jassmlcpp
+            return jassmlcpp.agent.JassAgentMCTSFullCpp(
+                nr_iterations=config.agent.iterations,
+                exploration=1.5
+            )
+        else:
+            return AgentByNetworkCpp(url="http://baselines:9899/mcts", cheating=True)
     elif config.agent.type == "random":
-        return AgentByNetworkCpp(url="http://baselines:9896/random")
+        if force_local:
+            import jassmlcpp
+            return jassmlcpp.agent.JassAgentRandomCpp()
+        else:
+            return AgentByNetworkCpp(url="http://baselines:9896/random")
     elif config.agent.type == "dpolicy":
-        return AgentByNetworkCpp(url="http://baselines:9897/dpolicy")
+        if force_local:
+            from lib.jass.agent.agent_determinized_policy_cpp import AgentDeterminizedPolicyCpp
+            return AgentDeterminizedPolicyCpp(
+                model_path= str(Path(__file__).parent.parent / "resources" / "az-model-from-supervised-data.pd"),
+                determinizations=25
+            )
+        else:
+            return AgentByNetworkCpp(url="http://baselines:9897/dpolicy")
+
 
     raise NotImplementedError(f"Agent type {config.agent.type} is not implemented.")
 

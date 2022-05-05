@@ -417,16 +417,17 @@ class MuZeroTrainer:
                 latent_space_entropy = latent_space_entropy.write(i+1, entropy)
                 # ---------------Logging --------------- #
 
+            raw_loss = self.reward_loss_weight * tf.reduce_sum(reward_loss, axis=-1, name="rewards_loss")\
+                       + self.value_loss_weight * tf.reduce_sum(value_loss, axis=-1,name="value_loss")\
+                       + self.policy_loss_weight * policy_loss\
+                       + self.player_loss_weight * player_loss\
+                       + self.hand_loss_weight * hand_loss\
+                       + self.value_entropy_weight * tf.reduce_sum(value_entropy, axis=-1)\
+                       + self.reward_entropy_weight * tf.reduce_sum(reward_entropy, axis=-1)\
+                       + self.is_terminal_loss_weight * is_terminal_loss
             loss = tf.reduce_sum(
                 (
-                        self.reward_loss_weight * tf.reduce_sum(reward_loss, axis=-1, name="rewards_loss") +
-                        self.value_loss_weight * tf.reduce_sum(value_loss, axis=-1, name="value_loss") +
-                        self.policy_loss_weight * policy_loss +
-                        self.player_loss_weight * player_loss +
-                        self.hand_loss_weight * hand_loss +
-                        self.value_entropy_weight * tf.reduce_sum(value_entropy, axis=-1) +
-                        self.reward_entropy_weight * tf.reduce_sum(reward_entropy, axis=-1) +
-                        self.is_terminal_loss_weight * is_terminal_loss
+                    raw_loss
                  ) * sample_weights, name="loss_mean")
 
         gradients = tape.gradient(loss, self.network.trainable_variables)
@@ -456,6 +457,7 @@ class MuZeroTrainer:
             "training/is_terminal_loss": tf.reduce_mean(is_terminal_loss),
             "training/squared_weights_sum": squared_weights_sum,
             "training/loss": loss,
+            "training/raw_loss": tf.reduce_mean(raw_loss),
             **gradient_hists
         }, absolute_reward_errors.stack(), absolute_value_errors.stack(), policy_kls.stack(), policy_ces.stack(),\
                latent_space_entropy.stack(), player_ces.stack(), hand_bces.stack(), policy_entropy.stack(),\

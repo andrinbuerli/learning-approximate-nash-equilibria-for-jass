@@ -186,5 +186,8 @@ if __name__=="__main__":
     )
     connector.run(port=worker_config.optimization.port)
 
-    trainer.fit(worker_config.optimization.iterations, Path(network_path))
+    iterations = worker_config.optimization.total_steps // worker_config.optimization.updates_per_step
+
+    logging.info(f"Starting training process for {iterations} iterations with {worker_config.optimization.updates_per_step} updates per step")
+    trainer.fit(iterations, Path(network_path))
 

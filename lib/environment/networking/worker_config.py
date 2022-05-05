@@ -75,6 +75,7 @@ class OptimizationConfig(BaseConfig):
         self.is_terminal_loss_weight = 1.0
         self.optimizer = "adam"  # or sgd
         self.learning_rate = 1e-4
+        self.learning_rate_init = None
         self.grad_clip_norm = None
         self.dldl = False
         self.value_mse = False
@@ -92,7 +93,7 @@ class OptimizationConfig(BaseConfig):
         self.min_trajectory_length = 5
         self.max_samples_per_episode=2
         self.min_non_zero_prob_samples=1
-        self.iterations = 5
+        self.total_steps = 5
         self.use_per = False
         self.mask_private = False
         self.mask_valid = False

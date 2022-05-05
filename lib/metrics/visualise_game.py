@@ -12,7 +12,17 @@ from lib.metrics.base_async_metric import BaseAsyncMetric
 from lib.mu_zero.network.network_base import AbstractNetwork
 from lib.mu_zero.network.support_conversion import support_to_scalar
 
+
+def clear_all_matplotlib_cache():
+    plt.figure().clear()
+    plt.close()
+    plt.cla()
+    plt.clf()
+
+
 def _make_plots_(network: AbstractNetwork, iterator, f_shape, l_shape, features, mdp_value):
+    clear_all_matplotlib_cache()
+
     states, y = next(iterator)
     states = tf.reshape(states, f_shape)
     y = tf.reshape(y, l_shape)

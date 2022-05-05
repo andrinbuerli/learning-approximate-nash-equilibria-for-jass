@@ -2,17 +2,18 @@ import argparse
 import logging
 import sys
 from pathlib import Path
+from pprint import pprint
 
 import numpy as np
 import tensorflow as tf
 
-sys.path.append("../../")
+sys.path.append("../../../")
 
 from lib.environment.networking.worker_config import WorkerConfig
 from lib.factory import get_network, get_features, get_agent, get_opponent
 from lib.jass.arena.arena import Arena
 
-from lib.metrics.apao import APAO
+from lib.util import set_allow_gpu_memory_growth
 
 logging.basicConfig(
     level=logging.INFO,
@@ -23,8 +24,12 @@ logging.basicConfig(
 
 if __name__=="__main__":
     tf.config.experimental_run_functions_eagerly(True)
+    set_allow_gpu_memory_growth(True)
     parser = argparse.ArgumentParser(prog="Start MuZero Training for Jass")
-    parser.add_argument(f'--run', default="1648651789")
+    parser.add_argument(f'--run', default="1649334850")
+    parser.add_argument(f'--n_search_threads', default=1)
+    parser.add_argument(f'--virtual_loss', default=1)
+    parser.add_argument(f'--iterations', default=20)
     args = parser.parse_args()
 
     base_path = Path(__file__).resolve().parent.parent.parent / "results" / args.run
@@ -38,33 +43,19 @@ if __name__=="__main__":
 
     network.load(base_path / "latest_network.pd", from_graph=True)
 
-    config.agent.n_search_threads = 1
-    config.agent.virtual_loss = 1
-    config.agent.iterations = 50
+    config.agent.n_search_threads = int(args.n_search_threads)
+    config.agent.virtual_loss = int(args.virtual_loss)
+    config.agent.iterations = int(args.iterations)
+    config.agent.mdp_value = False
     agent1 = get_agent(config, network, greedy=True)
 
-    #config.optimization.apa_n_games = 1
-    #m = APAO("random", config, str(base_path / "latest_network.pd"), parallel_threads=config.optimization.apa_n_games)
+    pprint(config.to_json())
 
-    #i = 0
-    #while True:
-    #    m.poll_till_next_result_available()
+    opponent = "dmcts"
+    logging.info(f"Playing against {opponent} opponent")
+    opponent = get_opponent(opponent)
 
-
-    #    if i == 3:
-    #        network = get_network(config)
-    #        network.save(base_path / "latest_network.pd")
-
-    #    r = m.get_latest_result()
-    #    logging.info(r)
-
-    #    i += 1
-    #    logging.info(i)
-
-    opponent = get_opponent("mcts")
-
-    arena = Arena(nr_games_to_play=1000, cheating_mode=False, check_move_validity=True,
-                  print_every_x_games=1)
+    arena = Arena(nr_games_to_play=1000, cheating_mode=False, check_move_validity=True, log=True)
     arena.set_players(agent1, opponent, agent1, opponent)
     arena.play_all_games()
 

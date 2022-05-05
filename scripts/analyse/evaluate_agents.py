@@ -171,9 +171,9 @@ def _evaluate_(
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(prog='Evaluate multiple agents')
-    parser.add_argument(f'--max_parallel_evaluations', default=1)
-    parser.add_argument(f'--max_parallel_processes_per_evaluation', default=2)
-    parser.add_argument(f'--max_parallel_threads_per_evaluation_process', default=2)
+    parser.add_argument(f'--max_parallel_evaluations', default=1, type=int)
+    parser.add_argument(f'--max_parallel_processes_per_evaluation', default=2, type=int)
+    parser.add_argument(f'--max_parallel_threads_per_evaluation_process', default=2, type=int)
     parser.add_argument(f'--no_skip_on_result_file', default=False, action="store_true")
     parser.add_argument(f'--file', default="oos/imperfect.json", action="store_true")
     args = parser.parse_args()

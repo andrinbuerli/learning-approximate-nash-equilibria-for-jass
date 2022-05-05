@@ -11,8 +11,6 @@ from threading import Thread
 
 import tqdm
 
-from lib.environment.networking.worker_config import WorkerConfig
-
 mp.set_start_method('spawn', force=True)
 
 sys.path.append('../../')
@@ -23,6 +21,7 @@ import itertools
 from lib.jass.arena.arena import Arena
 
 from lib.factory import get_agent, get_network
+from lib.environment.networking.worker_config import WorkerConfig
 
 logging.basicConfig(
     level=logging.INFO,
@@ -175,7 +174,7 @@ if __name__ == "__main__":
     parser.add_argument(f'--max_parallel_evaluations', default=1)
     parser.add_argument(f'--max_parallel_processes_per_evaluation', default=2)
     parser.add_argument(f'--max_parallel_threads_per_evaluation_process', default=2)
-    parser.add_argument(f'--no_skip_on_result_file', default=False, action="store_true")
+    parser.add_argument(f'--no_skip__result_file', default=False, action="store_true")
     parser.add_argument(f'--file', default="oos/imperfect.json", action="store_true")
     args = parser.parse_args()
 

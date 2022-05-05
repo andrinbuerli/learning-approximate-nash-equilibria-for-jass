@@ -6,6 +6,8 @@ from pathlib import Path
 import tensorflow as tf
 import wandb
 
+from tqdm import tqdm
+
 from lib.environment.networking.worker_config import WorkerConfig
 from lib.jass.features.features_conv_cpp import FeaturesSetCppConv
 from lib.log.base_logger import BaseLogger
@@ -90,7 +92,7 @@ class MuZeroTrainer:
         self.replay_buffer.start_sampling()
 
         size_of_last_update_cumsum = 0
-        for it in range(iterations):
+        for it in tqdm(range(iterations)):
             start = time.time()
             buffer_size = self.replay_buffer.buffer_size
             non_zero_samples = self.replay_buffer.non_zero_samples

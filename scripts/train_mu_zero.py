@@ -188,6 +188,7 @@ if __name__=="__main__":
 
     iterations = worker_config.optimization.total_steps // worker_config.optimization.updates_per_step
 
-    logging.info(f"Starting training process for {iterations} iterations with {worker_config.optimization.updates_per_step} updates per step")
+    logging.info(f"Starting training process for {worker_config.optimization.total_steps} steps over "
+                 f"{iterations} iterations with {worker_config.optimization.updates_per_step} updates per step")
     trainer.fit(iterations, Path(network_path))
 

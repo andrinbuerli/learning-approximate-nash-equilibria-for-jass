@@ -1,11 +1,11 @@
 import pickle
 import uuid
 from pathlib import Path
+from time import sleep
 
 import numpy as np
 
 from lib.mu_zero.replay_buffer.file_based_replay_buffer_from_folder import FileBasedReplayBufferFromFolder
-from lib.mu_zero.replay_buffer.replay_buffer_from_folder import ReplayBufferFromFolder
 
 
 def test_buffer_size():
@@ -23,8 +23,13 @@ def test_buffer_size():
         min_non_zero_prob_samples=1,
         clean_up_files=False,
         mdp_value=False,
-        gamma=1
+        gamma=1,
+        use_per=False,
+        valid_policy_target=False,
+        clean_up_episodes=True
     )
+
+    sleep(1)
 
     assert testee.buffer_size > 0
 
@@ -47,11 +52,16 @@ def test_batch_size():
         min_non_zero_prob_samples=1,
         clean_up_files=False,
         mdp_value=False,
-        gamma=1
+        gamma=1,
+        use_per=False,
+        valid_policy_target=False,
+        clean_up_episodes=True
     )
 
+    sleep(1)
+
     batches = testee.sample_from_buffer()
-    states, actions, rewards, probs, outcomes = batches[0]
+    states, actions, rewards, probs, outcomes, sample_weights = batches[0]
 
     assert states.shape[0] == actions.shape[0] == rewards.shape[0] == probs.shape[0] == outcomes.shape[0] == 32
     assert states.shape[1] == actions.shape[1] == rewards.shape[1] == probs.shape[1] == outcomes.shape[1]
@@ -71,14 +81,19 @@ def test_min_non_zero_prob_samples():
         game_data_folder=Path(__file__).parent.parent.parent / "resources",
         episode_data_folder=Path(__file__).parent / f"tmp_episodes{str(uuid.uuid1())}",
         max_samples_per_episode=2,
-        min_non_zero_prob_samples=64,
+        min_non_zero_prob_samples=1,
         clean_up_files=False,
         mdp_value=False,
-        gamma=1
+        gamma=1,
+        use_per=False,
+        valid_policy_target=False,
+        clean_up_episodes=True
     )
 
+    sleep(1)
+
     batches = testee.sample_from_buffer()
-    states, actions, rewards, probs, outcomes = batches[0]
+    states, actions, rewards, probs, outcomes, sample_weights = batches[0]
 
     assert states.shape[0] == actions.shape[0] == rewards.shape[0] == probs.shape[0] == outcomes.shape[0] == 32
     assert states.shape[1] == actions.shape[1] == rewards.shape[1] == probs.shape[1] == outcomes.shape[1]
@@ -96,16 +111,20 @@ def test_buffer_restore():
         min_trajectory_length=5,
         max_trajectory_length=5,
         data_file_ending=".perfect.jass-data.pkl",
-        game_data_folder=Path(__file__).parent.parent.parent / "resources",
         episode_file_ending=".perfect.jass-episode.pkl",
+        game_data_folder=Path(__file__).parent.parent.parent / "resources",
         episode_data_folder=folder,
         max_samples_per_episode=2,
         min_non_zero_prob_samples=1,
         clean_up_files=False,
         mdp_value=False,
         gamma=1,
-        start_sampling=True
+        use_per=False,
+        valid_policy_target=False,
+        clean_up_episodes=False
     )
+
+    sleep(1)
 
     assert testee1.buffer_size > 0
 
@@ -126,6 +145,9 @@ def test_buffer_restore():
         clean_up_files=False,
         mdp_value=False,
         gamma=1,
+        use_per=False,
+        valid_policy_target=False,
+        clean_up_episodes=True,
         start_sampling=False
     )
 
@@ -150,10 +172,13 @@ def test_sample_trajectory():
         min_non_zero_prob_samples=1,
         clean_up_files=False,
         mdp_value=False,
-        gamma=1
+        gamma=1,
+        use_per=False,
+        valid_policy_target=False,
+        clean_up_episodes=True
     )
 
-    testee._update()
+    testee.update()
     total = testee.sum_tree.total()
     s = np.random.uniform(0, total)
     idx, priority, identifier = testee.sum_tree.get(s, timeout=10)
@@ -183,10 +208,13 @@ def test_sample_trajectory_mdp_value():
         min_non_zero_prob_samples=1,
         clean_up_files=False,
         mdp_value=True,
-        gamma=1
+        gamma=1,
+        use_per=False,
+        valid_policy_target=False,
+        clean_up_episodes=True
     )
 
-    testee._update()
+    testee.update()
     total = testee.sum_tree.total()
     s = np.random.uniform(0, total)
     idx, priority, identifier = testee.sum_tree.get(s, timeout=10)

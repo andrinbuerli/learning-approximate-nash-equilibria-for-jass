@@ -3,27 +3,11 @@ import shutil
 import numpy as np
 
 from lib.mu_zero.network.resnet import MuZeroResidualNetwork
+from test.util import get_test_resnet
 
 
 def test_shapes():
-    testee = MuZeroResidualNetwork(
-        observation_shape=(4, 9, 45),
-        action_space_size=43,
-        num_blocks_representation=2,
-        fcn_blocks_representation=1,
-        num_blocks_dynamics=3,
-        fcn_blocks_dynamics=2,
-        num_blocks_prediction=2,
-        num_channels=256,
-        reduced_channels_reward=128,
-        reduced_channels_value=1,
-        reduced_channels_policy=128,
-        fc_reward_layers=[256],
-        fc_value_layers=[256],
-        fc_policy_layers=[256],
-        support_size=100,
-        players=4
-    )
+    testee = get_test_resnet()
 
     encoded_state = testee.representation(np.random.uniform(0, 1, (1, 4, 9, 45)))
     assert encoded_state.shape == (1, 4, 9, 256)
@@ -38,24 +22,7 @@ def test_shapes():
 
 
 def test_summary():
-    testee = MuZeroResidualNetwork(
-        observation_shape=(4, 9, 43),
-        action_space_size=42,
-        num_blocks_representation=8,
-        fcn_blocks_representation=4,
-        num_blocks_dynamics=8,
-        fcn_blocks_dynamics=4,
-        num_blocks_prediction=2,
-        num_channels=256,
-        reduced_channels_reward=64,
-        reduced_channels_value=64,
-        reduced_channels_policy=64,
-        fc_reward_layers=[256, 256, 256],
-        fc_value_layers=[256, 256, 256],
-        fc_policy_layers=[256, 256, 256],
-        support_size=100,
-        players=4
-    )
+    testee = get_test_resnet()
 
     testee.summary()
 
@@ -64,24 +31,7 @@ def test_summary():
 
 
 def test_get_weights():
-    testee = MuZeroResidualNetwork(
-        observation_shape=(4, 9, 43),
-        action_space_size=42,
-        num_blocks_representation=2,
-        fcn_blocks_representation=1,
-        num_blocks_dynamics=3,
-        fcn_blocks_dynamics=2,
-        num_blocks_prediction=2,
-        num_channels=256,
-        reduced_channels_reward=128,
-        reduced_channels_value=1,
-        reduced_channels_policy=128,
-        fc_reward_layers=[256],
-        fc_value_layers=[256],
-        fc_policy_layers=[256],
-        support_size=100,
-        players=4
-    )
+    testee = get_test_resnet()
 
     w = testee.get_weight_list()
 
@@ -89,24 +39,7 @@ def test_get_weights():
 
 
 def test_set_weights():
-    testee = MuZeroResidualNetwork(
-        observation_shape=(4, 9, 43),
-        action_space_size=42,
-        num_blocks_representation=2,
-        fcn_blocks_representation=1,
-        num_blocks_dynamics=3,
-        fcn_blocks_dynamics=2,
-        num_blocks_prediction=2,
-        num_channels=256,
-        reduced_channels_reward=128,
-        reduced_channels_value=1,
-        reduced_channels_policy=128,
-        fc_reward_layers=[256],
-        fc_value_layers=[256],
-        fc_policy_layers=[256],
-        support_size=100,
-        players=4
-    )
+    testee = get_test_resnet()
 
     w = testee.get_weight_list()
 
@@ -118,24 +51,7 @@ def test_set_weights():
 
 
 def test_save_and_load():
-    testee = MuZeroResidualNetwork(
-        observation_shape=(4, 9, 43),
-        action_space_size=42,
-        num_blocks_representation=2,
-        fcn_blocks_representation=1,
-        num_blocks_dynamics=3,
-        fcn_blocks_dynamics=2,
-        num_blocks_prediction=2,
-        num_channels=256,
-        reduced_channels_reward=128,
-        reduced_channels_value=1,
-        reduced_channels_policy=128,
-        fc_reward_layers=[256],
-        fc_value_layers=[256],
-        fc_policy_layers=[256],
-        support_size=100,
-        players=4
-    )
+    testee = get_test_resnet()
 
     path = f"test{id(testee)}.pd"
     testee.save(path)

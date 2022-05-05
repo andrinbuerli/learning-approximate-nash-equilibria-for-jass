@@ -14,7 +14,8 @@ def test_vis():
     testee = GameVisualisation(
         label_length=LabelSetActionFull.LABEL_LENGTH,
         worker_config=config,
-        network_path = str(Path(__file__).parent.parent / "resources" / "imperfect_resnet_random.pd")
+        network_path = str(Path(__file__).parent.parent / "resources" / "imperfect_resnet_random.pd"),
+        mdp_value=False
     )
 
     testee.poll_till_next_result_available()

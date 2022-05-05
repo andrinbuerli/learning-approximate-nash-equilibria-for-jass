@@ -1,26 +1,11 @@
 import numpy as np
 
 from lib.mu_zero.network.buffering_network import BufferingNetwork
-from lib.mu_zero.network.resnet import MuZeroResidualNetwork
+from test.util import get_test_resnet
 
 
 def test_initial_inference():
-    network = MuZeroResidualNetwork(
-        observation_shape=(4, 9, 43),
-        action_space_size=42,
-        num_blocks_representation=2,
-        num_blocks_dynamics=2,
-        num_blocks_prediction=2,
-        num_channels=256,
-        reduced_channels_reward=128,
-        reduced_channels_value=1,
-        reduced_channels_policy=128,
-        fc_reward_layers=[256],
-        fc_value_layers=[256],
-        fc_policy_layers=[256],
-        support_size=100,
-        players=4
-    )
+    network = get_test_resnet()
 
     testee = BufferingNetwork(network, buffer_size=1)
 
@@ -34,22 +19,7 @@ def test_initial_inference():
 
 
 def test_recurrent_inference():
-    network = MuZeroResidualNetwork(
-        observation_shape=(4, 9, 43),
-        action_space_size=42,
-        num_blocks_representation=2,
-        num_blocks_dynamics=2,
-        num_blocks_prediction=2,
-        num_channels=256,
-        reduced_channels_reward=128,
-        reduced_channels_value=1,
-        reduced_channels_policy=128,
-        fc_reward_layers=[256],
-        fc_value_layers=[256],
-        fc_policy_layers=[256],
-        support_size=100,
-        players=4
-    )
+    network = get_test_resnet()
 
     testee = BufferingNetwork(network, buffer_size=1)
 
@@ -63,22 +33,7 @@ def test_recurrent_inference():
 
 
 def test_recurrent_inference_repeated_synch():
-    network = MuZeroResidualNetwork(
-        observation_shape=(4, 9, 43),
-        action_space_size=42,
-        num_blocks_representation=2,
-        num_blocks_dynamics=2,
-        num_blocks_prediction=2,
-        num_channels=256,
-        reduced_channels_reward=128,
-        reduced_channels_value=1,
-        reduced_channels_policy=128,
-        fc_reward_layers=[256],
-        fc_value_layers=[256],
-        fc_policy_layers=[256],
-        support_size=100,
-        players=4
-    )
+    network = get_test_resnet()
 
     testee = BufferingNetwork(network, buffer_size=1)
 
@@ -98,22 +53,7 @@ def test_recurrent_inference_repeated_synch():
 
 
 def test_recurrent_inference_repeated_async():
-    network = MuZeroResidualNetwork(
-        observation_shape=(4, 9, 43),
-        action_space_size=42,
-        num_blocks_representation=2,
-        num_blocks_dynamics=2,
-        num_blocks_prediction=2,
-        num_channels=256,
-        reduced_channels_reward=128,
-        reduced_channels_value=1,
-        reduced_channels_policy=128,
-        fc_reward_layers=[256],
-        fc_value_layers=[256],
-        fc_policy_layers=[256],
-        support_size=100,
-        players=4
-    )
+    network = get_test_resnet()
 
     testee = BufferingNetwork(network, buffer_size=2)
 
@@ -131,22 +71,7 @@ def test_recurrent_inference_repeated_async():
 
 
 def test_recurrent_inference_too_small_buffer():
-    network = MuZeroResidualNetwork(
-        observation_shape=(4, 9, 43),
-        action_space_size=42,
-        num_blocks_representation=2,
-        num_blocks_dynamics=2,
-        num_blocks_prediction=2,
-        num_channels=256,
-        reduced_channels_reward=128,
-        reduced_channels_value=1,
-        reduced_channels_policy=128,
-        fc_reward_layers=[256],
-        fc_value_layers=[256],
-        fc_policy_layers=[256],
-        support_size=100,
-        players=4
-    )
+    network = get_test_resnet()
 
     testee = BufferingNetwork(network, buffer_size=2, timeout=10)
 
@@ -159,22 +84,7 @@ def test_recurrent_inference_too_small_buffer():
     del testee
 
 def test_recurrent_inference_too_small_buffer_timeout():
-    network = MuZeroResidualNetwork(
-        observation_shape=(4, 9, 43),
-        action_space_size=42,
-        num_blocks_representation=2,
-        num_blocks_dynamics=2,
-        num_blocks_prediction=2,
-        num_channels=256,
-        reduced_channels_reward=128,
-        reduced_channels_value=1,
-        reduced_channels_policy=128,
-        fc_reward_layers=[256],
-        fc_value_layers=[256],
-        fc_policy_layers=[256],
-        support_size=100,
-        players=4
-    )
+    network = get_test_resnet()
 
     testee = BufferingNetwork(network, buffer_size=2, timeout=0.1)
 

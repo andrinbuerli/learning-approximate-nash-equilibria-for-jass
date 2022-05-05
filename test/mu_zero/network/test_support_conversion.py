@@ -40,7 +40,7 @@ def test_support_to_scalar_batched():
 def test_scalar_to_support():
     scalar = np.array([[1]])
 
-    distribution = scalar_to_support(scalar, min_value=0, support_size=2, augment=False)
+    distribution = scalar_to_support(scalar, min_value=0, support_size=2, dldl=False)
 
     assert (distribution == [0, 1]).numpy().all()
 
@@ -49,7 +49,7 @@ def test_scalar_to_support_augmented():
     scalar = np.array([[1]])
 
     for _ in range(10):
-        distribution = scalar_to_support(scalar, min_value=0, support_size=3, augment=True).numpy().reshape(-1)
+        distribution = scalar_to_support(scalar, min_value=0, support_size=3, dldl=True).numpy().reshape(-1)
         assert distribution[0] > 0 and distribution[1] < 1
         assert distribution[0] < distribution[1]
         assert np.isclose(distribution.sum(), 1)

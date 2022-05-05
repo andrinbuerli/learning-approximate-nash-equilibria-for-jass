@@ -4,13 +4,6 @@ from jasscpp import GameObservationCpp
 
 from lib.cfr.oos import OOS
 from lib.jass.agent.remembering_agent import RememberingAgent
-from lib.jass.features.features_cpp_conv_cheating import FeaturesSetCppConvCheating
-from lib.jass.features.features_set_cpp import FeaturesSetCpp
-from lib.mu_zero.mcts.latent_node_selection_policy import LatentNodeSelectionPolicy
-from lib.mu_zero.mcts.latent_value_calc_policy import LatentValueCalculationPolicy
-from lib.mu_zero.mcts.min_max_stats import MinMaxStats
-from lib.mu_zero.mcts.tree_search import ALPV_MCTS
-from lib.mu_zero.network.network_base import AbstractNetwork
 
 
 class AgentOnlineOutcomeSampling(RememberingAgent):
@@ -55,10 +48,6 @@ class AgentOnlineOutcomeSampling(RememberingAgent):
 
         key = self.search.get_infostate_key_from_obs(obs)
         prob = self.search.get_average_strategy(key)
-
-        # valid_actions = self.search.rule.get_full_valid_actions_from_obs(obs)
-        # prob *= valid_actions
-        # prob /= prob.sum()
 
         return prob
 

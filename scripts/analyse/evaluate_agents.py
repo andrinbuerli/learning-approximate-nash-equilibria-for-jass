@@ -133,24 +133,25 @@ def _evaluate_(
 
     points_agent1 = []
     points_agent2 = []
-    for points1, points2 in iter(queue.get, None):
-        points_agent1.append(points1)
-        points_agent2.append(points2)
+    while len(points_agent1) < total_games and len(points_agent2) < total_games:
+        for points1, points2 in iter(queue.get, None):
+            points_agent1.append(points1)
+            points_agent2.append(points2)
 
-        mean_agent1 = np.mean(points_agent1)
-        mean_agent2 = np.mean(points_agent2)
+            mean_agent1 = np.mean(points_agent1)
+            mean_agent2 = np.mean(points_agent2)
 
-        pbar.set_postfix({agent1_config['note']: mean_agent1, agent2_config['note']: mean_agent2})
-        pbar.update(1)
-        print("-") # trigger flushing of output stream
+            pbar.set_postfix({agent1_config['note']: mean_agent1, agent2_config['note']: mean_agent2})
+            pbar.update(1)
+            print("-")  # trigger flushing of output stream
 
-        with open(str(tmp_result_file), "w") as f:
-            json.dump({
-                f"{agent1_config['note']}-mean": mean_agent1,
-                f"{agent2_config['note']}-mean": mean_agent2,
-                agent1_config['note']: [float(x) for x in points_agent1],
-                agent2_config['note']: [float(x) for x in points_agent2]
-            }, f)
+            with open(str(tmp_result_file), "w") as f:
+                json.dump({
+                    f"{agent1_config['note']}-mean": mean_agent1,
+                    f"{agent2_config['note']}-mean": mean_agent2,
+                    agent1_config['note']: [float(x) for x in points_agent1],
+                    agent2_config['note']: [float(x) for x in points_agent2]
+                }, f)
 
     logging.info(
         f"{agent1_config['note']}-vs-{agent2_config['note']}: {np.mean(points_agent1)} - {np.mean(points_agent2)}")

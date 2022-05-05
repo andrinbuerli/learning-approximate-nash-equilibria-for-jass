@@ -20,7 +20,7 @@
     },
     {
       "type": "oos",
-      "note": "OOS-100",
+      "note": "OOS-1000",
       "iterations": 1000,
       "delta": 0.9,
       "epsilon": 0.9,
@@ -29,7 +29,7 @@
     },
     {
       "type": "oos",
-      "note": "OOS-100",
+      "note": "OOS-10000",
       "iterations": 10000,
       "delta": 0.9,
       "epsilon": 0.9,

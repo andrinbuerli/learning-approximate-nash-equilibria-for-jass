@@ -35,6 +35,24 @@
       "epsilon": 0.9,
       "skip": true,
       "network_path": ""
+    },
+    {
+      "type": "oos",
+      "note": "OOS-100000",
+      "iterations": 100000,
+      "delta": 0.9,
+      "epsilon": 0.9,
+      "skip": true,
+      "network_path": ""
+    },
+    {
+      "type": "oos",
+      "note": "OOS-1000000",
+      "iterations": 1000000,
+      "delta": 0.9,
+      "epsilon": 0.9,
+      "skip": true,
+      "network_path": ""
     }
   ]
 }

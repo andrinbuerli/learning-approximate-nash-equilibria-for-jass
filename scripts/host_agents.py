@@ -29,7 +29,7 @@ def host_agent(config: WorkerConfig):
     except NotImplementedError:
         network = None
 
-    agent = get_agent(config, network)
+    agent = get_agent(config, network, force_local=True)
     if config.agent.cheating:
         agent = AgentFromCppCheating(agent=agent)
     else:

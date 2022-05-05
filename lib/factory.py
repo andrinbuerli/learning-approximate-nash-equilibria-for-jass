@@ -5,7 +5,6 @@ from lib.jass.agent.agent_by_network_cpp import AgentByNetworkCpp
 from lib.jass.features.features_conv_cpp import FeaturesSetCppConv
 from lib.jass.features.features_cpp_conv_cheating import FeaturesSetCppConvCheating
 from lib.jass.features.features_set_cpp import FeaturesSetCpp
-from lib.mu_zero.cosine_lr_scheduler import CosineLRSchedule
 
 
 def get_agent(config: WorkerConfig, network, greedy=False) -> CppAgent:
@@ -90,6 +89,7 @@ def get_optimizer(config: WorkerConfig):
         if config.optimization.learning_rate_init is None:
             lr = config.optimization.learning_rate
         else:
+            from lib.mu_zero.cosine_lr_scheduler import CosineLRSchedule
             lr = CosineLRSchedule(learning_rate_init=config.optimization.learning_rate_init, max_steps=config.optimization.total_steps)
 
         return tfa.optimizers.AdamW(

@@ -130,6 +130,10 @@ class AgentConfig(BaseConfig):
         self.nr_determinizations = 25
         self.threads_to_use = 4
 
+        # oos
+        self.delta = 1.0
+        self.epsilon = 0.0
+
 
 class WorkerConfig(BaseConfig):
     def __init__(self, features: FeaturesSetCpp = None):

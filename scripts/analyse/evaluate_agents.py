@@ -87,9 +87,9 @@ def _evaluate_(
         agent2_config,
         skip_on_result_file,
         max_parallel_processes_per_evaluation,
-        max_parallel_threads_per_evaluation_process):
-    result_file = Path(__file__).parent / "agents_eval_results" / general_config[
-        "information"] / f"{agent1_config['note']}-vs-{agent2_config['note']}.json"
+        max_parallel_threads_per_evaluation_process,
+        result_folder):
+    result_file = Path(__file__).parent / "agents_eval_results" / result_folder / f"{agent1_config['note']}-vs-{agent2_config['note']}.json"
 
     if agent1_config["skip"] and agent2_config["skip"]:
         logging.info(f"skipping flag set for both agents, skipping...")
@@ -177,6 +177,7 @@ if __name__ == "__main__":
     parser.add_argument(f'--max_parallel_threads_per_evaluation_process', default=2, type=int)
     parser.add_argument(f'--no_skip_on_result_file', default=False, action="store_true")
     parser.add_argument(f'--file', default="oos/imperfect.json", action="store_true")
+    parser.add_argument(f'--folder', default="results")
     args = parser.parse_args()
 
     path = Path(__file__).resolve().parent.parent.parent / "resources" / "evaluation" / args.file
@@ -184,7 +185,7 @@ if __name__ == "__main__":
     with open(path, "r") as f:
         config = json.load(f)
 
-    (Path(__file__).resolve().parent / "agents_eval_results" / config["information"]).mkdir(parents=True, exist_ok=True)
+    (Path(__file__).resolve().parent / "agents_eval_results" / args.folder).mkdir(parents=True, exist_ok=True)
 
     processes = []
     for comb in list(itertools.combinations(config["agents"], r=2)):
@@ -192,7 +193,8 @@ if __name__ == "__main__":
             config, *comb,
             not args.no_skip_on_result_file,
             args.max_parallel_processes_per_evaluation,
-            args.max_parallel_threads_per_evaluation_process))
+            args.max_parallel_threads_per_evaluation_process,
+            args.folder))
         processes.append(p)
         p.start()
 

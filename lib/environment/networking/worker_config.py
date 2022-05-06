@@ -102,6 +102,7 @@ class OptimizationConfig(BaseConfig):
         self.apa_n_games = 4
         self.data_folder = ""
         self.valid_policy_target = False
+        self.log_gradients = True
 
 class LogConfig(BaseConfig):
     def __init__(self):

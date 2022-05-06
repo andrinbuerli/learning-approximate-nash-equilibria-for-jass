@@ -43,8 +43,10 @@ class MuZeroTrainer:
             store_buffer:bool = False,
             grad_clip_norm: int = None,
             value_mse: bool = False,
-            reward_mse: bool = False
+            reward_mse: bool = False,
+            log_gradients: bool = True
     ):
+        self.log_gradients = log_gradients
         self.reward_mse = reward_mse
         self.is_terminal_loss_weight = is_terminal_loss_weight
         self.value_mse = value_mse
@@ -122,10 +124,13 @@ class MuZeroTrainer:
 
             logging.info('Logging training steps infos...')
             for training_info in training_infos:
-                grad_infos = {
-                    key.replace('/', '_').replace("gradients_", "gradients/"):
-                        wandb.Histogram(training_info[key].numpy())
-                    for key in training_info if key.__contains__("gradients/")}
+                if self.log_gradients:
+                    grad_infos = {
+                        key.replace('/', '_').replace("gradients_", "gradients/"):
+                            wandb.Histogram(training_info[key].numpy())
+                        for key in training_info if key.__contains__("gradients/")}
+                else:
+                    grad_infos = {}
 
                 train_infos = {key: float(training_info[key].numpy())
                                for key in training_info if not key.__contains__("gradients/")}

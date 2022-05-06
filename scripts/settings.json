@@ -57,7 +57,8 @@
   "weight_decay": 0.0001,
   "store_buffer": true,
   "log_n_steps_ahead": 15,
-  "apa_n_games": 1
+  "apa_n_games": 1,
+  "log_gradients": false
  },
  "network": {
   "fully_connected": false,

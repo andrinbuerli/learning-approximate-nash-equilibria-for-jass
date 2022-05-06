@@ -176,7 +176,8 @@ if __name__=="__main__":
         grad_clip_norm=worker_config.optimization.grad_clip_norm,
         dldl=worker_config.optimization.dldl,
         value_mse=worker_config.optimization.value_mse,
-        reward_mse=worker_config.optimization.reward_mse
+        reward_mse=worker_config.optimization.reward_mse,
+        log_gradients=worker_config.optimization.log_gradients
     )
 
     connector = WorkerConnector(

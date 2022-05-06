@@ -99,6 +99,9 @@ def _make_plots_(network: AbstractNetwork, iterator, f_shape, l_shape, features,
         plt.scatter(i, policy_kl, c=colors[player], label=f"player {player}" if legend[player] else None)
         legend[player] = False
     plt.legend()
+    policy_img = wandb.Image(fig_policy_kls)
+    del fig_policy_kls
+    clear_all_matplotlib_cache()
 
     fig_player_kls = plt.figure()
     plt.plot(player_kls)
@@ -107,6 +110,9 @@ def _make_plots_(network: AbstractNetwork, iterator, f_shape, l_shape, features,
         plt.scatter(i, player_kl, c=colors[player], label=f"player {player}" if legend[player] else None)
         legend[player] = False
     plt.legend()
+    player_img = wandb.Image(fig_player_kls)
+    del fig_player_kls
+    clear_all_matplotlib_cache()
 
     fig_hand_kls = plt.figure()
     plt.plot(hand_kls)
@@ -115,6 +121,9 @@ def _make_plots_(network: AbstractNetwork, iterator, f_shape, l_shape, features,
         plt.scatter(i, hand_kl, c=colors[player], label=f"player {player}" if legend[player] else None)
         legend[player] = False
     plt.legend()
+    hand_img = wandb.Image(fig_hand_kls)
+    del fig_hand_kls
+    clear_all_matplotlib_cache()
 
     fig_value = plt.figure()
     values = np.array(values)
@@ -138,6 +147,9 @@ def _make_plots_(network: AbstractNetwork, iterator, f_shape, l_shape, features,
     plt.legend()
     plt.xlabel("Moves")
     plt.ylabel("Cumulative Reward")
+    value_img = wandb.Image(fig_value)
+    del fig_value
+    clear_all_matplotlib_cache()
 
     fig_reward = plt.figure()
     legend = True
@@ -151,21 +163,9 @@ def _make_plots_(network: AbstractNetwork, iterator, f_shape, l_shape, features,
     plt.xlabel("Moves")
     plt.ylabel("Reward")
     plt.legend(bbox_to_anchor=(1.1, 1))
-
     reward_img = wandb.Image(fig_reward)
     del fig_reward
-
-    value_img = wandb.Image(fig_value)
-    del fig_value
-
-    policy_img = wandb.Image(fig_policy_kls)
-    del fig_policy_kls
-
-    player_img = wandb.Image(fig_player_kls)
-    del fig_player_kls
-
-    hand_img = wandb.Image(fig_hand_kls)
-    del fig_hand_kls
+    clear_all_matplotlib_cache()
 
     plt.show()
     gc.collect()

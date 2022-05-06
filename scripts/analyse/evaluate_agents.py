@@ -39,7 +39,7 @@ def _play_games_(n_games_to_play, general_config, agent1_config, agent2_config, 
     for _ in rng:
         arena = Arena(
             nr_games_to_play=1, cheating_mode=general_config["information"] != "imperfect",
-            check_move_validity=True,
+            check_move_validity=True, reset_agents=True,
             store_trajectory=False)
         arena.set_players(agent1, agent2, agent1, agent2)
         arena.play_game(dealer=np.random.choice([0, 1, 2, 3]))

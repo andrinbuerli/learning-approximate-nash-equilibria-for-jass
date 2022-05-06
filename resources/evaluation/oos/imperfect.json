@@ -29,28 +29,10 @@
     },
     {
       "type": "oos",
-      "note": "OOS-10000",
-      "iterations": 10000,
+      "note": "OOS-100000",
+      "iterations": 100000,
       "delta": 0.9,
       "epsilon": 0.9,
-      "skip": true,
-      "network_path": ""
-    },
-    {
-      "type": "oos",
-      "note": "OOS-10000-epsilon-0.6",
-      "iterations": 10000,
-      "delta": 0.9,
-      "epsilon": 0.6,
-      "skip": true,
-      "network_path": ""
-    },
-    {
-      "type": "oos",
-      "note": "OOS-10000-epsilon-0.4",
-      "iterations": 10000,
-      "delta": 0.9,
-      "epsilon": 0.4,
       "skip": true,
       "network_path": ""
     }

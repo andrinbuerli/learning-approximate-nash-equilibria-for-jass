@@ -1,3 +1,4 @@
+import gc
 from pathlib import Path
 
 import numpy as np
@@ -151,12 +152,30 @@ def _make_plots_(network: AbstractNetwork, iterator, f_shape, l_shape, features,
     plt.ylabel("Reward")
     plt.legend(bbox_to_anchor=(1.1, 1))
 
+    reward_img = wandb.Image(fig_reward)
+    del fig_reward
+
+    value_img = wandb.Image(fig_value)
+    del fig_value
+
+    policy_img = wandb.Image(fig_policy_kls)
+    del fig_policy_kls
+
+    player_img = wandb.Image(fig_player_kls)
+    del fig_player_kls
+
+    hand_img = wandb.Image(fig_hand_kls)
+    del fig_hand_kls
+
+    plt.show()
+    gc.collect()
+
     return {
-        f"Visualizations/reward": wandb.Image(fig_reward),
-        f"Visualizations/value": wandb.Image(fig_value),
-        f"Visualizations/policy": wandb.Image(fig_policy_kls),
-        f"Visualizations/player": wandb.Image(fig_player_kls),
-        f"Visualizations/hand": wandb.Image(fig_hand_kls)
+        f"Visualizations/reward": reward_img,
+        f"Visualizations/value": value_img,
+        f"Visualizations/policy": policy_img,
+        f"Visualizations/player": player_img,
+        f"Visualizations/hand": hand_img
     }
 
 

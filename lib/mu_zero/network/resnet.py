@@ -292,7 +292,7 @@ class RepresentationNetwork(tf.keras.Model):
         self.fully_connected = fully_connected
         self.observation_shape = observation_shape
         self.layer0 = conv2x3(num_channels) if not fully_connected else dense(num_channels)
-        self.bn = layers.LayerNormalization()
+        self.bn = layers.BatchNormalization()
         self.ln = layers.LayerNormalization()
         self.resblocks = [ResidualBlock(num_channels, fully_connected) for _ in range(num_blocks)]
         self.resblocks_fcn = [ResidualFullyConnectedBlock(num_channels, fully_connected) for _ in range(num_blocks_fully_connected)]
@@ -340,7 +340,7 @@ class DynamicsNetwork(tf.keras.Model):
         self.observation_shape = observation_shape
         self.num_channels = num_channels
         self.layer0 = conv2x3(num_channels) if not fully_connected else dense(num_channels)
-        self.bn = layers.LayerNormalization()
+        self.bn = layers.BatchNormalization()
         self.resblocks = [ResidualBlock(num_channels, fully_connected) for _ in range(num_blocks)]
         self.resblocks_fcn = [ResidualFullyConnectedBlock(num_channels, fully_connected) for _ in range(num_blocks_fully_connected)]
 
@@ -507,9 +507,9 @@ class ResidualBlock(tf.keras.Model):
     def __init__(self, num_channels, fully_connected):
         super().__init__()
         self.layer1 = conv2x3(num_channels) if not fully_connected else dense(num_channels)
-        self.bn1 = layers.LayerNormalization()
+        self.bn1 = layers.BatchNormalization()
         self.layer2 = conv2x3(num_channels) if not fully_connected else dense(num_channels)
-        self.bn2 = layers.LayerNormalization()
+        self.bn2 = layers.BatchNormalization()
         self.dense = dense
 
     def call(self, x, training=None):
@@ -526,13 +526,13 @@ class ResidualFullyConnectedBlock(tf.keras.Model):
     def __init__(self, num_channels, fully_connected):
         super().__init__()
         self.layer1 = conv2x3(num_channels // 2) if not fully_connected else dense(num_channels // 2)
-        self.bn1 = layers.LayerNormalization()
+        self.bn1 = layers.BatchNormalization()
         self.layer2 = conv4x9(num_channels // 2) if not fully_connected else dense(num_channels // 2)
-        self.bn2 = layers.LayerNormalization()
+        self.bn2 = layers.BatchNormalization()
         self.layer3 = layers.Conv2D(filters=num_channels, kernel_size=(1, 1), padding="same",
                                     activation=None, use_bias=False, kernel_initializer="glorot_uniform") \
                     if not fully_connected else dense(num_channels)
-        self.bn3 = layers.LayerNormalization()
+        self.bn3 = layers.BatchNormalization()
 
     def call(self, x, training=None):
         out = self.layer1(x, training=training)

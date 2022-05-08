@@ -87,7 +87,7 @@ if __name__=="__main__":
         min_non_zero_prob_samples=worker_config.optimization.min_non_zero_prob_samples,
         use_per=worker_config.optimization.use_per)
 
-    replay_buffer.restore()
+    replay_buffer.restore(tree_from_file=worker_config.optimization.restore_buffer_tree_from_file)
 
     manager = MetricsManager(
         APAO("dmcts", worker_config, str(network_path), parallel_threads=worker_config.optimization.apa_n_games),

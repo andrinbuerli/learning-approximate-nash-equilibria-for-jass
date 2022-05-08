@@ -178,14 +178,27 @@ class FileBasedReplayBufferFromFolder:
     def buffer_size(self):
         return self.sum_tree.filled_size
 
-    def restore(self):
-        for file in self.episode_data_folder.glob("*"):
-            self.sum_tree.add(data=file.name.split(".")[0],
-                              p=self.max_samples_per_episode)
-        logging.info(f"restored replay buffer ({self.sum_tree.filled_size}) from {self.episode_data_folder}")
+    def restore(self, tree_from_file: bool):
+        restore_path = self.cache_path / f"replay_buffer.pkl"
+        if tree_from_file and restore_path.exists():
+            with open(restore_path, "rb") as f:
+                self.sum_tree = pickle.load(f)
+            logging.info(f"restored replay buffer from {restore_path}")
+        else:
+            for file in self.episode_data_folder.glob("*"):
+                self.sum_tree.add(data=file.name.split(".")[0],
+                                  p=self.max_samples_per_episode)
+            logging.info(f"restored replay buffer ({self.sum_tree.filled_size}) from {self.episode_data_folder}")
 
     def save(self):
-        pass # already done as all episodes are stored in pickle files
+        save_path = self.cache_path / f"replay_buffer.pkl"
+
+        if save_path.exists():
+            save_path.rename(self.cache_path / f"replay_buffer-old.pkl")
+
+        with open(save_path, "wb") as f:
+            pickle.dump(self.sum_tree, f)
+            logging.info(f"saved replay buffer to {save_path}")
 
     def _sample_continuously_from_buffer(self):
         while self.running:

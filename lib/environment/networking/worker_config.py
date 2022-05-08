@@ -103,6 +103,7 @@ class OptimizationConfig(BaseConfig):
         self.data_folder = ""
         self.valid_policy_target = False
         self.log_gradients = True
+        self.restore_buffer_tree_from_file = True
 
 class LogConfig(BaseConfig):
     def __init__(self):

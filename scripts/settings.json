@@ -59,7 +59,7 @@
   "log_n_steps_ahead": 15,
   "apa_n_games": 1,
   "log_gradients": false,
-  "restore_buffer_tree_from_file": true
+  "restore_buffer_tree_from_file": false
  },
  "network": {
   "fully_connected": false,

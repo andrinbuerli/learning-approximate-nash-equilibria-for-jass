@@ -29,10 +29,11 @@ class AgentMuZeroMCTS(RememberingAgent):
                  discount=1,
                  mdp_value=False,
                  virtual_loss=10,
-                 n_search_threads=4
+                 n_search_threads=4,
+                 use_player_function: bool = False,
+                 use_terminal_function: bool = False,
                  ):
         super().__init__(temperature=temperature)
-
         self.iterations = iterations
         self.virtual_loss = virtual_loss
         self.mdp_value = mdp_value
@@ -49,7 +50,10 @@ class AgentMuZeroMCTS(RememberingAgent):
             dirichlet_eps=dirichlet_eps,
             dirichlet_alpha=dirichlet_alpha,
             mdp_value=mdp_value,
-            discount=discount)
+            discount=discount,
+            use_player_function=use_player_function,
+            use_terminal_function=use_terminal_function
+        )
 
         self.reward_calc_policy = LatentValueCalculationPolicy()
 

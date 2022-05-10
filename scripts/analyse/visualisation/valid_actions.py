@@ -29,7 +29,7 @@ if __name__=="__main__":
     parser.add_argument(f'--run', default="1649334850")
     args = parser.parse_args()
 
-    base_path = Path(__file__).resolve().parent.parent.parent / "results" / args.run
+    base_path = Path(__file__).resolve().parent.parent.parent.parent / "results" / args.run
 
     config = WorkerConfig()
     config.load_from_json(base_path / "worker_config.json")
@@ -86,6 +86,7 @@ if __name__=="__main__":
     players = [game.state.player]
     player_kls = []
     hand_kls = []
+    is_terminals = []
     while not game.is_done():
         valid_actions = rule.get_full_valid_actions_from_state(game.state)
         valid_actions = valid_actions / np.maximum(valid_actions.sum(), 1)
@@ -102,6 +103,8 @@ if __name__=="__main__":
         hand_kls.append(hand_kl)
 
         values.append(support_to_scalar(value[0], min_value=0).numpy())
+
+        is_terminals.append(is_terminal[0])
 
         plt.plot(value[0].numpy()[0], c="red")
         plt.plot(value[0].numpy()[1], c="blue")
@@ -149,6 +152,15 @@ if __name__=="__main__":
         value, reward, policy, player, hand, is_terminal, encoded_state = network.recurrent_inference(encoded_state, [[action]], all_preds=True)
         all_reward_estimates.append(support_to_scalar(reward[0], min_value=0).numpy())
 
+    for _ in range(5):
+        all_rewards.append([0, 0])
+        is_terminals.append(is_terminal[0])
+        values.append(support_to_scalar(value[0], min_value=0).numpy())
+        value, reward, policy, player, hand, is_terminal, encoded_state = network.recurrent_inference(encoded_state,
+                                                                                                      [[action]],
+                                                                                                      all_preds=True)
+        all_reward_estimates.append(support_to_scalar(reward[0], min_value=0).numpy())
+
     plt.plot(policy_kls)
     colors = ["red", "blue", "green", "violet"]
     legend = [True, True, True, True]
@@ -175,6 +187,11 @@ if __name__=="__main__":
     plt.savefig("hand_kls.png")
     plt.clf()
 
+    plt.plot(is_terminals)
+    plt.axvline(len(is_terminals)-5, c="r")
+    plt.savefig("is_terminals.png")
+    plt.clf()
+
     values = np.array(values)
     plt.plot(values[:, 0], marker="x", label="pred 0", alpha=0.5, color="green")
     plt.plot(values[:, 1], marker="x", label="pred 1", alpha=0.5, color="red")
@@ -198,6 +215,7 @@ if __name__=="__main__":
     plt.xlabel("Moves")
     plt.ylabel("Outcome")
     plt.savefig("outcome-values.png")
+    plt.clf()
 
     legend = True
     for i, (r, r_estimate) in enumerate(zip(all_rewards, all_reward_estimates)):

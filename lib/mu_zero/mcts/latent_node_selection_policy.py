@@ -28,7 +28,11 @@ class LatentNodeSelectionPolicy:
             dirichlet_alpha: float = 0.3,
             mdp_value: bool = False,
             synchronized: bool = False,
+            use_player_function: bool = False,
+            use_terminal_function: bool = False,
             debug: bool = False):
+        self.use_terminal_function = use_terminal_function
+        self.use_player_function = use_player_function
         self.mdp_value = mdp_value
         self.synchronized = synchronized
         self.discount = discount
@@ -71,7 +75,12 @@ class LatentNodeSelectionPolicy:
                 c.avail += 1
 
             # is_terminal_state = child.parent.is_post_terminal is not None and child.is_post_terminal > 0.5
-            is_terminal_state = child.next_player == -1
+
+            if self.use_player_function:
+                is_terminal_state = child.is_post_terminal > 0.5 if self.use_terminal_function else False
+            else:
+                is_terminal_state = child.next_player == -1
+
             with node.lock:
                 with child.lock:
                     not_expanded = child.prior is None
@@ -116,7 +125,12 @@ class LatentNodeSelectionPolicy:
 
     def _exploitation_term(self, child: Node):
         if child.visits > 0:
-            next_player = child.parent.next_player # child.parent.predicted_player.argmax()
+
+            if self.use_player_function:
+                next_player = child.parent.predicted_player.argmax()
+            else:
+                next_player = child.parent.next_player
+
             q = (child.value_sum[next_player] / child.visits)
             assert len(child.reward.shape) == 1, f'shape: {child.reward.shape}'
             q_value = (child.reward[next_player] + self.discount * q) \
@@ -141,40 +155,42 @@ class LatentNodeSelectionPolicy:
 
         # add edges for all children
         for action in node.missing_actions(node.valid_actions):
-            # add one child edge
-            # node.add_child(
-            #     action=action,
-            #     next_player=-1,
-            #     pushed=-1,
-            #     trump=-1)
-            if action < TRUMP_FULL_OFFSET:
-                nr_played_cards = len(node.cards_played)
-                next_state_is_at_start_of_trick = (nr_played_cards + 1) % 4 == 0
-                if next_state_is_at_start_of_trick:
-                    next_player_in_game = self._get_start_trick_next_player(action, node, root_obs)
-                else:
-                    next_player_in_game = next_player[node.next_player]
+            if self.use_player_function:
+                #add one child edge
                 node.add_child(
                     action=action,
-                    next_player=next_player_in_game,
-                    cards_played=list(node.cards_played + [action]))
+                    next_player=-1,
+                    pushed=-1,
+                    trump=-1)
             else:
-                trump = -1
-                pushed = None
-                if action == TRUMP_FULL_P:  # PUSH
-                    next_player_in_game = (node.next_player + 2) % 4
-                    pushed = True
-                else:  # TRUMP
-                    if node.pushed:
-                        next_player_in_game = (node.next_player + 2) % 4
+                if action < TRUMP_FULL_OFFSET:
+                    nr_played_cards = len(node.cards_played)
+                    next_state_is_at_start_of_trick = (nr_played_cards + 1) % 4 == 0
+                    if next_state_is_at_start_of_trick:
+                        next_player_in_game = self._get_start_trick_next_player(action, node, root_obs)
                     else:
-                        next_player_in_game = node.next_player
-                    trump = action - 36
-                node.add_child(
-                    action=action,
-                    next_player=next_player_in_game,
-                    pushed=pushed,
-                    trump=trump) # mask push if played
+                        next_player_in_game = next_player[node.next_player]
+                    node.add_child(
+                        action=action,
+                        next_player=next_player_in_game,
+                        cards_played=list(node.cards_played + [action]))
+                else:
+                    trump = -1
+                    pushed = None
+                    if action == TRUMP_FULL_P:  # PUSH
+                        next_player_in_game = (node.next_player + 2) % 4
+                        pushed = True
+                    else:  # TRUMP
+                        if node.pushed:
+                            next_player_in_game = (node.next_player + 2) % 4
+                        else:
+                            next_player_in_game = node.next_player
+                        trump = action - 36
+                    node.add_child(
+                        action=action,
+                        next_player=next_player_in_game,
+                        pushed=pushed,
+                        trump=trump) # mask push if played
 
     def _get_start_trick_next_player(self, action, node, root_obs):
         assert node.trump > -1

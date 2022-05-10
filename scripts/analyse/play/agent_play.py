@@ -30,6 +30,8 @@ if __name__=="__main__":
     parser.add_argument(f'--n_search_threads', default=1)
     parser.add_argument(f'--virtual_loss', default=1)
     parser.add_argument(f'--iterations', default=20)
+    parser.add_argument(f'--player_func', default=False, action="store_true")
+    parser.add_argument(f'--terminal_func', default=False, action="store_true")
     args = parser.parse_args()
 
     base_path = Path(__file__).resolve().parent.parent.parent.parent / "results" / args.run

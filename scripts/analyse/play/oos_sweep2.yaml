@@ -12,3 +12,7 @@ parameters:
     values: [1000]
   n_games:
     values: [100]
+# docker-compose run agent_play bash -c "cd scripts/analyse/play && wandb sweep oos_sweep2.yaml"
+# docker-compose run agent_play bash -c "export WANDB_API_KEY=$(cat .wandbkey)
+#  && cd scripts/analyse/play
+#  && wandb agent andrinburli/app-scripts_analyse_play/5refs3e2"

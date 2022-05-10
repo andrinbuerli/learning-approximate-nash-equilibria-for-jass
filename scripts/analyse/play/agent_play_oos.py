@@ -6,7 +6,7 @@ import time
 import numpy as np
 import tensorflow as tf
 
-sys.path.append("../../")
+sys.path.append("../../../")
 
 from lib.factory import get_opponent
 from lib.cfr.agent_online_outcome_sampling import AgentOnlineOutcomeSampling

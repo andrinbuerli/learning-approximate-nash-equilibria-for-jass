@@ -46,11 +46,12 @@ services:
           - 9898:9898
           - 9897:9897
           - 9896:9896
+          - 9895:9895
         volumes:
             - .:/app
         command: bash -c "
                   cd scripts
-                  && python host_agents.py --files dmcts.json dpolicy.json random.json"
+                  && python host_agents.py --files mcts.json dmcts.json dpolicy.json random.json dmcts-50.json"
 
     test:
         build:

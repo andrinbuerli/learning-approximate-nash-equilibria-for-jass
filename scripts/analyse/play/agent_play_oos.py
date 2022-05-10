@@ -76,7 +76,7 @@ if __name__=="__main__":
         agent2 = get_opponent("random")
         logging.info("random")
     elif args.dmcts:
-        agent2 = get_opponent("dmcts")
+        agent2 = get_opponent("dmcts-50")
         logging.info("dmcts")
     elif args.mcts:
         agent2 = get_opponent("mcts")
@@ -101,7 +101,7 @@ if __name__=="__main__":
     if args.log_console:
         logger = ConsoleLogger({})
     else:
-        with open("../../.wandbkey", "r") as f:
+        with open("../../../.wandbkey", "r") as f:
             api_key = f.read().rstrip()
         logger = WandbLogger(
             wandb_project_name=params["log"]["projectname"],

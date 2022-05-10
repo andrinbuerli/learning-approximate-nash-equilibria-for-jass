@@ -1,0 +1,14 @@
+program: agent_play_oos.py
+method: bayes
+metric:
+  name: t0
+  goal: maximize
+parameters:
+  delta:
+    values: [0.2, 0.4, 0.6, 0.7, 0.8, 0.9, 1.0]
+  epsilon:
+    values: [0.2, 0.4, 0.6, 0.7, 0.8, 0.9, 1.0]
+  iterations1:
+    values: 1000
+  n_games:
+    values: 100

@@ -144,6 +144,8 @@ def get_optimizer(config: WorkerConfig):
 def get_opponent(type: str) -> CppAgent:
     if type == "dmcts":
         return AgentByNetworkCpp(url="http://baselines:9898/dmcts")
+    if type == "dmcts-50":
+        return AgentByNetworkCpp(url="http://baselines:9895/dmcts-50")
     if type == "mcts":
         return AgentByNetworkCpp(url="http://baselines:9899/mcts", cheating=True)
     elif type == "random":

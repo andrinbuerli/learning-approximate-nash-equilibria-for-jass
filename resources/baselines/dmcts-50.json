@@ -1,0 +1,10 @@
+{
+ "agent": {
+  "type": "dmcts",
+  "name": "dmcts-50",
+  "iterations": 50,
+  "nr_determinizations": 25,
+  "threads_to_use": 4,
+  "port": 9895
+ }
+}

@@ -35,7 +35,7 @@ def host_agent(config: WorkerConfig):
     else:
         agent = AgentFromCpp(agent=agent)
     app = PlayerServiceApp("jass_agents")
-    name = config.agent.type
+    name = config.agent.name if config.agent.name is not None else config.agent.type
     logging.info(f"Hosting player {config.agent.port}/{name}")
     app.add_player(name, agent)
     app.run(host="0.0.0.0", port=config.agent.port)

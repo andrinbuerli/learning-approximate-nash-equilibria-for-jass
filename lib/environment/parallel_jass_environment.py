@@ -182,12 +182,12 @@ def _play_games_multi_threaded_(n_games, continuous):
                 if continuous:
                     queue.put(
                         (np.stack(states), np.stack(actions), np.stack(rewards), np.stack(probs), np.stack(outcomes)))
-
-                    del states, actions, rewards, probs, outcomes, network
-                    tf.keras.backend.clear_session()
-                    gc.collect()
                 else:
                     return states, actions, rewards, probs, outcomes
+
+            del states, actions, rewards, probs, outcomes, network
+            tf.keras.backend.clear_session()
+            gc.collect()
 
         except Exception as e:
             logging.warning(f"Exception occurred: {e}, continuing anyway, traceback: {traceback.format_exc()}")

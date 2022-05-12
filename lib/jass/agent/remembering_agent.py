@@ -34,7 +34,8 @@ class RememberingAgent(CppAgent):
         return self._state_values
 
     def action_trump(self, obs: GameObservationCpp) -> int:
-        distribution = self.get_play_action_probs_and_value(obs)
+        distribution, values = self.get_play_action_probs_and_value(obs)
+        self._state_values.append((distribution * values).sum())
         self._trump_probs.append(distribution)
 
         trump_distribution = self._heat_prob(distribution[36:])
@@ -54,7 +55,8 @@ class RememberingAgent(CppAgent):
         return int(action_trump)
 
     def action_play_card(self, obs: GameObservationCpp) -> int:
-        distribution = self.get_play_action_probs_and_value(obs)
+        distribution, values = self.get_play_action_probs_and_value(obs)
+        self._state_values.append((distribution * values).sum())
         self._card_probs.append(distribution)
         card_distribution = self._heat_prob(distribution[:36])
         action_card = np.random.choice(np.arange(0, 36, 1), p=card_distribution)

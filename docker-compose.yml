@@ -63,6 +63,7 @@ services:
         entrypoint: []
         volumes:
             - .:/app
+            - ../jass-train-py/data/conv_observation_full_0.75_quantile:/data
         command: pytest --forked -n auto --timeout=120 /app/test -v
 
 

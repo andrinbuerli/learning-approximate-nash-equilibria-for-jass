@@ -62,8 +62,8 @@ class LatentNodeSelectionPolicy:
             exploration = np.array([self._exploration_term(x) for x in children])
             exploitation = np.array([self._exploitation_term(x) for x in children])
 
-            max_exploitation = 157 # exploitation.max()
-            min_exploitation = 0 # exploitation.min()
+            max_exploitation = 157 if not self.mdp_value else exploitation.max()
+            min_exploitation = 0 if not self.mdp_value else exploitation.min()
 
             exploitation = (exploitation - min_exploitation) / np.max([(max_exploitation - min_exploitation), 1])
 

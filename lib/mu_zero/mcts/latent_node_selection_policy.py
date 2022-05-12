@@ -45,7 +45,7 @@ class LatentNodeSelectionPolicy:
         self.feature_extractor = feature_extractor
         self.rule = RuleSchieber()
 
-    def tree_policy(self, observation: jasscpp.GameObservationCpp, node: Node, virtual_loss=0) -> Node:
+    def tree_policy(self, observation: jasscpp.GameObservationCpp, node: Node, virtual_loss=0, observation_feature_format=None) -> Node:
         while True:
             with node.lock: # ensures that node and children not currently locked, i.e. being expanded
                 node.visits += virtual_loss
@@ -89,27 +89,32 @@ class LatentNodeSelectionPolicy:
                             child.visits += virtual_loss
                             child.value, child.reward, child.prior, child.predicted_player, _, child.is_post_terminal, child.hidden_state = \
                                 self.network.recurrent_inference(node.hidden_state, np.array([[child.action]]), all_preds=True)
-                            self._expand_node(child, observation)
+                            self._expand_node(child, observation, observation_feature_format)
                         break
 
             node = child
 
         return child
 
-    def init_node(self, node: Node, observation: Union[jasscpp.GameStateCpp, jasscpp.GameObservationCpp]):
+    def init_node(self, node: Node, observation: Union[jasscpp.GameStateCpp, jasscpp.GameObservationCpp], observation_feature_format=None):
         if node.is_root():
             rule = jasscpp.RuleSchieberCpp()
-            if type(observation) == jasscpp.GameStateCpp:
+            if observation_feature_format is not None:
+                node.valid_actions = observation_feature_format.valid_actions
+            elif type(observation) == jasscpp.GameStateCpp:
                 node.valid_actions = rule.get_full_valid_actions_from_state(observation)
             else:
                 node.valid_actions = rule.get_full_valid_actions_from_obs(observation)
 
             assert (node.valid_actions >= 0).all(), 'Error in valid actions'
 
-            features = self.feature_extractor.convert_to_features(observation, rule)[None]
+            if observation_feature_format is not None:
+                features = observation[None]
+            else:
+                features = self.feature_extractor.convert_to_features(observation, rule)[None]
             node.value, node.reward, node.prior, node.predicted_player, _, node.is_post_terminal, node.hidden_state =\
                 self.network.initial_inference(features, all_preds=True)
-            self._expand_node(node, root_obs=observation)
+            self._expand_node(node, root_obs=observation, observation_feature_format=observation_feature_format)
 
             valid_idxs = np.where(node.valid_actions)[0]
             eta = np.random.dirichlet(self.dirichlet_alpha[:len(valid_idxs)])
@@ -141,7 +146,7 @@ class LatentNodeSelectionPolicy:
 
         return q_value
 
-    def _expand_node(self, node: Node, root_obs: jasscpp.GameObservationCpp):
+    def _expand_node(self, node: Node, root_obs: jasscpp.GameObservationCpp, observation_feature_format):
         node.value, node.reward, node.prior, node.predicted_player, node.is_post_terminal = \
             [x.numpy().squeeze() for x in [node.value, node.reward, node.prior, node.predicted_player, node.is_post_terminal]]
 
@@ -167,7 +172,7 @@ class LatentNodeSelectionPolicy:
                     nr_played_cards = len(node.cards_played)
                     next_state_is_at_start_of_trick = (nr_played_cards + 1) % 4 == 0
                     if next_state_is_at_start_of_trick:
-                        next_player_in_game = self._get_start_trick_next_player(action, node, root_obs)
+                        next_player_in_game = self._get_start_trick_next_player(action, node, root_obs, observation_feature_format)
                     else:
                         next_player_in_game = next_player[node.next_player]
                     node.add_child(
@@ -192,13 +197,20 @@ class LatentNodeSelectionPolicy:
                         pushed=pushed,
                         trump=trump) # mask push if played
 
-    def _get_start_trick_next_player(self, action, node, root_obs):
+    def _get_start_trick_next_player(self, action, node, root_obs, observation_feature_format):
         assert node.trump > -1
 
         prev_actions = [action]
         prev_values = [card_values[node.trump, action]]
         players = [node.next_player]
         parent = node
+
+        if observation_feature_format is None:
+            tricks = root_obs.tricks
+            trick_first_player = root_obs.trick_first_player
+        else:
+            tricks = observation_feature_format.tricks
+            trick_first_player = observation_feature_format.trick_first_player
 
         while parent.parent is not None and len(prev_actions) < 4:
             prev_actions.append(parent.action)
@@ -210,10 +222,10 @@ class LatentNodeSelectionPolicy:
         current_trick = len(node.cards_played) // 4
         for i in range(4 - num_cards):
             j = 4 - 1 - num_cards - i
-            card = root_obs.tricks[current_trick][j]
+            card = tricks[current_trick][j]
             prev_actions.append(card)
             prev_values.append(card_values[node.trump, card])
-            players.append((root_obs.trick_first_player[current_trick] - j) % 4)
+            players.append((trick_first_player[current_trick] - j) % 4)
 
         assert sum(players) == sum([0, 1, 2, 3]) and len(players) == 4, "invalid previous players"
         assert len(prev_actions) == 4 and len(prev_values) == 4, "invalid previous cards"

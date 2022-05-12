@@ -18,7 +18,8 @@ class ALPV_MCTS:
                  discount: float = 0.9,
                  n_search_threads: int = 4,
                  virtual_loss: int = 10,
-                 store_trajectory_actions: bool = False):
+                 store_trajectory_actions: bool = False,
+                 observation_feature_format=None):
         """
         Initialize the search tree.
         Args:
@@ -45,11 +46,55 @@ class ALPV_MCTS:
         self.reward_calc = reward_calc
 
         # initialize root node
-        cards_played = [x for x in observation.tricks.reshape(-1).tolist() if x >= 0]
-        self.root = Node(parent=None, action=None, player=None, trump=observation.trump,
-                         next_player=observation.player, cards_played=cards_played)
 
-        self.node_selection.init_node(self.root, observation)
+        self.observation_feature_format = observation_feature_format
+
+        if observation_feature_format is None:
+            cards_played = [x for x in observation.tricks.reshape(-1).tolist() if x >= 0]
+            root_player = observation.player
+            trump = observation.trump
+        else:
+            reshaped = observation.reshape(observation_feature_format.FEATURE_SHAPE)
+            root_player = reshaped[0, 0, observation_feature_format.CH_PLAYER:observation_feature_format.CH_PLAYER + 4].argmax()
+            trump_one_hot = reshaped[0, 0, observation_feature_format.CH_TRUMP:observation_feature_format.CH_TRUMP + 6]
+            if trump_one_hot.max() > 0:
+                trump = trump_one_hot.argmax()
+            else:
+                trump = -1
+
+            valid_cards = reshaped[:, :, observation_feature_format.CH_CARDS_VALID].reshape(-1)
+            trump_valid = np.repeat(reshaped[0, 0, observation_feature_format.CH_TRUMP_VALID].reshape(-1), 6)
+            push_valid = reshaped[0, 0, observation_feature_format.CH_PUSH_VALID].reshape(-1)
+
+            observation_feature_format.valid_actions = np.concatenate((valid_cards, trump_valid, push_valid))
+
+            observation_feature_format.tricks = -np.ones((9, 4), dtype=np.int32)
+            observation_feature_format.trick_first_player = -np.ones(9, dtype=np.int32)
+            trick_cards_position = reshaped[:, :,
+                                   observation_feature_format.CH_CARDS_IN_POSITION:observation_feature_format.CH_CARDS_IN_POSITION + 4]\
+                .argmax(axis=-1).reshape(-1)
+            trick_cards_player = reshaped[:, :,
+                                 observation_feature_format.CH_CARDS_PLAYER_0:observation_feature_format.CH_CARDS_PLAYER_0 + 4]\
+                .argmax(axis=-1).reshape(-1)
+            for i in range(9):
+                trick_cards_one_hot = reshaped[:, :, observation_feature_format.CH_CARDS_IN_TRICK + i].reshape(-1)
+                trick_cards = np.flatnonzero(trick_cards_one_hot)
+
+                if len(trick_cards) == 0:
+                    break
+
+                for c in trick_cards:
+                    trick_card_position = trick_cards_position[c]
+                    observation_feature_format.tricks[i, trick_card_position] = int(c)
+                    if trick_card_position == 0:
+                        observation_feature_format.trick_first_player[i] = int(trick_cards_player[c])
+
+            cards_played = [int(x) for x in observation_feature_format.tricks.reshape(-1).tolist() if x > -1]
+
+        self.root = Node(parent=None, action=None, player=None, trump=trump,
+                         next_player=root_player, cards_played=cards_played)
+
+        self.node_selection.init_node(self.root, observation, observation_feature_format)
 
         self.pool = ThreadPool(processes=self.n_search_threads)
 
@@ -79,7 +124,8 @@ class ALPV_MCTS:
 
         # select and possibly expand the tree using the tree policy
         node = self.node_selection.tree_policy(node=self.root, observation=self.observation,
-                                               virtual_loss=self.virtual_loss)
+                                               virtual_loss=self.virtual_loss,
+                                               observation_feature_format=self.observation_feature_format)
 
         # evaluate the new node
         value = self.reward_calc.calculate_value(node)

@@ -58,7 +58,7 @@ class AgentMuZeroMCTS(RememberingAgent):
         self.reward_calc_policy = LatentValueCalculationPolicy()
 
 
-    def get_play_action_probs_and_value(self, obs: GameObservationCpp) -> np.array:
+    def get_play_action_probs_and_value(self, obs: GameObservationCpp, feature_format=None) -> np.array:
         stats = MinMaxStats()
         search = ALPV_MCTS(
             observation=obs,
@@ -68,11 +68,12 @@ class AgentMuZeroMCTS(RememberingAgent):
             stats=stats,
             discount=self.discount,
             virtual_loss=self.virtual_loss,
-            n_search_threads=self.n_search_threads
+            n_search_threads=self.n_search_threads,
+            observation_feature_format=feature_format
         )
 
         search.run_simulations_async(self.iterations)
 
-        prob, q_value = search.get_result()
+        prob, q_values = search.get_result()
 
-        return prob
+        return prob, q_values

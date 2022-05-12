@@ -143,6 +143,7 @@ def _play_games_multi_threaded_(n_games, continuous):
     network_path = _play_games_multi_threaded_.network_path
     reanalyse_fraction = _play_games_multi_threaded_.reanalyse_fraction
     reanalyse_data_path = _play_games_multi_threaded_.reanalyse_data_path
+    continuous_games_without_reload = _play_games_multi_threaded_.continuous_games_without_reload
 
     import tensorflow as tf
     from lib.util import set_allow_gpu_memory_growth
@@ -168,30 +169,33 @@ def _play_games_multi_threaded_(n_games, continuous):
 
             network = get_network(worker_config, network_path=network_path)
 
-            rand = np.random.uniform(0, 1)
+            for _ in range(continuous_games_without_reload):
+                rand = np.random.uniform(0, 1)
 
-            if rand < reanalyse_fraction:
-                actions, outcomes, probs, rewards, states = reanalyse(ds, network, pool, worker_config)
-                logging.info(f"reanalysed single game")
-            else:
-                actions, outcomes, probs, rewards, states = play_games(n_games, network, pool, worker_config)
-                logging.info(f"finished {n_games} games")
+                if rand < reanalyse_fraction:
+                    actions, outcomes, probs, rewards, states = reanalyse(ds, network, pool, worker_config)
+                    logging.info(f"reanalysed single game")
+                else:
+                    actions, outcomes, probs, rewards, states = play_games(n_games, network, pool, worker_config)
+                    logging.info(f"finished {n_games} games")
 
-            if continuous:
-                queue.put((np.stack(states), np.stack(actions), np.stack(rewards), np.stack(probs), np.stack(outcomes)))
+                if continuous:
+                    queue.put(
+                        (np.stack(states), np.stack(actions), np.stack(rewards), np.stack(probs), np.stack(outcomes)))
 
-                del states, actions, rewards, probs, outcomes, network
-                tf.keras.backend.clear_session()
-                gc.collect()
-            else:
-                return states, actions, rewards, probs, outcomes
+                    del states, actions, rewards, probs, outcomes, network
+                    tf.keras.backend.clear_session()
+                    gc.collect()
+                else:
+                    return states, actions, rewards, probs, outcomes
+
         except Exception as e:
             logging.warning(f"Exception occurred: {e}, continuing anyway, traceback: {traceback.format_exc()}")
 
 
 def _init_process_worker_(function, network_path: str, worker_config: WorkerConfig, check_move_validity: bool,
                           max_parallel_threads: int, reanalyse_fraction: float, reanalyse_data_path: str,
-                          queue: Queue, cancel_con: Connection):
+                          continuous_games_without_reload: int, queue: Queue, cancel_con: Connection):
     while network_path is not None and not os.path.exists(Path(network_path) / "prediction.pd" / "assets"):
         logging.info(f"waiting for model to be saved at {network_path}")
         time.sleep(1)
@@ -206,6 +210,7 @@ def _init_process_worker_(function, network_path: str, worker_config: WorkerConf
     function.worker_config = worker_config
     function.reanalyse_fraction = reanalyse_fraction
     function.reanalyse_data_path = reanalyse_data_path
+    function.continuous_games_without_reload = continuous_games_without_reload
 
 
 class ParallelJassEnvironment:
@@ -218,7 +223,9 @@ class ParallelJassEnvironment:
             network_path,
             check_move_validity=True,
             reanalyse_fraction: float = 0,
+            continuous_games_without_reload: int = 16,
             reanalyse_data_path="/data"):
+        self.continuous_games_without_reload = continuous_games_without_reload
         self.reanalyse_data_path = reanalyse_data_path
         self.reanalyse_fraction = reanalyse_fraction
         self.network_path = network_path
@@ -258,7 +265,8 @@ class ParallelJassEnvironment:
                 processes=self.max_parallel_processes,
                 initializer=_init_process_worker_,
                 initargs=(_play_games_multi_threaded_, self.network_path, self.agent_config, self.check_move_validity,
-                          self.max_parallel_threads, self.reanalyse_fraction, self.reanalyse_data_path, queue, cancel_con))
+                          self.max_parallel_threads, self.reanalyse_fraction, self.reanalyse_data_path, self.continuous_games_without_reload,
+                          queue, cancel_con))
 
         logging.debug(f"starting {n_games} games with {self.max_parallel_processes} workers...")
 

@@ -9,6 +9,7 @@ from copy import copy
 from multiprocessing import Queue
 from multiprocessing.connection import Connection
 from pathlib import Path
+from random import shuffle
 
 import numpy as np
 from jass.features.feature_example_buffer import parse_feature_example
@@ -150,6 +151,7 @@ def _play_games_multi_threaded_(n_games, continuous):
     first_call = True
 
     tf_record_files = [str(x.resolve()) for x in Path(reanalyse_data_path).glob("*.tfrecord")]
+    shuffle(tf_record_files)
     ds = tf.data.TFRecordDataset(tf_record_files)
     ds = iter(ds.map(lambda x: parse_feature_example(
                 x,

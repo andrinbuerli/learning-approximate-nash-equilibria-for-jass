@@ -5,7 +5,6 @@ from pathlib import Path
 
 import tensorflow as tf
 import wandb
-
 from tqdm import tqdm
 
 from lib.environment.networking.worker_config import WorkerConfig
@@ -22,6 +21,7 @@ class MuZeroTrainer:
     def __init__(
             self,
             network: AbstractNetwork,
+            target_network: AbstractNetwork,
             replay_buffer: FileBasedReplayBufferFromFolder,
             metrics_manager: MetricsManager,
             config: WorkerConfig,
@@ -38,14 +38,20 @@ class MuZeroTrainer:
             value_entropy_weight: float = 1.0,
             reward_entropy_weight: float = 1.0,
             is_terminal_loss_weight: float = 1.0,
+            target_network_update: int = 10,
             dldl: bool = False,
             store_weights:bool = True,
             store_buffer:bool = False,
             grad_clip_norm: int = None,
             value_mse: bool = False,
+            value_td_5_step: bool = False,
             reward_mse: bool = False,
-            log_gradients: bool = True
+            log_gradients: bool = True,
+            log_inputs: bool = False
     ):
+        self.log_inputs = log_inputs
+        self.target_network_update = target_network_update
+        self.value_td_5_step = value_td_5_step
         self.log_gradients = log_gradients
         self.reward_mse = reward_mse
         self.is_terminal_loss_weight = is_terminal_loss_weight
@@ -69,6 +75,7 @@ class MuZeroTrainer:
         self.updates_per_step = updates_per_step
         self.replay_buffer = replay_buffer
         self.network = network
+        self.target_network = target_network
 
         self.optimizer = optimizer
 
@@ -114,6 +121,9 @@ class MuZeroTrainer:
 
                 if self.store_buffer:
                     self.replay_buffer.save()
+
+            if ((it * self.updates_per_step) % self.target_network_update) == 0:
+                self.target_network.set_weights(self.network.get_weights())
 
             custom_metrics = self.metrics_manager.get_latest_metrics_state()
 
@@ -223,7 +233,7 @@ class MuZeroTrainer:
 
             train_input_dict = {
                 f"train_input/channel_{c}_{self.feature_names[c]}": ft[c] for c in range(self.config.network.feature_extractor.FEATURE_SHAPE[-1])
-            }
+            } if self.log_inputs else {}
 
             training_infos.append({
                 **info, **reward_error, **value_error, **policy_kls, **policy_ces, **ls_entropies,
@@ -252,6 +262,9 @@ class MuZeroTrainer:
     def train_step(self, states, next_actions, rewards_target, policies_target, outcomes_target, sample_weights):
         batch_size = tf.shape(states)[0]
         trajectory_length = tf.shape(states)[1]
+
+        if self.value_td_5_step:
+            trajectory_length = trajectory_length - 5
 
         policy_kls = tf.TensorArray(tf.float32, size=trajectory_length, dynamic_size=False, clear_after_read=True)
         policy_ces = tf.TensorArray(tf.float32, size=trajectory_length, dynamic_size=False, clear_after_read=True)
@@ -296,7 +309,13 @@ class MuZeroTrainer:
             reward_loss = tf.zeros((batch_size, 4), dtype=tf.float32) # zero reward predicted for initial inference
 
             expected_value = support_to_scalar_per_player(value, min_value=0, nr_players=4)
-            if self.value_mse:
+            if self.value_td_5_step:
+                target_value_5_steps_ahead = self.target_network.initial_inference(states[:, 5], training=False)[0]
+                target_value_5_steps_ahead = support_to_scalar_per_player(target_value_5_steps_ahead, min_value=0, nr_players=4)
+                cum_reward_5_steps_ahead = tf.cast(tf.reduce_sum(rewards_target[:, :5], axis=1, keepdims=False), tf.float32)
+                target_value = cum_reward_5_steps_ahead + target_value_5_steps_ahead
+                value_ce = (expected_value - target_value)**2
+            elif self.value_mse:
                 value_ce = (expected_value - tf.cast(outcomes_target[:, 0], tf.float32))**2
             else:
                 value_target_distribution = scalar_to_support(
@@ -378,7 +397,14 @@ class MuZeroTrainer:
                 reward_loss += self.scale_gradient(factor=1/trajectory_length)(reward_ce)
 
                 expected_value = support_to_scalar_per_player(value, min_value=0, nr_players=4)
-                if self.value_mse:
+                if self.value_td_5_step:
+                    target_value_5_steps_ahead = self.target_network.initial_inference(states[:, i+5], training=False)[0]
+                    target_value_5_steps_ahead = support_to_scalar_per_player(target_value_5_steps_ahead, min_value=0, nr_players=4)
+                    target_value_5_steps_ahead *=  (1 - post_terminal_states[:, None])  # target value after terminal is 0
+                    cum_reward_5_steps_ahead = tf.cast(tf.reduce_sum(rewards_target[:, i:i+5], axis=1, keepdims=False), tf.float32)
+                    target_value = cum_reward_5_steps_ahead + target_value_5_steps_ahead
+                    value_ce = (expected_value - target_value)**2
+                elif self.value_mse:
                     value_ce = (expected_value - tf.cast(outcomes_target[:, i+1], tf.float32)) ** 2
                 else:
                     value_target_distribution = scalar_to_support(

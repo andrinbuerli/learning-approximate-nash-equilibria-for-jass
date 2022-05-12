@@ -65,6 +65,7 @@ class NetworkConfig(BaseConfig):
 class OptimizationConfig(BaseConfig):
     def __init__(self):
         self.port = 8080
+        self.reanalyse_fraction = 0.0
         self.value_loss_weight = 1.0
         self.reward_loss_weight = 1.0
         self.policy_loss_weight = 1.0
@@ -78,6 +79,8 @@ class OptimizationConfig(BaseConfig):
         self.learning_rate_init = None
         self.grad_clip_norm = None
         self.dldl = False
+        self.target_network_update = 100
+        self.value_td_5_step = False
         self.value_mse = False
         self.reward_mse = False
         self.weight_decay = 1e-4

@@ -124,7 +124,6 @@ if __name__ == "__main__":
         while data_collecting_queue.qsize() > 0:
             data_collecting_queue.put('STOP')
             for states, actions, rewards, probs, outcomes in iter(data_collecting_queue.get, 'STOP'):
-                print(states.shape, actions.shape, rewards.shape, probs.shape, outcomes.shape)
                 all_states.extend(states)
                 all_actions.extend(actions)
                 all_rewards.extend(rewards)

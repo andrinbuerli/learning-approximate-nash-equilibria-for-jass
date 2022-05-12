@@ -10,6 +10,7 @@ from jass.game.const import next_player, TRUMP_FULL_OFFSET, TRUMP_FULL_P, card_v
 from jass.game.rule_schieber import RuleSchieber
 
 from lib.jass.features.features_set_cpp import FeaturesSetCpp
+from lib.mu_zero.mcts.min_max_stats import MinMaxStats
 from lib.mu_zero.mcts.node import Node
 from lib.mu_zero.network.network_base import AbstractNetwork
 from lib.mu_zero.network.support_conversion import support_to_scalar
@@ -45,7 +46,13 @@ class LatentNodeSelectionPolicy:
         self.feature_extractor = feature_extractor
         self.rule = RuleSchieber()
 
-    def tree_policy(self, observation: jasscpp.GameObservationCpp, node: Node, virtual_loss=0, observation_feature_format=None) -> Node:
+    def tree_policy(
+            self,
+            observation: jasscpp.GameObservationCpp,
+            node: Node,
+            stats: MinMaxStats,
+            virtual_loss=0,
+            observation_feature_format=None) -> Node:
         while True:
             with node.lock: # ensures that node and children not currently locked, i.e. being expanded
                 node.visits += virtual_loss
@@ -60,12 +67,13 @@ class LatentNodeSelectionPolicy:
 
             #with node.lock: # ensures that node and children not currently locked, i.e. being expanded
             exploration = np.array([self._exploration_term(x) for x in children])
-            exploitation = np.array([self._exploitation_term(x) for x in children])
+            exploitation = np.array([self._exploitation_term(x, stats) for x in children])
 
-            max_exploitation = 157 if not self.mdp_value else exploitation.max()
-            min_exploitation = 0 if not self.mdp_value else exploitation.min()
+            # max_exploitation = 157 if not self.mdp_value else exploitation.max()
+            # min_exploitation = 0 if not self.mdp_value else exploitation.min()
 
-            exploitation = (exploitation - min_exploitation) / np.max([(max_exploitation - min_exploitation), 1])
+            #exploitation = (exploitation - min_exploitation) / np.max([(max_exploitation - min_exploitation), 1])
+            #exploitation = stats.normalize(exploitation)
 
             puct = exploitation + exploration
             i_max = np.argmax(puct)
@@ -128,7 +136,7 @@ class LatentNodeSelectionPolicy:
 
         return exploration_term
 
-    def _exploitation_term(self, child: Node):
+    def _exploitation_term(self, child: Node, stats: MinMaxStats):
         if child.visits > 0:
             with child.lock:
                 if self.use_player_function:
@@ -140,6 +148,8 @@ class LatentNodeSelectionPolicy:
                 assert len(child.reward.shape) == 1, f'shape: {child.reward.shape}'
                 q_value = (child.reward[next_player] + self.discount * q) \
                     if self.mdp_value else q
+
+                q_value = stats.normalize(q_value)
             #logging.info(q_normed)
         else:
             q_value = 0

@@ -125,7 +125,8 @@ class ALPV_MCTS:
         # select and possibly expand the tree using the tree policy
         node = self.node_selection.tree_policy(node=self.root, observation=self.observation,
                                                virtual_loss=self.virtual_loss,
-                                               observation_feature_format=self.observation_feature_format)
+                                               observation_feature_format=self.observation_feature_format,
+                                               stats=self.stats)
 
         # evaluate the new node
         value = self.reward_calc.calculate_value(node)
@@ -140,10 +141,10 @@ class ALPV_MCTS:
 
             #[node.stats.update(v) for v in value]
             if node.is_root():
-                node.stats.update(value[node.next_player])
+                self.stats.update(value[node.next_player])
             else:
-                player = node.parent.next_player # node.parent.predicted_player.argmax()
-                node.stats.update(value[player])
+                player = node.next_player # node.parent.predicted_player.argmax()
+                self.stats.update(value[player])
 
             if node.is_root():
                 break

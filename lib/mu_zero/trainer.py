@@ -123,6 +123,7 @@ class MuZeroTrainer:
                     self.replay_buffer.save()
 
             if ((it * self.updates_per_step) % self.target_network_update) == 0:
+                logging.info('Copy weights to target network')
                 self.target_network.set_weights(self.network.get_weights())
 
             custom_metrics = self.metrics_manager.get_latest_metrics_state()

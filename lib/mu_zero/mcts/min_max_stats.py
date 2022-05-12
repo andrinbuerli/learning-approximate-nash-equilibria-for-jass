@@ -1,3 +1,6 @@
+import numpy as np
+
+
 class MinMaxStats:
     """
     A class that holds the min-max values of the tree.
@@ -16,4 +19,4 @@ class MinMaxStats:
             # We normalize only when we have set the maximum and minimum values
             return (value - self.minimum) / (self.maximum - self.minimum)
         else:
-            return 1  # if min and max not yet set, less than two nodes have been expanded yet
+            return np.ones_like(value)  # if min and max not yet set, less than two nodes have been expanded yet

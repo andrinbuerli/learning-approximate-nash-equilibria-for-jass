@@ -79,7 +79,9 @@ if __name__ == "__main__":
         max_parallel_processes=int(args.max_parallel_processes),
         max_parallel_threads=int(args.max_parallel_threads),
         worker_config=config,
-        network_path=network_path)
+        network_path=network_path,
+        reanalyse_fraction=config.optimization.reanalyse_fraction,
+        reanalyse_data_path="/data")
 
     data_collecting_queue = Queue()
     cancel_receiver, cancel_sender = Pipe(duplex=False)

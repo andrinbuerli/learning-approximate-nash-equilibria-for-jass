@@ -185,7 +185,6 @@ def _play_games_multi_threaded_(n_games, continuous):
                 return states, actions, rewards, probs, outcomes
         except Exception as e:
             logging.warning(f"Exception occurred: {e}, continuing anyway, traceback: {traceback.format_exc()}")
-            raise e
 
 
 def _init_process_worker_(function, network_path: str, worker_config: WorkerConfig, check_move_validity: bool,

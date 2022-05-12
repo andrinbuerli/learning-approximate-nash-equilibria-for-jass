@@ -130,16 +130,16 @@ class LatentNodeSelectionPolicy:
 
     def _exploitation_term(self, child: Node):
         if child.visits > 0:
+            with child.lock:
+                if self.use_player_function:
+                    next_player = child.parent.predicted_player.argmax()
+                else:
+                    next_player = child.parent.next_player
 
-            if self.use_player_function:
-                next_player = child.parent.predicted_player.argmax()
-            else:
-                next_player = child.parent.next_player
-
-            q = (child.value_sum[next_player] / child.visits)
-            assert len(child.reward.shape) == 1, f'shape: {child.reward.shape}'
-            q_value = (child.reward[next_player] + self.discount * q) \
-                if self.mdp_value else q
+                q = (child.value_sum[next_player] / child.visits)
+                assert len(child.reward.shape) == 1, f'shape: {child.reward.shape}'
+                q_value = (child.reward[next_player] + self.discount * q) \
+                    if self.mdp_value else q
             #logging.info(q_normed)
         else:
             q_value = 0

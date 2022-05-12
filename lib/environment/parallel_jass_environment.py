@@ -170,10 +170,10 @@ def _play_games_multi_threaded_(n_games, continuous):
 
             if rand < reanalyse_fraction:
                 actions, outcomes, probs, rewards, states = reanalyse(ds, network, pool, worker_config)
+                logging.info(f"reanalysed single game")
             else:
                 actions, outcomes, probs, rewards, states = play_games(n_games, network, pool, worker_config)
-
-            logging.info(f"finished {n_games} games")
+                logging.info(f"finished {n_games} games")
 
             if continuous:
                 queue.put((np.stack(states), np.stack(actions), np.stack(rewards), np.stack(probs), np.stack(outcomes)))

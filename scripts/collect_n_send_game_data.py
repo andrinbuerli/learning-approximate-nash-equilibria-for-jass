@@ -150,7 +150,7 @@ if __name__ == "__main__":
 
                 logging.info("Received new weights")
 
-                if time.time() - last_save > 60: # 1 min:
+                if time.time() - last_save > 120: # 2 min:
                     network.set_weights_from_list(weights)
                     network.save(network_path)
                     last_save = time.time()

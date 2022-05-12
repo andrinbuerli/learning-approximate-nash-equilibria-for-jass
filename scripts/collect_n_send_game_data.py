@@ -106,9 +106,9 @@ if __name__ == "__main__":
 
     could_not_reach = 0
 
+    last_save = time.time()
     while True:
         time.sleep(5)
-        data_collecting_queue.put(None)
 
         try:
             response = requests.get(url=base_url + "/ping")
@@ -121,12 +121,15 @@ if __name__ == "__main__":
             if could_not_reach >= 10:
                 break
 
-        for states, actions, rewards, probs, outcomes in iter(data_collecting_queue.get, None):
-            all_states.extend(states)
-            all_actions.extend(actions)
-            all_rewards.extend(rewards)
-            all_probs.extend(probs)
-            all_outcomes.extend(outcomes)
+        while data_collecting_queue.qsize() > 0:
+            data_collecting_queue.put('STOP')
+            for states, actions, rewards, probs, outcomes in iter(data_collecting_queue.get, 'STOP'):
+                print(states.shape, actions.shape, rewards.shape, probs.shape, outcomes.shape)
+                all_states.extend(states)
+                all_actions.extend(actions)
+                all_rewards.extend(rewards)
+                all_probs.extend(probs)
+                all_outcomes.extend(outcomes)
 
         if len(all_states) > int(args.min_states_to_send):
             logging.info(f"Sending {len(all_states)} episodes..")
@@ -148,8 +151,11 @@ if __name__ == "__main__":
 
                 logging.info("Received new weights")
 
-                network.set_weights_from_list(weights)
-                network.save(network_path)
+                if time.time() - last_save > 60: # 1 min:
+                    network.set_weights_from_list(weights)
+                    network.save(network_path)
+                    last_save = time.time()
+
                 del weights
                 gc.collect()
             except:

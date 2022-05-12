@@ -6,6 +6,7 @@ services:
             - NVIDIA_VISIBLE_DEVICES=0
         volumes:
             - ../../:/app
+            - ../jass-train-py/data/conv_observation_full_0.75_quantile:/data
         network_mode: host
         command: >
             bash -c "cd scripts && python collect_n_send_game_data.py
@@ -21,6 +22,7 @@ services:
             - NVIDIA_VISIBLE_DEVICES=1
         volumes:
             - ../../:/app
+            - ../jass-train-py/data/conv_observation_full_0.75_quantile:/data
         network_mode: host
         command: >
             bash -c "cd scripts && python collect_n_send_game_data.py

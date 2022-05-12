@@ -69,6 +69,8 @@ if __name__=="__main__":
 
     network.summary()
 
+    target_network = get_network(worker_config, network_path=str(network_path))
+
     replay_buffer = FileBasedReplayBufferFromFolder(
         max_buffer_size=worker_config.optimization.max_buffer_size,
         batch_size=worker_config.optimization.batch_size,
@@ -156,6 +158,7 @@ if __name__=="__main__":
 
     trainer = MuZeroTrainer(
         network=network,
+        target_network=target_network,
         replay_buffer=replay_buffer,
         metrics_manager=manager,
         logger=logger,
@@ -177,7 +180,9 @@ if __name__=="__main__":
         dldl=worker_config.optimization.dldl,
         value_mse=worker_config.optimization.value_mse,
         reward_mse=worker_config.optimization.reward_mse,
-        log_gradients=worker_config.optimization.log_gradients
+        log_gradients=worker_config.optimization.log_gradients,
+        target_network_update=worker_config.optimization.target_network_update,
+        value_td_5_step=worker_config.optimization.value_td_5_step
     )
 
     connector = WorkerConnector(

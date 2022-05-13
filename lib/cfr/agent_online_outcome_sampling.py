@@ -49,7 +49,7 @@ class AgentOnlineOutcomeSampling(RememberingAgent):
         key = self.search.get_infostate_key_from_obs(obs)
         prob = self.search.get_average_strategy(key)
 
-        return prob
+        return prob, np.ones_like(prob)
 
     def reset(self):
         self.search.reset()

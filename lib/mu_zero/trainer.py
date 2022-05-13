@@ -316,8 +316,7 @@ class MuZeroTrainer:
                 #                                                          min_value=-outcome_support_size//2, nr_players=4)
                 # target_value_5_steps_ahead *=  (1 - post_terminal_states[:, None])  # target value after terminal is 0
 
-                target_value_5_steps_ahead = tf.cast(outcomes_target[:, 1 + 5], tf.float32)
-
+                target_value_5_steps_ahead = tf.cast(outcomes_target[:, 5], tf.float32)
                 cum_reward_5_steps_ahead = tf.cast(tf.reduce_sum(rewards_target[:, :5], axis=1, keepdims=False), tf.float32)
                 target_value = cum_reward_5_steps_ahead + target_value_5_steps_ahead
                 if self.value_mse:
@@ -417,7 +416,7 @@ class MuZeroTrainer:
 
                     target_value_5_steps_ahead = tf.cast(outcomes_target[:, (i+1)+5], tf.float32)
 
-                    cum_reward_5_steps_ahead = tf.cast(tf.reduce_sum(rewards_target[:, i:i+5], axis=1, keepdims=False), tf.float32)
+                    cum_reward_5_steps_ahead = tf.cast(tf.reduce_sum(rewards_target[:, (i+1):(i+1)+5], axis=1, keepdims=False), tf.float32)
                     target_value = cum_reward_5_steps_ahead + target_value_5_steps_ahead
                     if self.value_mse:
                         value_ce = (expected_value - target_value) ** 2

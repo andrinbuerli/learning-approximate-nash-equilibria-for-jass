@@ -164,15 +164,24 @@ class ALPV_MCTS:
             The probability of each action and the associated, estimated reward.
         """
         prob = np.zeros(43)
-        q_value = np.zeros(43)
+        q_value = np.zeros((43, 2))
 
-        for action, node in self.root.children.items():
-            prob[action] = node.visits
-            q = (node.value_sum[node.player] / (node.visits + 1))
+        for action, child in self.root.children.items():
+            prob[action] = child.visits
+            q = (child.value_sum[child.player] / (child.visits + 1))
+            team = child.player % 2
             if self.mdp_value:
-                q_value[action] = q * self.discount + node.reward[node.player]
+                q_value[action, team] = q * self.discount + child.reward[child.player]
             else:
-                q_value[action] = q
+                q_value[action, team] = q
+
+            other_team = (team + 1) % 2
+            q = (child.value_sum[other_team] / (child.visits + 1))
+            if self.mdp_value:
+                q_value[action, other_team] = q * self.discount + child.reward[other_team]
+            else:
+                q_value[action, other_team] = q
+
         prob /= np.sum(prob)
         return prob, q_value
 

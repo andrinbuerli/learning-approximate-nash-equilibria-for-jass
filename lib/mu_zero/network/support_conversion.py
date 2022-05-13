@@ -60,7 +60,7 @@ def scalar_to_support(scalar_m, support_size, min_value, dldl=False):
     else:
         scalar_m = tf.clip_by_value(tf.cast(scalar_m, tf.int32), clip_value_min=min_value,
                                     clip_value_max=min_value + (support_size - 1))
-
+        scalar_m -= min_value
         distribution_m = tf.one_hot(scalar_m, depth=support_size)
         distribution = distribution_m
 

@@ -50,7 +50,7 @@ class MuZeroResidualNetwork(AbstractNetwork):
         self.num_channels = num_channels
         self.observation_shape = observation_shape
         self.action_space_size = action_space_size
-        self.support_size = support_size + 1
+        self.support_size = support_size
         block_output_size_reward = reduced_channels_reward * observation_shape[0] * observation_shape[1]
 
         block_output_size_value = reduced_channels_value * observation_shape[0] * observation_shape[1]
@@ -434,7 +434,7 @@ class PredictionNetwork(tf.keras.Model):
         self.block_output_size_terminal_state = observation_shape[0] * observation_shape[1] * 1 if not fully_connected else num_channels
         self.fc_value = [
             mlp(
-                self.block_output_size_value, fc_value_layers, full_support_size*2,
+                self.block_output_size_value, fc_value_layers, (full_support_size*2+1),
                 output_activation=layers.Activation("softmax"),
                 name=f"value_{_}"
             ) for _ in range(players // 2)

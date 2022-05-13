@@ -43,7 +43,7 @@
   "mask_private": false,
   "mask_valid": false,
   "value_td_5_step": true,
-  "value_mse": true,
+  "value_mse": false,
   "reward_mse": false,
   "max_buffer_size": 10000,
   "min_buffer_size": 10000,
@@ -61,6 +61,7 @@
   "log_n_steps_ahead": 15,
   "apa_n_games": 1,
   "log_gradients": false,
+  "log_inputs": true,
   "restore_buffer_tree_from_file": false
  },
  "network": {

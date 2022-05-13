@@ -181,6 +181,7 @@ if __name__=="__main__":
         value_mse=worker_config.optimization.value_mse,
         reward_mse=worker_config.optimization.reward_mse,
         log_gradients=worker_config.optimization.log_gradients,
+        log_inputs=worker_config.optimization.log_inputs,
         target_network_update=worker_config.optimization.target_network_update,
         value_td_5_step=worker_config.optimization.value_td_5_step
     )

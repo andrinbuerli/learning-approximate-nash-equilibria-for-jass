@@ -156,7 +156,7 @@ class MuZeroResidualNetwork(AbstractNetwork):
         encoded_state = self.representation(observation, training=training)
         policy, value, player, hand, is_terminal = self.prediction(encoded_state, training=training, inc_player=True)
         # reward equal to 0 for consistency
-        reward = tf.tile(tf.one_hot(0, depth=self.support_size)[None, None], [batch_size, self.players, 1])
+        reward = tf.tile(tf.one_hot(0, depth=2*self.support_size)[None, None], [batch_size, self.players, 1])
         if training or all_preds:
             return (
                 value,
@@ -274,9 +274,9 @@ TOTAL: {sum([representation_params, dynamics_params, prediction_params]):,} trai
                 1, self.observation_shape[0], self.observation_shape[1], self.num_channels)
             else:
                 assert encoded_next_state.shape == (1, self.num_channels)
-            assert reward.shape == (1, self.players, self.support_size)
+            assert reward.shape == (1, self.players, 2 * self.support_size)
             assert policy.shape == (1, self.action_space_size)
-            assert value.shape == (1, self.players, 2 * self.support_size + 1)
+            assert value.shape == (1, self.players, 2 * self.support_size)
 
     def __del__(self):
         del self
@@ -356,7 +356,7 @@ class DynamicsNetwork(tf.keras.Model):
         self.block_output_size_reward = block_output_size_reward if not fully_connected else num_channels
         self.fc_reward = [
                 mlp(
-                self.block_output_size_reward, fc_reward_layers, full_support_size,
+                self.block_output_size_reward, fc_reward_layers, 2*full_support_size,
                 output_activation=layers.Activation("softmax"),
                 name=f"reward_{_}"
             ) for _ in range(players // 2)
@@ -438,7 +438,7 @@ class PredictionNetwork(tf.keras.Model):
         self.block_output_size_terminal_state = observation_shape[0] * observation_shape[1] * 1 if not fully_connected else num_channels
         self.fc_value = [
             mlp(
-                self.block_output_size_value, fc_value_layers, (full_support_size*2+1),
+                self.block_output_size_value, fc_value_layers, full_support_size*2,
                 output_activation=layers.Activation("softmax"),
                 name=f"value_{_}"
             ) for _ in range(players // 2)

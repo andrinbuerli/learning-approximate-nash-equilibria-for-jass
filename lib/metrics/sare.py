@@ -12,7 +12,8 @@ from lib.mu_zero.network.support_conversion import support_to_scalar
 
 
 def _calculate_mae_(reward_true, reward_estimate):
-    value_pred = tf.reshape(support_to_scalar(tf.reshape(reward_estimate, (-1, reward_estimate.shape[-1])), min_value=0), (-1, 4))
+    support_size = reward_estimate.shape[-1]
+    value_pred = tf.reshape(support_to_scalar(tf.reshape(reward_estimate, (-1, support_size)), min_value=-support_size//2), (-1, 4))
     mae = tf.reduce_mean(tf.abs(value_pred - tf.cast(reward_true, tf.float32)))
     return mae
 

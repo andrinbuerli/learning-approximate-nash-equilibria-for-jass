@@ -162,9 +162,10 @@ class LatentNodeSelectionPolicy:
 
         #assert node.next_player == node.predicted_player.argmax()
 
-        support_size = node.value.shape[-1]
-        node.value = support_to_scalar(distribution=node.value, min_value=-support_size//2).numpy()
-        node.reward = support_to_scalar(distribution=node.reward, min_value=0).numpy()
+        value_support_size = node.value.shape[-1]
+        node.value = support_to_scalar(distribution=node.value, min_value=-value_support_size//2).numpy()
+        reward_support_size = node.reward.shape[-1]
+        node.reward = support_to_scalar(distribution=node.reward, min_value=-reward_support_size//2).numpy()
 
         #[node.stats.update(v) for v in node.value]
         #node.stats.update(node.value[node.parent.predicted_player.argmax()])

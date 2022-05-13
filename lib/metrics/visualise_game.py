@@ -88,7 +88,8 @@ def _make_plots_(network: AbstractNetwork, iterator, f_shape, l_shape, features,
         all_rewards.append(rewards)
 
         action = tf.math.argmax(y[i, :43])
-        all_reward_estimates.append(support_to_scalar(reward[0], min_value=0).numpy())
+        support_size = tf.shape(reward)[-1]
+        all_reward_estimates.append(support_to_scalar(reward[0], min_value=-support_size//2).numpy())
         value, reward, policy, player, hand, is_terminal, encoded_state = network.recurrent_inference(encoded_state, [[action]], all_preds=True)
         i += 1
 

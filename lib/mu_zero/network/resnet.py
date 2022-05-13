@@ -272,7 +272,7 @@ TOTAL: {sum([representation_params, dynamics_params, prediction_params]):,} trai
         assert reward.shape == (1, self.players, self.support_size)
         policy, value = self.prediction(encoded_next_state)
         assert policy.shape == (1, self.action_space_size)
-        assert value.shape == (1, self.players, 2*self.support_size)
+        assert value.shape == (1, self.players, 2*self.support_size+1)
 
     def __del__(self):
         del self

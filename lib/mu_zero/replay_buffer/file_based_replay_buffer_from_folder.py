@@ -268,7 +268,7 @@ class FileBasedReplayBufferFromFolder:
         states, actions, rewards, probs, outcomes = episode
         episode_length = 37 if states[-1].sum() == 0 else 38
 
-        assert (rewards.sum(axis=0) == outcomes[0]).all()
+        # assert (rewards.sum(axis=0) == outcomes[0]).all()
 
         if self.valid_policy_target:
             valid_cards = states.reshape(-1, 36, 45)[:, :, FeaturesSetCppConv.CH_CARDS_VALID]

@@ -272,7 +272,7 @@ TOTAL: {sum([representation_params, dynamics_params, prediction_params]):,} trai
         assert reward.shape == (1, self.players, self.support_size)
         policy, value = self.prediction(encoded_next_state)
         assert policy.shape == (1, self.action_space_size)
-        assert value.shape == (1, self.players, self.support_size)
+        assert value.shape == (1, self.players, 2*self.support_size)
 
     def __del__(self):
         del self
@@ -434,7 +434,7 @@ class PredictionNetwork(tf.keras.Model):
         self.block_output_size_terminal_state = observation_shape[0] * observation_shape[1] * 1 if not fully_connected else num_channels
         self.fc_value = [
             mlp(
-                self.block_output_size_value, fc_value_layers, full_support_size,
+                self.block_output_size_value, fc_value_layers, full_support_size*2,
                 output_activation=layers.Activation("softmax"),
                 name=f"value_{_}"
             ) for _ in range(players // 2)

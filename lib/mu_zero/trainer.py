@@ -309,18 +309,24 @@ class MuZeroTrainer:
 
             reward_loss = tf.zeros((batch_size, 4), dtype=tf.float32) # zero reward predicted for initial inference
 
-            expected_value = support_to_scalar_per_player(value, min_value=0, nr_players=4)
+            expected_value = support_to_scalar_per_player(value, min_value=outcome_support_size//2, nr_players=4)
             if self.value_td_5_step:
                 target_value_5_steps_ahead = self.target_network.initial_inference(states[:, 1 + 5], training=False)[0]
                 target_value_5_steps_ahead = support_to_scalar_per_player(target_value_5_steps_ahead, min_value=0, nr_players=4)
+                target_value_5_steps_ahead *=  (1 - post_terminal_states[:, None])  # target value after terminal is 0
                 cum_reward_5_steps_ahead = tf.cast(tf.reduce_sum(rewards_target[:, :5], axis=1, keepdims=False), tf.float32)
                 target_value = cum_reward_5_steps_ahead + target_value_5_steps_ahead
-                value_ce = (expected_value - target_value)**2
+                if self.value_mse:
+                    value_ce = (expected_value - target_value) ** 2
+                else:
+                    value_target_distribution = scalar_to_support(
+                        target_value, support_size=outcome_support_size, min_value=outcome_support_size//2, dldl=self.dldl)
+                    value_ce = self.cross_entropy(value_target_distribution, value)
             elif self.value_mse:
                 value_ce = (expected_value - tf.cast(outcomes_target[:, 0], tf.float32))**2
             else:
                 value_target_distribution = scalar_to_support(
-                    outcomes_target[:, 0], support_size=outcome_support_size, min_value=0, dldl=self.dldl)
+                    outcomes_target[:, 0], support_size=outcome_support_size, min_value=outcome_support_size//2, dldl=self.dldl)
                 value_ce = self.cross_entropy(value_target_distribution, value)
             # Scale gradient by the number of unroll steps (See paper appendix Training)
             value_loss = self.scale_gradient(factor=1/trajectory_length)(value_ce)
@@ -404,13 +410,18 @@ class MuZeroTrainer:
                     target_value_5_steps_ahead *=  (1 - post_terminal_states[:, None])  # target value after terminal is 0
                     cum_reward_5_steps_ahead = tf.cast(tf.reduce_sum(rewards_target[:, i:i+5], axis=1, keepdims=False), tf.float32)
                     target_value = cum_reward_5_steps_ahead + target_value_5_steps_ahead
-                    value_ce = (expected_value - target_value)**2
+                    if self.value_mse:
+                        value_ce = (expected_value - target_value) ** 2
+                    else:
+                        value_target_distribution = scalar_to_support(
+                            target_value, support_size=outcome_support_size, min_value=outcome_support_size//2, dldl=self.dldl)
+                        value_ce = self.cross_entropy(value_target_distribution, value)
                 elif self.value_mse:
                     value_ce = (expected_value - tf.cast(outcomes_target[:, i+1], tf.float32)) ** 2
                 else:
                     value_target_distribution = scalar_to_support(
                         outcomes_target[:, i+1], support_size=outcome_support_size,
-                        min_value=0, dldl=self.dldl)
+                        min_value=outcome_support_size//2, dldl=self.dldl)
                     value_ce = self.cross_entropy(value_target_distribution, value)
                 # Scale gradient by the number of unroll steps (See paper appendix Training)
                 value_loss += self.scale_gradient(factor=1/trajectory_length)(value_ce)

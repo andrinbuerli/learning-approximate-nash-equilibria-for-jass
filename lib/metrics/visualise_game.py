@@ -69,7 +69,8 @@ def _make_plots_(network: AbstractNetwork, iterator, f_shape, l_shape, features,
         hand_kl = (true_hand_dist * np.log(true_hand_dist / pred_hand_dist + 1e-7)).sum()
         hand_kls.append(hand_kl)
 
-        values.append(support_to_scalar(value[0], min_value=0).numpy())
+        support_size = tf.shape(value)[-1]
+        values.append(support_to_scalar(value[0], min_value=support_size//2).numpy())
 
         players.append(current_player)
         current_team = current_player % 2

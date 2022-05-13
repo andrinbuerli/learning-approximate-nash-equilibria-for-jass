@@ -2,6 +2,7 @@ import gc
 import logging
 import pickle
 import shutil
+import traceback
 import uuid
 from multiprocessing import Queue
 from pathlib import Path
@@ -254,8 +255,8 @@ class FileBasedReplayBufferFromFolder:
 
                 del states, actions, rewards, probs, outcomes
                 gc.collect()
-            except:
-                logging.warning(f"failed reading file {file}.")
+            except Exception as e:
+                logging.warning(f"failed reading file {file}. Exception: {e}, continuing anyway, traceback: {traceback.format_exc()}")
                 # if self.clean_up_files:
                 #    file.unlink()
 

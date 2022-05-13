@@ -118,7 +118,7 @@ if __name__ == "__main__":
             logging.error(f"Could not reach host at {base_url}, could not reach for {could_not_reach} times...")
             could_not_reach += 1
 
-            if could_not_reach >= 10:
+            if could_not_reach >= 50:
                 break
 
         while data_collecting_queue.qsize() > 0:

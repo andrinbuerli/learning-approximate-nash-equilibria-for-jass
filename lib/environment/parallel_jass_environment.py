@@ -122,7 +122,7 @@ def reanalyse(dataset, network, pool, worker_config):
 
     probs = np.array([x[0] for x in results])
     outcomes = np.take_along_axis((y[:, 43:45] * 157).astype(int)[:episode_length], current_teams, axis=1)
-    values = [x[1] for x in results]
+    values = np.array([(x[0]*x[1]).sum() for x in results])
 
     if len(states) == 37:  # pad if no push
         states = np.concatenate((states, np.zeros_like(states[-1])[None]), axis=0)
@@ -131,6 +131,8 @@ def reanalyse(dataset, network, pool, worker_config):
         probs = np.concatenate((probs, np.zeros_like(probs[-1])[None]), axis=0)
         outcomes = np.concatenate((outcomes, np.zeros_like(outcomes[-1])[None]), axis=0)
         values = np.concatenate((values, np.zeros_like(values[-1])[None]), axis=0)
+
+    outcomes = values
 
     return actions[None], outcomes[None], probs[None], rewards[None], states[None]
 

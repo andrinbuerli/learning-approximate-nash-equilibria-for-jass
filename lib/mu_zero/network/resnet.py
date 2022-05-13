@@ -96,10 +96,11 @@ class MuZeroResidualNetwork(AbstractNetwork):
                 block_output_size_policy=block_output_size_policy,
                 fully_connected=fully_connected
             )
+            self._warmup()
         else:
             self.load(network_path, from_graph=True)
+            self._warmup(assertion=False)
 
-        self._warmup()
 
     def prediction(self, encoded_state, training=False, inc_player=False):
         policy, value, player, hand, is_terminal = self.prediction_network(encoded_state, training=training)
@@ -258,21 +259,24 @@ TOTAL: {sum([representation_params, dynamics_params, prediction_params]):,} trai
 
         return encoded_state_normalized
 
-    def _warmup(self):
+    def _warmup(self, assertion=True):
         encoded_state = self.representation(np.random.uniform(0, 1, (1,) + tuple(self.observation_shape)).reshape(1, -1))
-        if not self.fully_connected:
-            assert encoded_state.shape == (1, self.observation_shape[0], self.observation_shape[1], self.num_channels)
-        else:
-            assert encoded_state.shape == (1, self.num_channels)
         encoded_next_state, reward = self.dynamics(encoded_state, action=np.array([[1]]))
-        if not self.fully_connected:
-            assert encoded_next_state.shape == (1, self.observation_shape[0], self.observation_shape[1], self.num_channels)
-        else:
-            assert encoded_next_state.shape == (1, self.num_channels)
-        assert reward.shape == (1, self.players, self.support_size)
         policy, value = self.prediction(encoded_next_state)
-        assert policy.shape == (1, self.action_space_size)
-        assert value.shape == (1, self.players, 2*self.support_size+1)
+        if assertion:
+            if not self.fully_connected:
+                assert encoded_state.shape == (
+                1, self.observation_shape[0], self.observation_shape[1], self.num_channels)
+            else:
+                assert encoded_state.shape == (1, self.num_channels)
+            if not self.fully_connected:
+                assert encoded_next_state.shape == (
+                1, self.observation_shape[0], self.observation_shape[1], self.num_channels)
+            else:
+                assert encoded_next_state.shape == (1, self.num_channels)
+            assert reward.shape == (1, self.players, self.support_size)
+            assert policy.shape == (1, self.action_space_size)
+            assert value.shape == (1, self.players, 2 * self.support_size + 1)
 
     def __del__(self):
         del self

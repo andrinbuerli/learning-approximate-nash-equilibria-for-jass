@@ -47,7 +47,7 @@ class MuZeroTrainer:
             value_td_5_step: bool = False,
             reward_mse: bool = False,
             log_gradients: bool = True,
-            log_inputs: bool = False
+            log_inputs: bool = True
     ):
         self.log_inputs = log_inputs
         self.target_network_update = target_network_update

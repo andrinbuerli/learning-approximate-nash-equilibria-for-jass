@@ -1,5 +1,4 @@
 {
- "timestamp": 1652358141,
  "log": {
   "projectname": "jass-mu-zero",
   "entity": "andrinburli",
@@ -50,7 +49,7 @@
   "max_samples_per_episode": 512,
   "min_non_zero_prob_samples": 10000,
   "port": 8080,
-  "store_model_weights_after": 50,
+  "store_model_weights_after": 10,
   "max_trajectory_length": 16,
   "min_trajectory_length": 16,
   "target_network_update": 100,

@@ -256,7 +256,7 @@ class FileBasedReplayBufferFromFolder:
                 del states, actions, rewards, probs, outcomes
                 gc.collect()
             except Exception as e:
-                logging.warning(f"failed reading file {file}. Exception: {e}, continuing anyway, traceback: {traceback.format_exc()}")
+                logging.warning(f"failed reading file {file}. Exception: {e}, continuing anyway") #, traceback: {traceback.format_exc()}")
                 # if self.clean_up_files:
                 #    file.unlink()
 

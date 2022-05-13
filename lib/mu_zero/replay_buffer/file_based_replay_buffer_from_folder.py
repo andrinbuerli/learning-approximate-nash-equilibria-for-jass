@@ -223,7 +223,7 @@ class FileBasedReplayBufferFromFolder:
                 assert len(states) == len(actions) == len(rewards) == len(probs) == len(outcomes)
 
                 for s, a, r, p, o in zip(states, actions, rewards, probs, outcomes):
-                    assert (r.sum(axis=0) == o[0]).all()
+                    #assert (r.sum(axis=0) == o[0]).all()
                     identifier = str(uuid.uuid4())
                     episode_file = self.episode_data_folder / f"{identifier}{self.episode_file_ending}"
                     with open(str(episode_file), "wb") as f:

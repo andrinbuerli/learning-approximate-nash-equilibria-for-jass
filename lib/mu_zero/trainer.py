@@ -8,7 +8,6 @@ import wandb
 from tqdm import tqdm
 
 from lib.environment.networking.worker_config import WorkerConfig
-from lib.jass.features.features_conv_cpp import FeaturesSetCppConv
 from lib.log.base_logger import BaseLogger
 from lib.metrics.metrics_manager import MetricsManager
 from lib.mu_zero.network.network_base import AbstractNetwork
@@ -284,13 +283,13 @@ class MuZeroTrainer:
             reward_support_size = tf.shape(reward)[-1]
             outcome_support_size = tf.shape(value)[-1]
 
-            reshaped_state = tf.reshape(states[:, 0], (-1,) + FeaturesSetCppConv.FEATURE_SHAPE)
-            current_player = reshaped_state[:, 0, 0, FeaturesSetCppConv.CH_PLAYER:FeaturesSetCppConv.CH_PLAYER+4]
+            reshaped_state = tf.reshape(states[:, 0], (-1,) + self.config.network.feature_extractor.FEATURE_SHAPE)
+            current_player = reshaped_state[:, 0, 0, self.config.network.feature_extractor.CH_PLAYER:self.config.network.feature_extractor.CH_PLAYER+4]
             player_ce = self.cross_entropy(current_player, player)
             # Scale gradient by the number of unroll steps (See paper appendix Training)
             player_loss = self.scale_gradient(factor=1 / trajectory_length)(player_ce)
 
-            current_hand = tf.reshape(reshaped_state[:, :, :, FeaturesSetCppConv.CH_HAND], (-1, 36))
+            current_hand = tf.reshape(reshaped_state[:, :, :, self.config.network.feature_extractor.CH_HAND], (-1, 36))
             hand_bce = self.binary_cross_entropy(current_hand, hand)
             # Scale gradient by the number of unroll steps (See paper appendix Training)
             hand_loss = self.scale_gradient(factor=1 / trajectory_length)(hand_bce)
@@ -374,13 +373,13 @@ class MuZeroTrainer:
                 # Scale the gradient at the start of the dynamics function (See paper appendix Training)
                 encoded_states = self.scale_gradient(factor=1/2)(encoded_states)
 
-                reshaped_state = tf.reshape(states[:, (i + 1)], (-1,) + FeaturesSetCppConv.FEATURE_SHAPE)
-                current_player = reshaped_state[:, 0, 0, FeaturesSetCppConv.CH_PLAYER:FeaturesSetCppConv.CH_PLAYER + 4]
+                reshaped_state = tf.reshape(states[:, (i + 1)], (-1,) + self.config.network.feature_extractor.FEATURE_SHAPE)
+                current_player = reshaped_state[:, 0, 0, self.config.network.feature_extractor.CH_PLAYER:self.config.network.feature_extractor.CH_PLAYER + 4]
                 player_ce = self.cross_entropy(current_player, player)
                 # Scale gradient by the number of unroll steps (See paper appendix Training)
                 player_loss += self.scale_gradient(factor=1 / trajectory_length)(player_ce)
 
-                current_hand = tf.reshape(reshaped_state[:, :, :, FeaturesSetCppConv.CH_HAND], (-1, 36))
+                current_hand = tf.reshape(reshaped_state[:, :, :, self.config.network.feature_extractor.CH_HAND], (-1, 36))
                 hand_bce = self.binary_cross_entropy(current_hand, hand)
                 # Scale gradient by the number of unroll steps (See paper appendix Training)
                 hand_loss += self.scale_gradient(factor=1 / trajectory_length)(hand_bce)

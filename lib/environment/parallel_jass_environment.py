@@ -70,7 +70,7 @@ def _play_single_game_(i, agent):
     del arena, agent
     gc.collect()
 
-    return states, actions, rewards, probs, outcomes
+    return states, actions, rewards, probs, values
 
 
 def _init_thread_worker_(function, feature_extractor, check_move_validity):
@@ -86,8 +86,8 @@ def play_games(n_games, network, pool, worker_config):
     actions = [x[1] for x in results]
     rewards = [x[2] for x in results]
     probs = [x[3] for x in results]
-    outcomes = [x[4] for x in results]
-    return actions, outcomes, probs, rewards, states
+    values = [x[4] for x in results]
+    return actions, values, probs, rewards, states
 
 
 def _reanalyse_observation_(observation, agent, feature_format):

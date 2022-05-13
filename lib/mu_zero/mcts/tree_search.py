@@ -140,11 +140,6 @@ class ALPV_MCTS:
                 node.propagate(value, self.virtual_loss)
 
             [self.stats.update(v) for v in value]
-            #if node.is_root():
-            #    self.stats.update(value[node.parent.next_player])
-            #else:
-            #    player = node.next_player # node.parent.predicted_player.argmax()
-            #    self.stats.update(value[player])
 
             if node.is_root():
                 break

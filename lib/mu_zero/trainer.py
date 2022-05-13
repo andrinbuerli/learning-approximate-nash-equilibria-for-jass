@@ -321,7 +321,8 @@ class MuZeroTrainer:
                     value_ce = (expected_value - target_value) ** 2
                 else:
                     value_target_distribution = scalar_to_support(
-                        target_value, support_size=outcome_support_size, min_value=-outcome_support_size//2, dldl=self.dldl)
+                        tf.cast(target_value, tf.int32), support_size=outcome_support_size,
+                        min_value=-outcome_support_size//2, dldl=self.dldl)
                     value_ce = self.cross_entropy(value_target_distribution, value)
             elif self.value_mse:
                 value_ce = (expected_value - tf.cast(outcomes_target[:, 0], tf.float32))**2
@@ -416,7 +417,8 @@ class MuZeroTrainer:
                         value_ce = (expected_value - target_value) ** 2
                     else:
                         value_target_distribution = scalar_to_support(
-                            target_value, support_size=outcome_support_size, min_value=-outcome_support_size//2, dldl=self.dldl)
+                            tf.cast(target_value, tf.int32), support_size=outcome_support_size,
+                            min_value=-outcome_support_size//2, dldl=self.dldl)
                         value_ce = self.cross_entropy(value_target_distribution, value)
                 elif self.value_mse:
                     value_ce = (expected_value - tf.cast(outcomes_target[:, i+1], tf.float32)) ** 2

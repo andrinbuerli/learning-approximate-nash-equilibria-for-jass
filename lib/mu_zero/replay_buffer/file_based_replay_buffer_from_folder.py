@@ -24,6 +24,7 @@ class FileBasedReplayBufferFromFolder:
             max_trajectory_length: int,
             min_trajectory_length: int,
             mdp_value: bool,
+            td_error: bool,
             valid_policy_target: bool,
             gamma: float,
             game_data_folder: Path,
@@ -43,6 +44,7 @@ class FileBasedReplayBufferFromFolder:
         (states, actions, rewards, probs, outcomes)
         """
 
+        self.td_error = td_error
         self.use_per = use_per
         self.valid_policy_target = valid_policy_target
         self.clean_up_episodes = clean_up_episodes
@@ -284,13 +286,23 @@ class FileBasedReplayBufferFromFolder:
 
         assert np.allclose(probs[:episode_length].sum(axis=-1), 1)
 
-        if self.mdp_value:
+        if self.td_error:
+            episode = states, actions, rewards, probs, outcomes
+        elif self.mdp_value:
             outcomes = np.array([
                 np.sum([
                     x * self.gamma**i for i, x in enumerate(rewards[k:])
                 ], axis=0) for k in range(rewards.shape[0])
             ])
             episode = states, actions, rewards, probs, outcomes
+        else:
+            outcomes = np.array([
+                np.sum([
+                    x * self.gamma**i for i, x in enumerate(rewards)
+                ], axis=0) for _ in range(rewards.shape[0])
+            ])
+            episode = states, actions, rewards, probs, outcomes
+
 
         # create trajectories beyond terminal state
         i = np.random.choice(range(episode_length)) if i is None else i

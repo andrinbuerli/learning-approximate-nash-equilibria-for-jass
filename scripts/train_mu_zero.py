@@ -69,8 +69,6 @@ if __name__=="__main__":
 
     network.summary()
 
-    target_network = get_network(worker_config, network_path=str(network_path))
-
     replay_buffer = FileBasedReplayBufferFromFolder(
         max_buffer_size=worker_config.optimization.max_buffer_size,
         batch_size=worker_config.optimization.batch_size,
@@ -87,7 +85,8 @@ if __name__=="__main__":
         episode_data_folder=data_path / "episodes_data",
         max_samples_per_episode=worker_config.optimization.max_samples_per_episode,
         min_non_zero_prob_samples=worker_config.optimization.min_non_zero_prob_samples,
-        use_per=worker_config.optimization.use_per)
+        use_per=worker_config.optimization.use_per,
+        td_error=worker_config.optimization.value_td_5_step)
 
     replay_buffer.restore(tree_from_file=worker_config.optimization.restore_buffer_tree_from_file)
 
@@ -158,7 +157,6 @@ if __name__=="__main__":
 
     trainer = MuZeroTrainer(
         network=network,
-        target_network=target_network,
         replay_buffer=replay_buffer,
         metrics_manager=manager,
         logger=logger,
@@ -182,7 +180,6 @@ if __name__=="__main__":
         reward_mse=worker_config.optimization.reward_mse,
         log_gradients=worker_config.optimization.log_gradients,
         log_inputs=worker_config.optimization.log_inputs,
-        target_network_update=worker_config.optimization.target_network_update,
         value_td_5_step=worker_config.optimization.value_td_5_step
     )
 

@@ -21,7 +21,6 @@ class MuZeroTrainer:
     def __init__(
             self,
             network: AbstractNetwork,
-            target_network: AbstractNetwork,
             replay_buffer: FileBasedReplayBufferFromFolder,
             metrics_manager: MetricsManager,
             config: WorkerConfig,
@@ -38,7 +37,6 @@ class MuZeroTrainer:
             value_entropy_weight: float = 1.0,
             reward_entropy_weight: float = 1.0,
             is_terminal_loss_weight: float = 1.0,
-            target_network_update: int = 10,
             dldl: bool = False,
             store_weights:bool = True,
             store_buffer:bool = False,
@@ -50,7 +48,6 @@ class MuZeroTrainer:
             log_inputs: bool = True
     ):
         self.log_inputs = log_inputs
-        self.target_network_update = target_network_update
         self.value_td_5_step = value_td_5_step
         self.log_gradients = log_gradients
         self.reward_mse = reward_mse
@@ -75,7 +72,6 @@ class MuZeroTrainer:
         self.updates_per_step = updates_per_step
         self.replay_buffer = replay_buffer
         self.network = network
-        self.target_network = target_network
 
         self.optimizer = optimizer
 
@@ -121,10 +117,6 @@ class MuZeroTrainer:
 
                 if self.store_buffer:
                     self.replay_buffer.save()
-
-            if ((it * self.updates_per_step) % self.target_network_update) == 0:
-                logging.info('Copy weights to target network')
-                self.target_network.set_weights(self.network.get_weights())
 
             custom_metrics = self.metrics_manager.get_latest_metrics_state()
 
@@ -363,7 +355,14 @@ class MuZeroTrainer:
 
             hand_bces = hand_bces.write(0, tf.reduce_mean(hand_bce, name="hand_bces"))
 
-            absolute_value_errors = absolute_value_errors.write(0, tf.reduce_mean(tf.abs(expected_value - tf.cast(outcomes_target[:, 0], tf.float32)), name="val_mae"))
+            if self.value_td_5_step:
+                ave = tf.reduce_mean(tf.abs(expected_value - tf.cast(tf.reduce_sum(rewards_target[:, :], axis=-1), tf.float32)),
+                                     name="val_mae")
+            else:
+                ave = tf.reduce_mean(tf.abs(expected_value - tf.cast(outcomes_target[:, 0], tf.float32)),
+                                     name="val_mae")
+
+            absolute_value_errors = absolute_value_errors.write(0, ave)
             absolute_reward_errors = absolute_reward_errors.write(0, 0)
 
             entropy = self.calculate_LSE(batch_size, encoded_states)
@@ -461,7 +460,14 @@ class MuZeroTrainer:
 
                 hand_bces = hand_bces.write(i+1, tf.reduce_mean(hand_bce, name="hand_bces"))
 
-                absolute_value_errors = absolute_value_errors.write(i+1, tf.reduce_mean(tf.abs(expected_value - tf.cast(outcomes_target[:, i+1], tf.float32)), name="val_mae"))
+                if self.value_td_5_step:
+                    ave = tf.reduce_mean(
+                        tf.abs(expected_value - tf.cast(tf.reduce_sum(rewards_target[:, i:], axis=-1), tf.float32)),
+                        name="val_mae")
+                else:
+                    ave = tf.reduce_mean(tf.abs(expected_value - tf.cast(outcomes_target[:, i+1], tf.float32)), name="val_mae")
+
+                absolute_value_errors = absolute_value_errors.write(i+1, ave)
                 absolute_reward_errors = absolute_reward_errors.write(i+1, tf.reduce_mean(tf.abs(expected_reward - tf.cast(rewards_target[:, i], tf.float32)), name="reard_mae"))
 
                 value_entropies = value_entropies.write(i+1, tf.reduce_mean(value_H))

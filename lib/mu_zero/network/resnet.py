@@ -274,9 +274,9 @@ TOTAL: {sum([representation_params, dynamics_params, prediction_params]):,} trai
                 1, self.observation_shape[0], self.observation_shape[1], self.num_channels)
             else:
                 assert encoded_next_state.shape == (1, self.num_channels)
-            assert reward.shape == (1, self.players, 2 * self.support_size)
+            assert reward.shape == (1, self.players, 2 * self.support_size + 1)
             assert policy.shape == (1, self.action_space_size)
-            assert value.shape == (1, self.players, 2 * self.support_size)
+            assert value.shape == (1, self.players, 2 * self.support_size + 1)
 
     def __del__(self):
         del self
@@ -356,7 +356,7 @@ class DynamicsNetwork(tf.keras.Model):
         self.block_output_size_reward = block_output_size_reward if not fully_connected else num_channels
         self.fc_reward = [
                 mlp(
-                self.block_output_size_reward, fc_reward_layers, 2*full_support_size,
+                self.block_output_size_reward, fc_reward_layers, 2*full_support_size + 1,
                 output_activation=layers.Activation("softmax"),
                 name=f"reward_{_}"
             ) for _ in range(players // 2)
@@ -438,7 +438,7 @@ class PredictionNetwork(tf.keras.Model):
         self.block_output_size_terminal_state = observation_shape[0] * observation_shape[1] * 1 if not fully_connected else num_channels
         self.fc_value = [
             mlp(
-                self.block_output_size_value, fc_value_layers, full_support_size*2,
+                self.block_output_size_value, fc_value_layers, full_support_size*2 + 1,
                 output_activation=layers.Activation("softmax"),
                 name=f"value_{_}"
             ) for _ in range(players // 2)

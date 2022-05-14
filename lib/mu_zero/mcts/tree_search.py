@@ -163,15 +163,15 @@ class ALPV_MCTS:
 
         for action, child in self.root.children.items():
             prob[action] = child.visits
-            q = (child.value_sum[child.player] / (child.visits + 1))
             team = child.player % 2
+            q = (child.value_sum[team] / max(child.visits, 1))
             if self.mdp_value:
-                q_value[action, team] = q * self.discount + child.reward[child.player]
+                q_value[action, team] = q * self.discount + child.reward[team]
             else:
                 q_value[action, team] = q
 
             other_team = (team + 1) % 2
-            q = (child.value_sum[other_team] / (child.visits + 1))
+            q = (child.value_sum[other_team] / max(child.visits, 1))
             if self.mdp_value:
                 q_value[action, other_team] = q * self.discount + child.reward[other_team]
             else:

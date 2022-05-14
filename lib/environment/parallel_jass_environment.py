@@ -100,7 +100,7 @@ def reanalyse(dataset, network, pool, worker_config):
     features = worker_config.network.feature_extractor
 
     episode_length = int(observations.max(axis=-1).sum()) # padded states are zeros only
-    agents = [get_agent(worker_config, network=network, greedy=True) for _ in range(episode_length)]
+    agents = [get_agent(worker_config, network=network, greedy=False) for _ in range(episode_length)]
     feature_formats = [copy(features) for _ in range(episode_length)]
 
     results = pool.starmap(_reanalyse_observation_, zip(zip(observations), agents, feature_formats))

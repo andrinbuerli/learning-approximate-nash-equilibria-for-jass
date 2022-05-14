@@ -156,7 +156,7 @@ class MuZeroResidualNetwork(AbstractNetwork):
         encoded_state = self.representation(observation, training=training)
         policy, value, player, hand, is_terminal = self.prediction(encoded_state, training=training, inc_player=True)
         # reward equal to 0 for consistency
-        reward = tf.tile(tf.one_hot(self.support_size, depth=2*self.support_size)[None, None], [batch_size, self.players, 1])
+        reward = tf.tile(tf.one_hot(self.support_size, depth=2*self.support_size+1)[None, None], [batch_size, self.players, 1])
         if training or all_preds:
             return (
                 value,

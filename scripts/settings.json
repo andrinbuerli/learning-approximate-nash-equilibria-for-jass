@@ -82,9 +82,9 @@
   "num_channels": 128,
   "path": null,
   "players": 4,
-  "reduced_channels_policy": 64,
-  "reduced_channels_reward": 64,
-  "reduced_channels_value": 64,
+  "reduced_channels_policy": 16,
+  "reduced_channels_reward": 16,
+  "reduced_channels_value": 16,
   "support_size": 200,
   "type": "resnet"
  }

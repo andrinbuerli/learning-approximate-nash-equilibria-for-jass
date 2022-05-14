@@ -474,10 +474,7 @@ class MuZeroTrainer:
                        + self.value_entropy_weight * tf.reduce_sum(value_entropy, axis=-1)\
                        + self.reward_entropy_weight * tf.reduce_sum(reward_entropy, axis=-1)\
                        + self.is_terminal_loss_weight * is_terminal_loss
-            loss = tf.reduce_sum(
-                (
-                    raw_loss
-                 ) * sample_weights, name="loss_mean")
+            loss = tf.reduce_sum(raw_loss * sample_weights, name="loss_mean")
 
         gradients = tape.gradient(loss, self.network.trainable_variables)
 

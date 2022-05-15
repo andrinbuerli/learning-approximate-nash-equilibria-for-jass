@@ -98,6 +98,7 @@ class OptimizationConfig(BaseConfig):
         self.min_non_zero_prob_samples=1
         self.total_steps = 5
         self.use_per = False
+        self.value_based_per = False
         self.mask_private = False
         self.mask_valid = False
         self.store_buffer = False

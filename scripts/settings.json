@@ -42,7 +42,7 @@
   "use_per": false,
   "mask_private": false,
   "mask_valid": false,
-  "value_td_5_step": true,
+  "value_td_5_step": false,
   "value_mse": false,
   "reward_mse": false,
   "max_buffer_size": 10000,

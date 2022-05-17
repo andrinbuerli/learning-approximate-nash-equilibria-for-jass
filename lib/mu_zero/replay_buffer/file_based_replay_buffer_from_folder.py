@@ -312,7 +312,7 @@ class FileBasedReplayBufferFromFolder:
                 ], axis=0) for k in range(rewards.shape[0])
             ])
 
-            one_hot = np.squeeze(np.eye(probs.shape[-1])[actions.reshape(-1)])
+            one_hot = np.squeeze(np.eye(probs.shape[-1])[actions.reshape(-1)[:episode_length]])
             probs = one_hot
 
             episode = states, actions, rewards, probs, values

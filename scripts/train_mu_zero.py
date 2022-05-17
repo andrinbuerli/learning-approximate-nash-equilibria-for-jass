@@ -201,12 +201,13 @@ if __name__=="__main__":
         value_td_5_step=worker_config.optimization.value_td_5_step
     )
 
-    connector = WorkerConnector(
-        model_weights_path=data_path / "latest_network.pd" / "weights.pkl",
-        worker_config_path=data_path / "worker_config.json",
-        local_game_data_path=data_path / "game_data"
-    )
-    connector.run(port=worker_config.optimization.port)
+    if not worker_config.optimization.supervised_targets:
+        connector = WorkerConnector(
+            model_weights_path=data_path / "latest_network.pd" / "weights.pkl",
+            worker_config_path=data_path / "worker_config.json",
+            local_game_data_path=data_path / "game_data"
+        )
+        connector.run(port=worker_config.optimization.port)
 
     iterations = worker_config.optimization.total_steps // worker_config.optimization.updates_per_step
 

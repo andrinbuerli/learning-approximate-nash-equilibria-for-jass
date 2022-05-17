@@ -80,6 +80,42 @@
       "epsilon": 0.6,
       "skip": true,
       "network_path": ""
+    },
+    {
+      "type": "oos",
+      "note": "OOS-100-v3",
+      "iterations": 100,
+      "delta": 1.0,
+      "epsilon": 0.3,
+      "skip": true,
+      "network_path": ""
+    },
+    {
+      "type": "oos",
+      "note": "OOS-1000-v3",
+      "iterations": 1000,
+      "delta": 1.0,
+      "epsilon": 0.3,
+      "skip": true,
+      "network_path": ""
+    },
+    {
+      "type": "oos",
+      "note": "OOS-10000-v3",
+      "iterations": 10000,
+      "delta": 1.0,
+      "epsilon": 0.3,
+      "skip": true,
+      "network_path": ""
+    },
+    {
+      "type": "oos",
+      "note": "OOS-100000-v3",
+      "iterations": 100000,
+      "delta": 1.0,
+      "epsilon": 0.3,
+      "skip": true,
+      "network_path": ""
     }
   ]
 }

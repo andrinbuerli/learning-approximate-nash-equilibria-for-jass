@@ -7,7 +7,6 @@ from pprint import pprint
 import tensorflow as tf
 from jass.features.labels_action_full import LabelSetActionFull
 
-from lib.mu_zero.replay_buffer.supervised_replay_buffer_from_folder import SupervisedReplayBufferFromFolder
 
 sys.path.append("../")
 
@@ -25,6 +24,7 @@ from lib.metrics.apao import APAO
 from lib.metrics.visualise_game import GameVisualisation
 from lib.metrics.metrics_manager import MetricsManager
 from lib.mu_zero.replay_buffer.file_based_replay_buffer_from_folder import FileBasedReplayBufferFromFolder
+from lib.mu_zero.replay_buffer.supervised_replay_buffer_from_folder import SupervisedReplayBufferFromFolder
 from lib.mu_zero.trainer import MuZeroTrainer
 
 logging.getLogger("requests").setLevel(logging.WARNING)

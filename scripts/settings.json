@@ -13,8 +13,8 @@
   "iterations": 50,
   "mdp_value": true,
   "discount": 1,
-  "n_search_threads": 3,
-  "virtual_loss": 10,
+  "n_search_threads": 1,
+  "virtual_loss": 1,
   "port": 9999,
   "temperature": 1.0,
   "type": "mu-zero-mcts"

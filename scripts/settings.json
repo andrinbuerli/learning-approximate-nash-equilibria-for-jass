@@ -39,6 +39,7 @@
   "policy_loss_weight": 1.0,
   "dldl": false,
   "valid_policy_target": false,
+  "supervised_targets": true,
   "use_per": true,
   "value_based_per": true,
   "mask_private": false,

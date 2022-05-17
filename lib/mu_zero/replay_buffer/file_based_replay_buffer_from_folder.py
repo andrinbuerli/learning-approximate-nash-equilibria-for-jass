@@ -33,6 +33,7 @@ class FileBasedReplayBufferFromFolder:
             min_non_zero_prob_samples: int,
             use_per: bool,
             value_based_per:bool,
+            supervised_targets:bool,
             max_updates=20,
             data_file_ending=".jass-data.pkl",
             episode_file_ending=".jass-episode.pkl",
@@ -45,6 +46,7 @@ class FileBasedReplayBufferFromFolder:
         (states, actions, rewards, probs, outcomes)
         """
 
+        self.supervised_targets = supervised_targets
         self.value_based_per = value_based_per
         self.td_error = td_error
         self.use_per = use_per
@@ -190,8 +192,11 @@ class FileBasedReplayBufferFromFolder:
             logging.info(f"restored replay buffer from {restore_path}")
         else:
             for file in self.episode_data_folder.glob("*"):
-                with open(file, "rb") as f:
-                    states, actions, rewards, probs, values = pickle.load(f)
+                try:
+                    with open(file, "rb") as f:
+                        states, actions, rewards, probs, values = pickle.load(f)
+                except:
+                    continue
                 priority = self._get_priority(rewards, values)
                 self.sum_tree.add(data=file.name.split(".")[0], p=priority)
             logging.info(f"restored replay buffer ({self.sum_tree.filled_size}) from {self.episode_data_folder}")
@@ -299,22 +304,34 @@ class FileBasedReplayBufferFromFolder:
 
         assert np.allclose(probs[:episode_length].sum(axis=-1), 1)
 
-        if self.td_error:
-            episode = states, actions, rewards, probs, values
-        elif self.mdp_value:
-            outcomes = np.array([
+        states, actions, rewards, probs, values = episode
+        if self.supervised_targets:
+            values = np.array([
                 np.sum([
                     x * self.gamma**i for i, x in enumerate(rewards[k:])
                 ], axis=0) for k in range(rewards.shape[0])
             ])
-            episode = states, actions, rewards, probs, outcomes
+
+            one_hot = np.squeeze(np.eye(probs.shape[-1])[actions.reshape(-1)])
+            probs = one_hot
+
+            episode = states, actions, rewards, probs, values
+        elif self.td_error:
+            episode = states, actions, rewards, probs, values
+        elif self.mdp_value:
+            values = np.array([
+                np.sum([
+                    x * self.gamma**i for i, x in enumerate(rewards[k:])
+                ], axis=0) for k in range(rewards.shape[0])
+            ])
+            episode = states, actions, rewards, probs, values
         else:
-            outcomes = np.array([
+            values = np.array([
                 np.sum([
                     x * self.gamma**i for i, x in enumerate(rewards)
                 ], axis=0) for _ in range(rewards.shape[0])
             ])
-            episode = states, actions, rewards, probs, outcomes
+            episode = states, actions, rewards, probs, values
 
         # create trajectories beyond terminal state
         i = np.random.choice(range(episode_length)) if i is None else i
@@ -324,18 +341,18 @@ class FileBasedReplayBufferFromFolder:
         trajectory = [x[indices] for x in episode]
 
         if len(indices) < sampled_trajectory_length:
-            states, actions, rewards, probs, outcomes = trajectory
+            states, actions, rewards, probs, values = trajectory
             for _ in range(sampled_trajectory_length - len(indices)):
                 states = np.concatenate((states, np.zeros_like(states[-1], dtype=np.float32)[np.newaxis]), axis=0)
                 actions = np.concatenate((actions, actions[-1][np.newaxis]), axis=0)
                 rewards = np.concatenate((rewards, np.zeros_like(rewards[-1], dtype=np.int32)[np.newaxis]), axis=0)
                 probs = np.concatenate((probs, np.zeros_like(probs[-1], dtype=np.float32)[np.newaxis]), axis=0)
                 if self.mdp_value:
-                    outcomes = np.concatenate((outcomes, np.zeros_like(outcomes[-1], dtype=np.int32)[np.newaxis]), axis=0)
+                    values = np.concatenate((values, np.zeros_like(values[-1], dtype=np.int32)[np.newaxis]), axis=0)
                 else:
-                    outcomes = np.concatenate((outcomes, outcomes[-1][np.newaxis]), axis=0)
+                    values = np.concatenate((values, values[-1][np.newaxis]), axis=0)
 
-            trajectory = states, actions, rewards, probs, outcomes
+            trajectory = states, actions, rewards, probs, values
 
         return trajectory
 

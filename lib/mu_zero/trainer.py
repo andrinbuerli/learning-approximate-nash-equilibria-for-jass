@@ -85,7 +85,7 @@ class MuZeroTrainer:
     def fit(self, iterations: int, network_path: Path):
         logging.info("Starting alpha zero training")
 
-        while self.replay_buffer.buffer_size < self.min_buffer_size:
+        while self.replay_buffer.buffer_size < self.min_buffer_size and not self.config.optimization.supervised_targets:
             logging.info(f"waiting for buffer to fill up ({self.replay_buffer.buffer_size} / {self.min_buffer_size})")
             self.replay_buffer.update()
             time.sleep(5)
@@ -140,7 +140,7 @@ class MuZeroTrainer:
                 data = {
                     "meta/buffer_size": buffer_size,
                     "meta/non_zero_samples": non_zero_samples,
-                    "meta/sum_tree_total": self.replay_buffer.sum_tree.total(),
+                    "meta/sum_tree_total": self.replay_buffer.sum_tree.total() if hasattr(self.replay_buffer, "sum_tree") else 0,
                     "meta/learning_rate": current_lr,
                     "meta/size_of_last_update": size_of_last_update,
                     "meta/size_of_last_update_cumsum": size_of_last_update_cumsum,

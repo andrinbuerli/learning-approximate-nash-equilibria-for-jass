@@ -7,6 +7,8 @@ from pprint import pprint
 import tensorflow as tf
 from jass.features.labels_action_full import LabelSetActionFull
 
+from lib.mu_zero.replay_buffer.supervised_replay_buffer_from_folder import SupervisedReplayBufferFromFolder
+
 sys.path.append("../")
 
 from lib.log.wandb_logger import WandbLogger
@@ -69,26 +71,40 @@ if __name__=="__main__":
 
     network.summary()
 
-    replay_buffer = FileBasedReplayBufferFromFolder(
-        max_buffer_size=worker_config.optimization.max_buffer_size,
-        batch_size=worker_config.optimization.batch_size,
-        nr_of_batches=worker_config.optimization.updates_per_step,
-        max_trajectory_length=worker_config.optimization.max_trajectory_length,
-        min_trajectory_length=worker_config.optimization.min_trajectory_length,
-        game_data_folder=data_path / "game_data",
-        clean_up_files=True,
-        cache_path=data_path,
-        mdp_value=worker_config.agent.mdp_value,
-        valid_policy_target=worker_config.optimization.valid_policy_target,
-        gamma=worker_config.agent.discount,
-        start_sampling=False,
-        episode_data_folder=data_path / "episodes_data",
-        max_samples_per_episode=worker_config.optimization.max_samples_per_episode,
-        min_non_zero_prob_samples=worker_config.optimization.min_non_zero_prob_samples,
-        use_per=worker_config.optimization.use_per,
-        value_based_per=worker_config.optimization.value_based_per,
-        td_error=worker_config.optimization.value_td_5_step,
-        supervised_targets=worker_config.optimization.supervised_targets)
+    if worker_config.optimization.supervised_targets:
+        replay_buffer = SupervisedReplayBufferFromFolder(
+            features=worker_config.network.feature_extractor,
+            batch_size=worker_config.optimization.batch_size,
+            nr_of_batches=worker_config.optimization.updates_per_step,
+            max_trajectory_length=worker_config.optimization.max_trajectory_length,
+            min_trajectory_length=worker_config.optimization.min_trajectory_length,
+            cache_path=data_path,
+            mdp_value=worker_config.agent.mdp_value,
+            valid_policy_target=worker_config.optimization.valid_policy_target,
+            gamma=worker_config.agent.discount,
+            start_sampling=False,
+            td_error=worker_config.optimization.value_td_5_step)
+    else:
+        replay_buffer = FileBasedReplayBufferFromFolder(
+            max_buffer_size=worker_config.optimization.max_buffer_size,
+            batch_size=worker_config.optimization.batch_size,
+            nr_of_batches=worker_config.optimization.updates_per_step,
+            max_trajectory_length=worker_config.optimization.max_trajectory_length,
+            min_trajectory_length=worker_config.optimization.min_trajectory_length,
+            game_data_folder=data_path / "game_data",
+            clean_up_files=True,
+            cache_path=data_path,
+            mdp_value=worker_config.agent.mdp_value,
+            valid_policy_target=worker_config.optimization.valid_policy_target,
+            gamma=worker_config.agent.discount,
+            start_sampling=False,
+            episode_data_folder=data_path / "episodes_data",
+            max_samples_per_episode=worker_config.optimization.max_samples_per_episode,
+            min_non_zero_prob_samples=worker_config.optimization.min_non_zero_prob_samples,
+            use_per=worker_config.optimization.use_per,
+            value_based_per=worker_config.optimization.value_based_per,
+            td_error=worker_config.optimization.value_td_5_step,
+            supervised_targets=worker_config.optimization.supervised_targets)
 
     replay_buffer.restore(tree_from_file=worker_config.optimization.restore_buffer_tree_from_file)
 

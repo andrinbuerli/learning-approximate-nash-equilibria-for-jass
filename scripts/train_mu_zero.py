@@ -87,7 +87,8 @@ if __name__=="__main__":
         min_non_zero_prob_samples=worker_config.optimization.min_non_zero_prob_samples,
         use_per=worker_config.optimization.use_per,
         value_based_per=worker_config.optimization.value_based_per,
-        td_error=worker_config.optimization.value_td_5_step)
+        td_error=worker_config.optimization.value_td_5_step,
+        supervised_targets=worker_config.optimization.supervised_targets)
 
     replay_buffer.restore(tree_from_file=worker_config.optimization.restore_buffer_tree_from_file)
 

@@ -4,6 +4,7 @@ services:
         build: .
         volumes:
             - .:/app
+            - ../jass-train-py/data/conv_observation_full_0.75_quantile:/data
         ports:
           - 8080:8080
         command: >

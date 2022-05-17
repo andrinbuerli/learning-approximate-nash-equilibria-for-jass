@@ -41,7 +41,7 @@
   "valid_policy_target": false,
   "supervised_targets": true,
   "use_per": true,
-  "value_based_per": true,
+  "value_based_per": false,
   "mask_private": false,
   "mask_valid": false,
   "value_td_5_step": false,

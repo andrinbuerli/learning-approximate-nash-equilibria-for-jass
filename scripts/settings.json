@@ -40,7 +40,7 @@
   "dldl": false,
   "valid_policy_target": false,
   "supervised_targets": true,
-  "use_per": true,
+  "use_per": false,
   "value_based_per": false,
   "mask_private": false,
   "mask_valid": false,

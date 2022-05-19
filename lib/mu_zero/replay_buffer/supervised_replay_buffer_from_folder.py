@@ -56,7 +56,7 @@ class SupervisedReplayBufferFromFolder:
         self.ds = iter(ds.map(lambda x: parse_feature_example(
             x,
             feature_length=38 * features.FEATURE_LENGTH,
-            label_length=38 * LabelSetActionFull.LABEL_LENGTH)).repeat())
+            label_length=38 * LabelSetActionFull.LABEL_LENGTH)).repeat().shuffle(100))
 
         self.sample_queue = Queue()
         self.running = True
@@ -174,11 +174,18 @@ class SupervisedReplayBufferFromFolder:
 
         assert rewards.sum() == 157
 
-        values = np.array([
-            np.sum([
-                x * self.gamma**i for i, x in enumerate(rewards[k:])
-            ], axis=0) for k in range(rewards.shape[0])
-        ])
+        if self.mdp_value:
+            values = np.array([
+                np.sum([
+                    x * self.gamma ** i for i, x in enumerate(rewards[k:])
+                ], axis=0) for k in range(rewards.shape[0])
+            ])
+        else:
+            values = np.array([
+                np.sum([
+                    x * self.gamma ** i for i, x in enumerate(rewards[:])
+                ], axis=0) for _ in range(rewards.shape[0])
+            ])
 
         one_hot = np.squeeze(np.eye(43)[actions.reshape(-1)[:episode_length]])
         probs = one_hot

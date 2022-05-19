@@ -110,8 +110,8 @@ if __name__=="__main__":
 
     manager = MetricsManager(
         APAO("dmcts", worker_config, str(network_path), parallel_threads=worker_config.optimization.apa_n_games),
+        APAO("dmcts", worker_config, str(network_path), parallel_threads=worker_config.optimization.apa_n_games, only_policy=True),
         APAO("dpolicy", worker_config, str(network_path), parallel_threads=worker_config.optimization.apa_n_games),
-        APAO("policy", worker_config, str(network_path), parallel_threads=worker_config.optimization.apa_n_games),
         APAO("random", worker_config, str(network_path), parallel_threads=worker_config.optimization.apa_n_games),
         SARE(
             samples_per_calculation=worker_config.optimization.batch_size,

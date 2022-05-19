@@ -1,4 +1,5 @@
 import gc
+from copy import deepcopy
 
 import numpy as np
 
@@ -38,9 +39,20 @@ class APAO(BaseAsyncMetric):
     def get_params(self, thread_nr: int, network: AbstractNetwork, init_vars=None) -> []:
         return thread_nr, get_agent(self.worker_config, network, greedy=True), get_opponent(self.opponent_name)
 
-    def __init__(self, opponent_name: str, worker_config: WorkerConfig, network_path: str, parallel_threads: int):
+    def __init__(self, opponent_name: str, worker_config: WorkerConfig, network_path: str, parallel_threads: int,
+                 only_policy=False):
+
+        if only_policy:
+            worker_config = deepcopy(worker_config)
+            worker_config.agent.type = "policy"
+
+        self.only_policy = only_policy
+
         self.opponent_name = opponent_name
         super().__init__(worker_config, network_path, parallel_threads, _play_single_game_)
 
     def get_name(self):
-        return f"apa_{self.opponent_name}"
+        if self.only_policy:
+            return f"apa_{self.opponent_name}_raw_policy"
+        else:
+            return f"apa_{self.opponent_name}"

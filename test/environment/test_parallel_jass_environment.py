@@ -158,8 +158,8 @@ def test_collect_more_data_parallel_processes_and_threads():
 def test_collect_data_continuous():
     config = get_test_config()
 
-    config.agent.iterations = 10
-    config.agent.n_search_threads = 4
+    config.agent.iterations = 50
+    config.agent.n_search_threads = 1
 
     path = Path(__file__).parent.parent / "resources" / "imperfect_resnet_random.pd"
     testee = ParallelJassEnvironment(
@@ -181,6 +181,65 @@ def test_collect_data_continuous():
         assert states.shape[1] == actions.shape[1] == rewards.shape[1] == probs.shape[1] == outcomes.shape[1]
         assert rewards.sum() == 2*157
         assert states.shape[0] == 2
+        assert states.shape[1] == 38
+
+    del testee
+
+
+def test_collect_data_reanalyse():
+    config = get_test_config(cheating=False)
+
+    config.agent.iterations = 20
+    config.agent.n_search_threads = 1
+
+    path = Path(__file__).parent.parent / "resources" / "imperfect_resnet_random.pd"
+    testee = ParallelJassEnvironment(
+        max_parallel_processes=1,
+        max_parallel_threads=1,
+        worker_config=config,
+        network_path=path,
+        reanalyse_fraction=1.0,
+        reanalyse_data_path="/data")
+
+    states, actions, rewards, probs, outcomes = testee.collect_game_data(n_games=1)
+
+    print(list(zip(actions, rewards)))
+
+    assert states.shape[0] == actions.shape[0] == rewards.shape[0] == probs.shape[0] == outcomes.shape[0]
+    assert states.shape[1] == actions.shape[1] == rewards.shape[1] == probs.shape[1] == outcomes.shape[1]
+    assert rewards.sum() == 157
+    assert states.shape[0] == 1
+    assert states.shape[1] == 38
+
+
+def test_collect_data_continuous_reanalyse():
+    config = get_test_config()
+
+    config.agent.iterations = 50
+    config.agent.n_search_threads = 1
+
+    path = Path(__file__).parent.parent / "resources" / "imperfect_resnet_random.pd"
+    testee = ParallelJassEnvironment(
+        max_parallel_processes=2,
+        max_parallel_threads=32,
+        worker_config=config,
+        network_path=path,
+        reanalyse_fraction=1.0,
+        reanalyse_data_path="/data")
+
+    queue = Queue()
+    testee.start_collect_game_data_continuously(n_games=4, queue=queue, cancel_con=None)
+
+    for _ in range(2):
+        start = time.time()
+        states, actions, rewards, probs, outcomes = queue.get()
+
+        print(f"took: {time.time() - start}s")
+
+        assert states.shape[0] == actions.shape[0] == rewards.shape[0] == probs.shape[0] == outcomes.shape[0]
+        assert states.shape[1] == actions.shape[1] == rewards.shape[1] == probs.shape[1] == outcomes.shape[1]
+        assert rewards.sum() == 157
+        assert states.shape[0] == 1
         assert states.shape[1] == 38
 
     del testee

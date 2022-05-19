@@ -23,6 +23,30 @@ def test_shapes():
 
 def test_summary():
     testee = get_test_resnet()
+    testee = MuZeroResidualNetwork(
+        observation_shape=(4, 9, 45),
+        action_space_size=43,
+        num_blocks_representation=10,
+        fcn_blocks_representation=0,
+        num_blocks_dynamics=10,
+        fcn_blocks_dynamics=0,
+        num_blocks_prediction=0,
+        num_channels=128,
+        reduced_channels_reward=64,
+        reduced_channels_value=2,
+        reduced_channels_policy=64,
+        fc_reward_layers=[256],
+        fc_value_layers=[256],
+        fc_policy_layers=[256],
+        fc_hand_layers=[],
+        fc_player_layers=[],
+        fc_terminal_state_layers=[],
+        mask_valid=False,
+        mask_private=False,
+        support_size=100,
+        players=4,
+        fully_connected=False
+    )
 
     testee.summary()
 

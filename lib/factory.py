@@ -51,8 +51,6 @@ def get_agent(config: WorkerConfig, network, greedy=False, force_local=False) ->
             action_space=43,
             players=4,
             log=False,
-            chance_sampling=False,
-            chance_samples=-1,
             temperature=1.0,
             cheating_mode=False)
     elif config.agent.type == "dmcts":

@@ -28,6 +28,21 @@ def get_agent(config: WorkerConfig, network, greedy=False, force_local=False) ->
             virtual_loss=config.agent.virtual_loss,
             n_search_threads=config.agent.n_search_threads,
         )
+    elif config.agent.type == "policy":
+        from lib.mu_zero.mcts.agent_policy import AgentPolicy
+        return AgentPolicy(
+            network=network,
+            feature_extractor=config.network.feature_extractor,
+            temperature=config.agent.temperature if not greedy else 5e-2,
+        )
+    elif config.agent.type == "value":
+        from lib.mu_zero.mcts.agent_value import AgentValue
+        return AgentValue(
+            network=network,
+            feature_extractor=config.network.feature_extractor,
+            mdp_value=config.agent.mdp_value,
+            temperature=config.agent.temperature if not greedy else 5e-2,
+        )
     elif config.agent.type == "oos":
         return AgentOnlineOutcomeSampling(
             iterations=config.agent.iterations,

@@ -249,8 +249,8 @@ TOTAL: {sum([representation_params, dynamics_params, prediction_params]):,} trai
                                                encoded_state - minimas
                                        ) / scale_encoded_state
         else:
-            minimas = tf.reduce_min(encoded_state, axis=(1, 2), keepdims=True)
-            maximas = tf.reduce_max(encoded_state, axis=(1, 2), keepdims=True)
+            minimas = tf.reduce_min(encoded_state, axis=(1, 2, 3), keepdims=True)
+            maximas = tf.reduce_max(encoded_state, axis=(1, 2, 3), keepdims=True)
             scale_encoded_state = maximas - minimas
             scale_encoded_state = tf.maximum(scale_encoded_state, 1e-5)
             encoded_state_normalized = (
@@ -297,7 +297,6 @@ class RepresentationNetwork(tf.keras.Model):
         self.observation_shape = observation_shape
         self.layer0 = conv2x3(num_channels) if not fully_connected else dense(num_channels)
         self.bn = layers.BatchNormalization()
-        self.ln = layers.LayerNormalization()
         self.resblocks = [ResidualBlock(num_channels, fully_connected) for _ in range(num_blocks)]
         self.resblocks_fcn = [ResidualFullyConnectedBlock(num_channels, fully_connected) for _ in range(num_blocks_fully_connected)]
 
@@ -315,8 +314,6 @@ class RepresentationNetwork(tf.keras.Model):
 
         for block in self.resblocks_fcn:
             x = block(x, training=training)
-
-        x = self.ln(x, training=training)
 
         return x
 
@@ -348,8 +345,6 @@ class DynamicsNetwork(tf.keras.Model):
         self.resblocks = [ResidualBlock(num_channels, fully_connected) for _ in range(num_blocks)]
         self.resblocks_fcn = [ResidualFullyConnectedBlock(num_channels, fully_connected) for _ in range(num_blocks_fully_connected)]
 
-        self.ln = layers.LayerNormalization()
-
         if not fully_connected:
             self.conv1x1_reward =  layers.Conv2D(filters=reduced_channels_reward, kernel_size=(1, 1), padding="same",
                                                  activation=None, use_bias=False, kernel_initializer="glorot_uniform")
@@ -376,8 +371,6 @@ class DynamicsNetwork(tf.keras.Model):
 
         for block in self.resblocks_fcn:
             x = block(x, training=training)
-
-        x = self.ln(x, training=training)
 
         state = x
 

@@ -38,7 +38,7 @@ class BufferingNetwork(AbstractNetwork):
                 timeout_exception = True
 
             if len(observations) >= self.buffer_size or (len(observations) > 0 and timeout_exception):
-                result = self.executing_network.initial_inference(tf.concat(observations, axis=0))
+                result = self.executing_network.initial_inference(tf.concat(observations, axis=0), all_preds=True)
 
                 for i, conn in enumerate(conns):
                     conn.send([x[i][None] for x in result])
@@ -63,7 +63,7 @@ class BufferingNetwork(AbstractNetwork):
 
             if len(encoded_states) >= self.buffer_size or (len(encoded_states) > 0 and timeout_exception):
                 result = self.executing_network.recurrent_inference(
-                    tf.cast(tf.concat(encoded_states, axis=0), tf.float32), tf.concat(actions, axis=0))
+                    tf.cast(tf.concat(encoded_states, axis=0), tf.float32), tf.concat(actions, axis=0), all_preds=True)
 
                 for i, conn in enumerate(conns):
                     conn.send([x[i][None] for x in result])
@@ -71,14 +71,14 @@ class BufferingNetwork(AbstractNetwork):
 
                 encoded_states.clear(), conns.clear(), actions.clear()
 
-    def initial_inference(self, observation, return_connection=False):
+    def initial_inference(self, observation, return_connection=False, **kwargs):
         assert len(observation.shape) == 4 or len(observation.shape) == 2, "observation must be batched"
 
         parent_conn, child_conn = Pipe()
         self._initial_queue.put((observation, child_conn))
         return parent_conn.recv() if not return_connection else parent_conn
 
-    def recurrent_inference(self, encoded_state, action, return_connection=False):
+    def recurrent_inference(self, encoded_state, action, return_connection=False, **kwargs):
         assert len(encoded_state.shape) == 4 or len(encoded_state.shape) == 2, "encoded_state must be batched"
         assert len(action.shape) == 2, "action must be batched"
 

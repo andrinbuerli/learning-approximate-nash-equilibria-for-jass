@@ -147,7 +147,7 @@ class SupervisedReplayBufferFromFolder:
             batches = self._sample_from_buffer(self.nr_of_batches)
             self.sample_queue.put(batches)
 
-            while self.sample_queue.qsize() > 10:
+            while self.sample_queue.qsize() > 10 and self.running:
                 sleep(5)
 
     def update(self):

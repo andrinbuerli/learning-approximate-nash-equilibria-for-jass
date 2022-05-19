@@ -19,7 +19,7 @@ def test_infostate_key_start():
         game_nr=0,
         total_nr_games=1))
 
-    assert testee.get_infostate_key(sim.state)[:2] == "-1"
+    assert testee.get_infostate_key(sim.state)[1:3] == "-1"
 
 
 def test_infostate_key_trump():
@@ -36,7 +36,7 @@ def test_infostate_key_trump():
         total_nr_games=1))
     sim.perform_action_trump(0)
 
-    assert testee.get_infostate_key(sim.state)[:1] == "0"
+    assert testee.get_infostate_key(sim.state)[1:2] == "0"
 
 def test_infostate_key_push():
     testee = OOS(
@@ -52,7 +52,7 @@ def test_infostate_key_push():
         total_nr_games=1))
     sim.perform_action_trump(10)
 
-    assert testee.get_infostate_key(sim.state)[:2] == "-1"
+    assert testee.get_infostate_key(sim.state)[1:3] == "-1"
 
 def test_infostate_key_middle():
     testee = OOS(
@@ -71,7 +71,7 @@ def test_infostate_key_middle():
     for _ in range(7):
         sim.perform_action_play_card(np.flatnonzero(sim.get_valid_cards())[0])
 
-    assert testee.get_infostate_key(sim.state)[:1] == "0"
+    assert testee.get_infostate_key(sim.state)[1:2] == "0"
 
 def test_iteration():
     testee = OOS(
@@ -86,7 +86,7 @@ def test_iteration():
         game_nr=0,
         total_nr_games=1))
 
-    testee.run_iterations(jasscpp.observation_from_state(sim.state, -1), 10, targeted_mode=True)
+    testee.run_iterations(jasscpp.observation_from_state(sim.state, -1), 10, targeted_mode_init=True)
 
     assert len(testee.information_sets) > 0
 
@@ -109,6 +109,6 @@ def test_iteration_middle_of_game():
         a = np.flatnonzero(sim.get_valid_actions())
         sim.perform_action_full(np.random.choice(a))
 
-    testee.run_iterations(jasscpp.observation_from_state(sim.state, -1), 10000)
+    testee.run_iterations(jasscpp.observation_from_state(sim.state, -1), 100)
 
     assert len(testee.information_sets) > 0

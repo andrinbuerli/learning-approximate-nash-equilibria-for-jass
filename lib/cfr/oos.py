@@ -17,13 +17,9 @@ class OOS:
             gamma: float,
             action_space: int,
             players: int,
-            chance_sampling: bool,
-            iterations_per_chance_sample: int,
             log: bool = False,
             asserts: bool = False):
         self.asserts = asserts
-        self.iterations_per_chance_sample = iterations_per_chance_sample
-        self.chance_sampling = chance_sampling
         self.log = log
         self.players = players
         self.teams = players // 2
@@ -57,10 +53,6 @@ class OOS:
             return valid_actions / valid_actions.sum()
 
     def run_iterations(self, m: Tuple[GameStateCpp, GameObservationCpp], iterations: int, targeted_mode_init: bool = None):
-
-        if self.chance_sampling:
-            iterations = iterations // self.iterations_per_chance_sample
-
         immediate_regrets, xs, ls, us, w_Ts = [], [], [], [], []
 
         w_T = self.calculate_weighting_factor(m)
@@ -83,24 +75,24 @@ class OOS:
         else:
             targeted_mode = targeted_mode_init
         hands, prob_targeted, prob_untargeted = self.sample_chance_outcome(m, targeted_mode)
-        for _ in range(self.iterations_per_chance_sample if self.chance_sampling else 1):
-            for i_team in range(self.teams):
-                state = GameStateCpp()
-                state.dealer = m.dealer
-                state.player = next_player[m.dealer]
-                state.hands = hands
-                x, l, u = self.recurse(
-                    m=m,
-                    h=state,
-                    pi_i=1,
-                    pi_o=prob_untargeted * 1,
-                    s_1=prob_targeted * w_T,
-                    s_2=prob_untargeted * w_T,
-                    i_team=i_team,
-                    targeted_mode=targeted_mode)
 
-                if self.log:
-                    xs.append(x), ls.append(l), us.append(u), w_Ts.append(w_T)
+        for i_team in range(self.teams):
+            state = GameStateCpp()
+            state.dealer = m.dealer
+            state.player = next_player[m.dealer]
+            state.hands = hands
+            x, l, u = self.recurse(
+                m=m,
+                h=state,
+                pi_i=1,
+                pi_o=prob_untargeted * 1,
+                s_1=prob_targeted * w_T,
+                s_2=prob_untargeted * w_T,
+                i_team=i_team,
+                targeted_mode=targeted_mode)
+
+            if self.log:
+                xs.append(x), ls.append(l), us.append(u), w_Ts.append(w_T)
         if self.log:
             # imregret = np.nanmean([r.max() for key, (_, _, r) in self.infostates.items()])
             key = self.get_infostate_key_from_obs(m)

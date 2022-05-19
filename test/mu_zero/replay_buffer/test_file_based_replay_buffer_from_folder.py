@@ -26,7 +26,10 @@ def test_buffer_size():
         gamma=1,
         use_per=False,
         valid_policy_target=False,
-        clean_up_episodes=True
+        clean_up_episodes=True,
+        supervised_targets=False,
+        td_error=False,
+        value_based_per=False
     )
 
     sleep(1)
@@ -55,7 +58,10 @@ def test_batch_size():
         gamma=1,
         use_per=False,
         valid_policy_target=False,
-        clean_up_episodes=True
+        clean_up_episodes=True,
+        supervised_targets=False,
+        td_error=False,
+        value_based_per=False
     )
 
     sleep(1)
@@ -87,7 +93,10 @@ def test_min_non_zero_prob_samples():
         gamma=1,
         use_per=False,
         valid_policy_target=False,
-        clean_up_episodes=True
+        clean_up_episodes=True,
+        supervised_targets=False,
+        td_error=False,
+        value_based_per=False
     )
 
     sleep(1)
@@ -121,7 +130,10 @@ def test_buffer_restore():
         gamma=1,
         use_per=False,
         valid_policy_target=False,
-        clean_up_episodes=False
+        clean_up_episodes=True,
+        supervised_targets=False,
+        td_error=False,
+        value_based_per=False
     )
 
     sleep(1)
@@ -148,10 +160,13 @@ def test_buffer_restore():
         use_per=False,
         valid_policy_target=False,
         clean_up_episodes=True,
-        start_sampling=False
+        start_sampling=False,
+        supervised_targets=False,
+        td_error=False,
+        value_based_per=False
     )
 
-    testee2.restore()
+    testee2.restore(tree_from_file=False)
 
     assert testee2.buffer_size >= testee1.buffer_size
 
@@ -175,7 +190,10 @@ def test_sample_trajectory():
         gamma=1,
         use_per=False,
         valid_policy_target=False,
-        clean_up_episodes=True
+        clean_up_episodes=True,
+        supervised_targets=False,
+        td_error=False,
+        value_based_per=False
     )
 
     testee.update()
@@ -211,7 +229,10 @@ def test_sample_trajectory_mdp_value():
         gamma=1,
         use_per=False,
         valid_policy_target=False,
-        clean_up_episodes=True
+        clean_up_episodes=True,
+        supervised_targets=False,
+        td_error=False,
+        value_based_per=False
     )
 
     testee.update()

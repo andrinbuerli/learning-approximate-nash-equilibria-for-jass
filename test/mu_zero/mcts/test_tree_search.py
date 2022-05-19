@@ -2,6 +2,7 @@ from pathlib import Path
 
 import jasscpp
 
+from lib.factory import get_network
 from lib.jass.features.features_conv_cpp import FeaturesSetCppConv
 from lib.mu_zero.mcts.latent_node_selection_policy import LatentNodeSelectionPolicy
 from lib.mu_zero.mcts.latent_value_calc_policy import LatentValueCalculationPolicy
@@ -9,25 +10,12 @@ from lib.mu_zero.mcts.min_max_stats import MinMaxStats
 from lib.mu_zero.mcts.tree_search import ALPV_MCTS
 from lib.mu_zero.network.buffering_network import BufferingNetwork
 from lib.mu_zero.network.resnet import MuZeroResidualNetwork
+from test.util import get_test_config
 
 
 def test_single_simulation():
-    network = MuZeroResidualNetwork(
-        observation_shape=(4, 9, 45),
-        action_space_size=42,
-        num_blocks_representation=2,
-        num_blocks_dynamics=2,
-        num_blocks_prediction=2,
-        num_channels=256,
-        reduced_channels_reward=128,
-        reduced_channels_value=1,
-        reduced_channels_policy=128,
-        fc_reward_layers=[256],
-        fc_value_layers=[256],
-        fc_policy_layers=[256],
-        support_size=100,
-        players=4
-    )
+    config = get_test_config()
+    network = get_network(config)
 
     stats = MinMaxStats()
 
@@ -57,22 +45,8 @@ def test_single_simulation():
 
 
 def test_multiple_simulations():
-    network = MuZeroResidualNetwork(
-        observation_shape=(4, 9, 45),
-        action_space_size=43,
-        num_blocks_representation=2,
-        num_blocks_dynamics=2,
-        num_blocks_prediction=2,
-        num_channels=256,
-        reduced_channels_reward=128,
-        reduced_channels_value=1,
-        reduced_channels_policy=128,
-        fc_reward_layers=[256],
-        fc_value_layers=[256],
-        fc_policy_layers=[256],
-        support_size=100,
-        players=4
-    )
+    config = get_test_config()
+    network = get_network(config)
 
     stats = MinMaxStats()
 
@@ -102,22 +76,8 @@ def test_multiple_simulations():
 
 
 def test_multiple_simulations_async_single_thread():
-    network = MuZeroResidualNetwork(
-        observation_shape=(4, 9, 45),
-        action_space_size=43,
-        num_blocks_representation=2,
-        num_blocks_dynamics=2,
-        num_blocks_prediction=2,
-        num_channels=256,
-        reduced_channels_reward=128,
-        reduced_channels_value=1,
-        reduced_channels_policy=128,
-        fc_reward_layers=[256],
-        fc_value_layers=[256],
-        fc_policy_layers=[256],
-        support_size=100,
-        players=4
-    )
+    config = get_test_config()
+    network = get_network(config)
 
     stats = MinMaxStats()
 
@@ -148,22 +108,8 @@ def test_multiple_simulations_async_single_thread():
     assert testee.root.visits == 10
 
 def test_multiple_simulations_async_multi_thread():
-    network = MuZeroResidualNetwork(
-        observation_shape=(4, 9, 45),
-        action_space_size=43,
-        num_blocks_representation=2,
-        num_blocks_dynamics=2,
-        num_blocks_prediction=2,
-        num_channels=256,
-        reduced_channels_reward=128,
-        reduced_channels_value=1,
-        reduced_channels_policy=128,
-        fc_reward_layers=[256],
-        fc_value_layers=[256],
-        fc_policy_layers=[256],
-        support_size=100,
-        players=4
-    )
+    config = get_test_config()
+    network = get_network(config)
 
     stats = MinMaxStats()
 
@@ -200,22 +146,8 @@ def test_multiple_simulations_async_multi_thread():
 
 
 def test_multiple_simulations_async_multi_thread_concurrency_check():
-    network = MuZeroResidualNetwork(
-        observation_shape=(4, 9, 45),
-        action_space_size=43,
-        num_blocks_representation=2,
-        num_blocks_dynamics=2,
-        num_blocks_prediction=2,
-        num_channels=256,
-        reduced_channels_reward=128,
-        reduced_channels_value=1,
-        reduced_channels_policy=128,
-        fc_reward_layers=[256],
-        fc_value_layers=[256],
-        fc_policy_layers=[256],
-        support_size=100,
-        players=4
-    )
+    config = get_test_config()
+    network = get_network(config)
 
     stats = MinMaxStats()
 
@@ -250,22 +182,8 @@ def test_multiple_simulations_async_multi_thread_concurrency_check():
 
 
 def test_get_rewards():
-    network = MuZeroResidualNetwork(
-        observation_shape=(4, 9, 45),
-        action_space_size=43,
-        num_blocks_representation=2,
-        num_blocks_dynamics=2,
-        num_blocks_prediction=2,
-        num_channels=256,
-        reduced_channels_reward=128,
-        reduced_channels_value=1,
-        reduced_channels_policy=128,
-        fc_reward_layers=[256],
-        fc_value_layers=[256],
-        fc_policy_layers=[256],
-        support_size=100,
-        players=4
-    )
+    config = get_test_config()
+    network = get_network(config)
 
     stats = MinMaxStats()
 
@@ -297,26 +215,12 @@ def test_get_rewards():
     prob, q_value = testee.get_result()
 
     assert prob.shape == (43,)
-    assert q_value.shape == (43,)
+    assert q_value.shape == (43, 2)
 
 
 def test_get_rewards_lots_threads():
-    network = MuZeroResidualNetwork(
-        observation_shape=(4, 9, 45),
-        action_space_size=43,
-        num_blocks_representation=2,
-        num_blocks_dynamics=2,
-        num_blocks_prediction=2,
-        num_channels=256,
-        reduced_channels_reward=128,
-        reduced_channels_value=1,
-        reduced_channels_policy=128,
-        fc_reward_layers=[256],
-        fc_value_layers=[256],
-        fc_policy_layers=[256],
-        support_size=100,
-        players=4
-    )
+    config = get_test_config()
+    network = get_network(config)
 
     stats = MinMaxStats()
 
@@ -348,28 +252,14 @@ def test_get_rewards_lots_threads():
     prob, q_value = testee.get_result()
 
     assert prob.shape == (43,)
-    assert q_value.shape == (43,)
+    assert q_value.shape == (43, 2)
 
 
 def test_sync_consistency():
-    network = MuZeroResidualNetwork(
-        observation_shape=(4, 9, 45),
-        action_space_size=43,
-        num_blocks_representation=2,
-        num_blocks_dynamics=2,
-        num_blocks_prediction=2,
-        num_channels=256,
-        reduced_channels_reward=128,
-        reduced_channels_value=1,
-        reduced_channels_policy=128,
-        fc_reward_layers=[256],
-        fc_value_layers=[256],
-        fc_policy_layers=[256],
-        support_size=100,
-        players=4
-    )
+    config = get_test_config()
+    network = get_network(config)
 
-    network.load(Path(__file__).parent.parent.parent / "resources" / "imperfect_resnet_random.pd")
+    network.load(Path(__file__).parent.parent.parent / "resources" / "imperfect_resnet_random.pd", from_graph=True)
 
     tree_policy = LatentNodeSelectionPolicy(
             c_1=1,
@@ -424,24 +314,10 @@ def test_sync_consistency():
 
 
 def test_sync_vs_async_consistency():
-    network = MuZeroResidualNetwork(
-        observation_shape=(4, 9, 45),
-        action_space_size=43,
-        num_blocks_representation=2,
-        num_blocks_dynamics=2,
-        num_blocks_prediction=2,
-        num_channels=256,
-        reduced_channels_reward=128,
-        reduced_channels_value=1,
-        reduced_channels_policy=128,
-        fc_reward_layers=[256],
-        fc_value_layers=[256],
-        fc_policy_layers=[256],
-        support_size=100,
-        players=4
-    )
+    config = get_test_config()
+    network = get_network(config)
 
-    network.load(Path(__file__).parent.parent.parent / "resources" / "imperfect_resnet_random.pd")
+    network.load(Path(__file__).parent.parent.parent / "resources" / "imperfect_resnet_random.pd", from_graph=True)
 
     tree_policy = LatentNodeSelectionPolicy(
             c_1=1,
@@ -494,24 +370,10 @@ def test_sync_vs_async_consistency():
 
 
 def test_sync_vs_async_consistency_multi_threads():
-    network = MuZeroResidualNetwork(
-        observation_shape=(4, 9, 45),
-        action_space_size=43,
-        num_blocks_representation=2,
-        num_blocks_dynamics=2,
-        num_blocks_prediction=2,
-        num_channels=256,
-        reduced_channels_reward=128,
-        reduced_channels_value=1,
-        reduced_channels_policy=128,
-        fc_reward_layers=[256],
-        fc_value_layers=[256],
-        fc_policy_layers=[256],
-        support_size=100,
-        players=4
-    )
+    config = get_test_config()
+    network = get_network(config)
 
-    network.load(Path(__file__).parent.parent.parent / "resources" / "imperfect_resnet_random.pd")
+    network.load(Path(__file__).parent.parent.parent / "resources" / "imperfect_resnet_random.pd", from_graph=True)
 
     tree_policy = LatentNodeSelectionPolicy(
             c_1=1,

@@ -7,31 +7,19 @@ from jass.game.game_sim import GameSim
 from jass.game.game_state import GameState
 from jass.game.game_state_util import state_from_complete_game, observation_from_state
 
+from lib.factory import get_network
 from lib.jass.features.features_conv_cpp import FeaturesSetCppConv
 from lib.mu_zero.mcts.min_max_stats import MinMaxStats
 from lib.mu_zero.mcts.node import Node
 from lib.mu_zero.mcts.latent_node_selection_policy import LatentNodeSelectionPolicy
 from lib.mu_zero.network.resnet import MuZeroResidualNetwork
 from lib.util import convert_to_cpp_observation
+from test.util import get_test_config
 
 
 def test_init():
-    network = MuZeroResidualNetwork(
-        observation_shape=(4, 9, 45),
-        action_space_size=42,
-                num_blocks_representation=2,
-        num_blocks_dynamics=2,
-        num_blocks_prediction=2,
-        num_channels=256,
-        reduced_channels_reward=128,
-        reduced_channels_value=1,
-        reduced_channels_policy=128,
-        fc_reward_layers=[256],
-        fc_value_layers=[256],
-        fc_policy_layers=[256],
-        support_size=100,
-        players=4
-    )
+    config = get_test_config()
+    network = get_network(config)
 
     testee = LatentNodeSelectionPolicy(
             c_1=1,
@@ -55,22 +43,8 @@ def test_init():
 
 
 def test_select():
-    network = MuZeroResidualNetwork(
-        observation_shape=(4, 9, 45),
-        action_space_size=42,
-                num_blocks_representation=2,
-        num_blocks_dynamics=2,
-        num_blocks_prediction=2,
-        num_channels=256,
-        reduced_channels_reward=128,
-        reduced_channels_value=1,
-        reduced_channels_policy=128,
-        fc_reward_layers=[256],
-        fc_value_layers=[256],
-        fc_policy_layers=[256],
-        support_size=100,
-        players=4
-    )
+    config = get_test_config()
+    network = get_network(config)
 
     testee = LatentNodeSelectionPolicy(
             c_1=1,
@@ -135,28 +109,14 @@ def test_get_next_player():
             obs = observations[i]
             cards_played = [x for x in prev_obs.tricks.reshape(-1).tolist() if x >= 0]
             node = Node(None, None, player=prev_obs.player, next_player=prev_obs.player, cards_played=cards_played, trump=prev_obs.trump)
-            next_player = testee._get_start_trick_next_player(state.tricks.reshape(-1)[i - 1], node, prev_obs)
+            next_player = testee._get_start_trick_next_player(state.tricks.reshape(-1)[i - 1], node, prev_obs, None)
 
             assert next_player == obs.player
 
 
 def test_select_players_push():
-    network = MuZeroResidualNetwork(
-        observation_shape=(4, 9, 45),
-        action_space_size=43,
-                num_blocks_representation=2,
-        num_blocks_dynamics=2,
-        num_blocks_prediction=2,
-        num_channels=256,
-        reduced_channels_reward=128,
-        reduced_channels_value=1,
-        reduced_channels_policy=128,
-        fc_reward_layers=[256],
-        fc_value_layers=[256],
-        fc_policy_layers=[256],
-        support_size=100,
-        players=4
-    )
+    config = get_test_config()
+    network = get_network(config)
 
     testee = LatentNodeSelectionPolicy(
             c_1=1,
@@ -189,22 +149,8 @@ def test_select_players_push():
         node = child
 
 def test_select_players_not_push():
-    network = MuZeroResidualNetwork(
-        observation_shape=(4, 9, 45),
-        action_space_size=43,
-                num_blocks_representation=2,
-        num_blocks_dynamics=2,
-        num_blocks_prediction=2,
-        num_channels=256,
-        reduced_channels_reward=128,
-        reduced_channels_value=1,
-        reduced_channels_policy=128,
-        fc_reward_layers=[256],
-        fc_value_layers=[256],
-        fc_policy_layers=[256],
-        support_size=100,
-        players=4
-    )
+    config = get_test_config()
+    network = get_network(config)
 
     testee = LatentNodeSelectionPolicy(
             c_1=1,
@@ -239,22 +185,8 @@ def test_select_players_not_push():
 
 
 def test_select_players_middle_of_game():
-    network = MuZeroResidualNetwork(
-        observation_shape=(4, 9, 45),
-        action_space_size=43,
-                num_blocks_representation=2,
-        num_blocks_dynamics=2,
-        num_blocks_prediction=2,
-        num_channels=256,
-        reduced_channels_reward=128,
-        reduced_channels_value=1,
-        reduced_channels_policy=128,
-        fc_reward_layers=[256],
-        fc_value_layers=[256],
-        fc_policy_layers=[256],
-        support_size=100,
-        players=4
-    )
+    config = get_test_config()
+    network = get_network(config)
 
     testee = LatentNodeSelectionPolicy(
             c_1=1,

@@ -12,15 +12,15 @@ from lib.mu_zero.trainer import MuZeroTrainer
 from test.util import get_test_config
 
 
-def get_replay_buffer():
+def get_replay_buffer(cheating=False):
     replay_buffer = FileBasedReplayBufferFromFolder(
         max_buffer_size=1000,
         batch_size=32,
         nr_of_batches=1,
         min_trajectory_length=5,
         max_trajectory_length=5,
-        data_file_ending=".imperfect.jass-data.pkl",
-        episode_file_ending=".imperfect.jass-episode.pkl",
+        data_file_ending=".imperfect.jass-data.pkl" if not cheating else ".perfect.jass-data.pkl",
+        episode_file_ending=".imperfect.jass-episode.pkl" if not cheating else ".perfect.jass-episode.pkl",
         game_data_folder=Path(__file__).parent.parent / "resources",
         episode_data_folder=Path(__file__).parent / f"tmp_episodes{str(uuid.uuid1())}",
         max_samples_per_episode=2,
@@ -31,7 +31,10 @@ def get_replay_buffer():
         use_per=False,
         valid_policy_target=False,
         clean_up_episodes=True,
-        start_sampling=False
+        start_sampling=False,
+        supervised_targets=False,
+        td_error=False,
+        value_based_per=False
     )
 
     return replay_buffer
@@ -83,7 +86,8 @@ def test_fit_eager():
 
     shutil.rmtree(path)
 
-    del testee, replay_buffer
+    replay_buffer.stop_sampling()
+    del replay_buffer, testee
 
 
 def test_fit_eager_perfect():
@@ -100,7 +104,7 @@ def test_fit_eager_perfect():
 
     # network.load(base_path / "latest_network.pd")
 
-    replay_buffer = get_replay_buffer()
+    replay_buffer = get_replay_buffer(cheating=True)
 
     optimizer = get_optimizer(config)
 
@@ -133,7 +137,8 @@ def test_fit_eager_perfect():
 
     shutil.rmtree(path)
 
-    del testee, replay_buffer
+    replay_buffer.stop_sampling()
+    del replay_buffer, testee
 
 def test_fit_non_eager():
     import tensorflow as tf
@@ -176,7 +181,8 @@ def test_fit_non_eager():
 
     shutil.rmtree(path)
 
-    del testee
+    replay_buffer.stop_sampling()
+    del replay_buffer, testee
 
 
 def test_fit_non_eager_perfect():
@@ -187,7 +193,7 @@ def test_fit_non_eager_perfect():
 
     network = get_network(config)
 
-    replay_buffer = get_replay_buffer()
+    replay_buffer = get_replay_buffer(cheating=True)
 
     optimizer = get_optimizer(config)
 
@@ -219,4 +225,5 @@ def test_fit_non_eager_perfect():
 
     shutil.rmtree(path)
 
-    del testee
+    replay_buffer.stop_sampling()
+    del replay_buffer, testee

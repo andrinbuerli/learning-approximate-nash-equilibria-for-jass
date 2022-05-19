@@ -9,11 +9,11 @@ def test_initial_inference():
 
     testee = BufferingNetwork(network, buffer_size=1)
 
-    value, reward, policy, encoded_state = testee.initial_inference(np.random.uniform(0, 1, (1, 4, 9, 43)))
+    value, reward, policy, player, hand, is_terminal, encoded_state = testee.initial_inference(np.random.uniform(0, 1, (1, 4, 9, 45)))
     assert encoded_state.shape == (1, 4, 9, 256)
-    assert reward.shape == (1, 4, 101)
-    assert policy.shape == (1, 42)
-    assert value.shape == (1, 4, 101)
+    assert reward.shape == (1, 4, 201)
+    assert policy.shape == (1, 43)
+    assert value.shape == (1, 4, 201)
 
     del testee
 
@@ -23,11 +23,11 @@ def test_recurrent_inference():
 
     testee = BufferingNetwork(network, buffer_size=1)
 
-    value, reward, policy, encoded_state = testee.recurrent_inference(np.random.uniform(0, 1, (1, 4, 9, 256)), np.array([[1]]))
+    value, reward, policy, player, hand, is_terminal, encoded_state = testee.recurrent_inference(np.random.uniform(0, 1, (1, 4, 9, 256)), np.array([[1]]))
     assert encoded_state.shape == (1, 4, 9, 256)
-    assert reward.shape == (1, 4, 101)
-    assert policy.shape == (1, 42)
-    assert value.shape == (1, 4, 101)
+    assert reward.shape == (1, 4, 201)
+    assert policy.shape == (1, 43)
+    assert value.shape == (1, 4, 201)
 
     del testee
 
@@ -37,17 +37,17 @@ def test_recurrent_inference_repeated_synch():
 
     testee = BufferingNetwork(network, buffer_size=1)
 
-    value, reward, policy, encoded_state = testee.recurrent_inference(np.random.uniform(0, 1, (1, 4, 9, 256)), np.array([[1]]))
+    value, reward, policy, player, hand, is_terminal, encoded_state = testee.recurrent_inference(np.random.uniform(0, 1, (1, 4, 9, 256)), np.array([[1]]))
     assert encoded_state.shape == (1, 4, 9, 256)
-    assert reward.shape == (1, 4, 101)
-    assert policy.shape == (1, 42)
-    assert value.shape == (1, 4, 101)
+    assert reward.shape == (1, 4, 201)
+    assert policy.shape == (1, 43)
+    assert value.shape == (1, 4, 201)
 
-    value, reward, policy, encoded_state = testee.recurrent_inference(np.random.uniform(0, 1, (1, 4, 9, 256)), np.array([[1]]))
+    value, reward, policy, player, hand, is_terminal, encoded_state = testee.recurrent_inference(np.random.uniform(0, 1, (1, 4, 9, 256)), np.array([[1]]))
     assert encoded_state.shape == (1, 4, 9, 256)
-    assert reward.shape == (1, 4, 101)
-    assert policy.shape == (1, 42)
-    assert value.shape == (1, 4, 101)
+    assert reward.shape == (1, 4, 201)
+    assert policy.shape == (1, 43)
+    assert value.shape == (1, 4, 201)
 
     del testee
 
@@ -61,11 +61,11 @@ def test_recurrent_inference_repeated_async():
     conn2 = testee.recurrent_inference(np.random.uniform(0, 1, (1, 4, 9, 256)), np.array([[1]]), return_connection=True)
 
     for conn in [conn1, conn2]:
-        value, reward, policy, encoded_state = conn.recv()
+        value, reward, policy, player, hand, is_terminal, encoded_state = conn.recv()
         assert encoded_state.shape == (1, 4, 9, 256)
-        assert reward.shape == (1, 4, 101)
-        assert policy.shape == (1, 42)
-        assert value.shape == (1, 4, 101)
+        assert reward.shape == (1, 4, 201)
+        assert policy.shape == (1, 43)
+        assert value.shape == (1, 4, 201)
 
     del testee
 

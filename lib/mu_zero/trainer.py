@@ -289,7 +289,14 @@ class MuZeroTrainer:
             # Scale gradient by the number of unroll steps (See paper appendix Training)
             player_loss = self.scale_gradient(factor=1 / trajectory_length)(player_ce)
 
-            current_hand = tf.reshape(reshaped_state[:, :, :, self.config.network.feature_extractor.CH_HAND], (-1, 36))
+            if hasattr(self.config.network.feature_extractor, "CH_HAND"):
+                current_hand = tf.reshape(reshaped_state[:, :, :, self.config.network.feature_extractor.CH_HAND], (-1, 36))
+            else:
+                current_hand = tf.reshape(
+                    reshaped_state[:, :, :,
+                    self.config.network.feature_extractor.CH_HANDS:self.config.network.feature_extractor.CH_HANDS+4],
+                    (-1, 4, 36))
+                current_hand = tf.gather(current_hand, tf.argmax(current_player, axis=-1), axis=1, batch_dims=1)
             hand_bce = self.binary_cross_entropy(current_hand, hand)
             # Scale gradient by the number of unroll steps (See paper appendix Training)
             hand_loss = self.scale_gradient(factor=1 / trajectory_length)(hand_bce)
@@ -379,7 +386,15 @@ class MuZeroTrainer:
                 # Scale gradient by the number of unroll steps (See paper appendix Training)
                 player_loss += self.scale_gradient(factor=1 / trajectory_length)(player_ce)
 
-                current_hand = tf.reshape(reshaped_state[:, :, :, self.config.network.feature_extractor.CH_HAND], (-1, 36))
+                if hasattr(self.config.network.feature_extractor, "CH_HAND"):
+                    current_hand = tf.reshape(reshaped_state[:, :, :, self.config.network.feature_extractor.CH_HAND],
+                                              (-1, 36))
+                else:
+                    current_hand = tf.reshape(
+                        reshaped_state[:, :, :,
+                        self.config.network.feature_extractor.CH_HANDS:self.config.network.feature_extractor.CH_HANDS+4],
+                        (-1, 4, 36))
+                    current_hand = tf.gather(current_hand, tf.argmax(current_player, axis=-1), axis=1, batch_dims=1)
                 hand_bce = self.binary_cross_entropy(current_hand, hand)
                 # Scale gradient by the number of unroll steps (See paper appendix Training)
                 hand_loss += self.scale_gradient(factor=1 / trajectory_length)(hand_bce)

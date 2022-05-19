@@ -22,6 +22,6 @@ def test_vis():
 
     result = testee.get_latest_result()
 
-    assert len(result) == 0
+    assert len(result) == 5
 
     del testee

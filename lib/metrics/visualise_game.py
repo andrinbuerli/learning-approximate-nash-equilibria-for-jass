@@ -39,7 +39,8 @@ def _make_plots_(network: AbstractNetwork, iterator, f_shape, l_shape, features,
     hand_kls = []
     values = []
 
-    value, reward, policy, player, hand, is_terminal, encoded_state = network.initial_inference(states[0][None], all_preds=True)
+    idx = np.random.choice(range(38), 1)[0]
+    value, reward, policy, player, hand, is_terminal, encoded_state = network.initial_inference(states[idx][None], all_preds=True)
 
     prev_points = [0, 0]
     i = 0

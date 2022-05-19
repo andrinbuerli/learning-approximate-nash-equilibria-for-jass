@@ -185,8 +185,8 @@ class FileBasedReplayBufferFromFolder:
         return self.sum_tree.filled_size
 
     def restore(self, tree_from_file: bool):
-        restore_path = self.cache_path / f"replay_buffer.pkl"
-        if tree_from_file and restore_path.exists():
+        if tree_from_file and (self.cache_path / f"replay_buffer.pkl").exists():
+            restore_path = self.cache_path / f"replay_buffer.pkl"
             with open(restore_path, "rb") as f:
                 self.sum_tree = pickle.load(f)
             logging.info(f"restored replay buffer from {restore_path}")
@@ -226,7 +226,7 @@ class FileBasedReplayBufferFromFolder:
             batches = self._sample_from_buffer(self.nr_of_batches)
             self.sample_queue.put(batches)
 
-            while self.sample_queue.qsize() > 10:
+            while self.sample_queue.qsize() > 10 and self.running:
                 sleep(5)
 
     def update(self):

@@ -14,17 +14,16 @@ def test_shapes():
 
     encoded_next_state, reward = testee.dynamics(encoded_state, action=np.array([[1]]))
     assert encoded_next_state.shape == (1, 4, 9, 256)
-    assert reward.shape == (1, 4, 101)
+    assert reward.shape == (1, 4, 201)
 
     policy, value = testee.prediction(encoded_next_state)
     assert policy.shape == (1, 43)
-    assert value.shape == (1, 4, 101)
+    assert value.shape == (1, 4, 201)
 
 
 def test_summary():
-    testee = get_test_resnet()
     testee = MuZeroResidualNetwork(
-        observation_shape=(4, 9, 45),
+        observation_shape=(4, 9, 48),
         action_space_size=43,
         num_blocks_representation=10,
         fcn_blocks_representation=0,

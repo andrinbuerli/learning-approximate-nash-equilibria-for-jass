@@ -102,7 +102,8 @@ if __name__=="__main__":
         hand_kl = (true_hand_dist * np.log(true_hand_dist / pred_hand_dist + 1e-7)).sum()
         hand_kls.append(hand_kl)
 
-        values.append(support_to_scalar(value[0], min_value=0).numpy())
+        support_size = value.shape[-1]
+        values.append(support_to_scalar(value[0], min_value=-support_size // 2).numpy())
 
         is_terminals.append(is_terminal[0])
 
@@ -150,16 +151,20 @@ if __name__=="__main__":
         all_rewards.append(rewards)
 
         value, reward, policy, player, hand, is_terminal, encoded_state = network.recurrent_inference(encoded_state, [[action]], all_preds=True)
-        all_reward_estimates.append(support_to_scalar(reward[0], min_value=0).numpy())
+
+        support_size = reward.shape[-1]
+        all_reward_estimates.append(support_to_scalar(reward[0], min_value=-support_size//2).numpy())
 
     for _ in range(5):
         all_rewards.append([0, 0])
         is_terminals.append(is_terminal[0])
-        values.append(support_to_scalar(value[0], min_value=0).numpy())
+        support_size = value.shape[-1]
+        values.append(support_to_scalar(value[0], min_value=-support_size//2).numpy())
         value, reward, policy, player, hand, is_terminal, encoded_state = network.recurrent_inference(encoded_state,
                                                                                                       [[action]],
                                                                                                       all_preds=True)
-        all_reward_estimates.append(support_to_scalar(reward[0], min_value=0).numpy())
+        support_size = reward.shape[-1]
+        all_reward_estimates.append(support_to_scalar(reward[0], min_value=-support_size//2).numpy())
 
     plt.plot(policy_kls)
     colors = ["red", "blue", "green", "violet"]

@@ -178,7 +178,8 @@ class LatentNodeSelectionPolicy:
                     action=action,
                     next_player=-1,
                     pushed=-1,
-                    trump=-1)
+                    trump=-1,
+                    mask_invalid=False)
             else:
                 if action < TRUMP_FULL_OFFSET:
                     nr_played_cards = len(node.cards_played)

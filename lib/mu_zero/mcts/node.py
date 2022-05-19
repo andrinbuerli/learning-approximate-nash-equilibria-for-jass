@@ -15,7 +15,8 @@ class Node:
                  action_space_size: int = 43,
                  cards_played: [int] = [],
                  pushed: bool = False,
-                 trump: int = -1):
+                 trump: int = -1,
+                 mask_invalid = True):
         """
         Args:
                 parent: parent of the node, or None if root node
@@ -71,14 +72,16 @@ class Node:
         self.cards_played = cards_played
 
         self.valid_actions = np.ones(action_space_size)
-        if len(cards_played) > 0 or self.trump != -1:
-            self.valid_actions[36:] = 0             # trump cannot be played anymore
-            if len(cards_played) < 36:
-                self.valid_actions[cards_played] = 0  # past cards cannot be played anymore, except after terminal state
-        elif self.trump == -1:
-            self.valid_actions[:36] = 0  # cards can only be played after trump selection phase
-            if self.pushed:
-                self.valid_actions[-1] = 0
+        if mask_invalid:
+            if len(cards_played) > 0 or self.trump != -1:
+                self.valid_actions[36:] = 0  # trump cannot be played anymore
+                if len(cards_played) < 36:
+                    self.valid_actions[
+                        cards_played] = 0  # past cards cannot be played anymore, except after terminal state
+            elif self.trump == -1:
+                self.valid_actions[:36] = 0  # cards can only be played after trump selection phase
+                if self.pushed:
+                    self.valid_actions[-1] = 0
 
     def is_root(self):
         return self.parent is None
@@ -91,13 +94,15 @@ class Node:
                   next_player: int or None,
                   cards_played: [int] = [],
                   pushed: bool = None,
-                  trump: int = -1) -> 'Node':
+                  trump: int = -1,
+                  mask_invalid = True) -> 'Node':
         child = Node(parent=self, action=action,
                      player=self.next_player,
                      next_player=next_player if len(cards_played) < 36 else -1,
                      cards_played=cards_played,
                      pushed=pushed if pushed is not None else self.pushed,
-                     trump=trump if trump > -1 else self.trump)
+                     trump=trump if trump > -1 else self.trump,
+                     mask_invalid=mask_invalid)
         self.children[action] = child
         return child
 

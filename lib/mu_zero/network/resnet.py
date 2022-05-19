@@ -249,8 +249,8 @@ TOTAL: {sum([representation_params, dynamics_params, prediction_params]):,} trai
                                                encoded_state - minimas
                                        ) / scale_encoded_state
         else:
-            minimas = tf.reduce_min(encoded_state, axis=(1, 2, 3), keepdims=True)
-            maximas = tf.reduce_max(encoded_state, axis=(1, 2, 3), keepdims=True)
+            minimas = tf.reduce_min(encoded_state, axis=(1, 2), keepdims=True)
+            maximas = tf.reduce_max(encoded_state, axis=(1, 2), keepdims=True)
             scale_encoded_state = maximas - minimas
             scale_encoded_state = tf.maximum(scale_encoded_state, 1e-5)
             encoded_state_normalized = (

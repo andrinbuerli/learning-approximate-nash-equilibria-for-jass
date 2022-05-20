@@ -1,0 +1,14 @@
+version: '2.3'
+services:
+    data_collector0:
+        build: ../../
+        volumes:
+            - ../../:/app
+        network_mode: host
+        command: >
+            bash -c "cd scripts && python collect_n_send_game_data.py
+            --host gpu03
+            --max_parallel_processes 50
+            --max_parallel_threads 2
+            --min_states_to_send 1"
+

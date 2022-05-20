@@ -32,6 +32,9 @@ class AgentPolicy(RememberingAgent):
         features = self.feature_extractor.convert_to_features(obs, self.rule)
         value, reward, policy, next_encoded_state = self.network.initial_inference(features[None])
 
-        policy = policy.numpy().reshape(-1) * self.rule.get_full_valid_actions_from_obs(obs)
+        if type(obs) == GameObservationCpp:
+            policy = policy.numpy().reshape(-1) * self.rule.get_full_valid_actions_from_obs(obs)
+        else:
+            policy = policy.numpy().reshape(-1) * self.rule.get_full_valid_actions_from_state(obs)
 
         return policy, np.ones_like(policy)

@@ -19,7 +19,7 @@
   "type": "mu-zero-mcts"
  },
  "optimization": {
-  "reanalyse_fraction": 1.0,
+  "reanalyse_fraction": 0.0,
   "optimizer": "adam",
   "learning_rate": 0.0005,
   "learning_rate_init": 0.001,

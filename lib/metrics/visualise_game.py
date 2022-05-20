@@ -63,7 +63,10 @@ def _make_plots_(network: AbstractNetwork, iterator, f_shape, l_shape, features,
         player_kl = np.log(1 / player[0][current_player].numpy() + 1e-7)
         player_kls.append(player_kl)
 
-        true_hand = current_state[:, :, features.CH_HAND].numpy().reshape(-1)
+        if hasattr(features, "CH_HAND"):
+            true_hand = current_state[:, :, features.CH_HAND].numpy().reshape(-1)
+        else:
+            true_hand = current_state[:, :, features.CH_HANDS+current_player].numpy().reshape(-1)
 
         true_hand_dist = true_hand / true_hand.sum()
         pred_hand_dist = hand[0].numpy() / hand[0].numpy().sum()

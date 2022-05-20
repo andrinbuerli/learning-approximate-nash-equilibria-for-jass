@@ -7,7 +7,7 @@ services:
         network_mode: host
         command: >
             bash -c "cd scripts && python collect_n_send_game_data.py
-            --host gpu03
+            --host gpu03.res.el.eee.intern
             --max_parallel_processes 50
             --max_parallel_threads 2
             --min_states_to_send 1"

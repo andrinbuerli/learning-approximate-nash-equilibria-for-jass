@@ -43,7 +43,7 @@ def _make_plots_(network: AbstractNetwork, iterator, f_shape, l_shape, features,
     value, reward, policy, player, hand, is_terminal, encoded_state = network.initial_inference(states[idx][None], all_preds=True)
 
     prev_points = [0, 0]
-    i = 0
+    i = idx
     while i < 38 and y[i, :43].numpy().max() > 0:
         current_state = tf.reshape(states[i], features.FEATURE_SHAPE)
 

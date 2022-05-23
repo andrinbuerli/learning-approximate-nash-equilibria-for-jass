@@ -87,6 +87,10 @@ def play_games(n_games, network, pool, worker_config):
     rewards = [x[2] for x in results]
     probs = [x[3] for x in results]
     values = [x[4] for x in results]
+
+    [x.reset() for x in agents]
+    del agents
+
     return actions, values, probs, rewards, states
 
 

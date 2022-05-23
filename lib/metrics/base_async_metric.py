@@ -7,7 +7,7 @@ import multiprocessing as mp
 import tensorflow as tf
 mp.set_start_method('spawn', force=True)
 
-from multiprocessing import Queue, Process
+from multiprocessing import Pipe, Process
 from multiprocessing.pool import ThreadPool
 
 import numpy as np
@@ -32,7 +32,7 @@ class BaseAsyncMetric:
         self.parallel_threads = parallel_threads
         self.network_path = network_path
         self._latest_result = None
-        self.result_queue = Queue()
+        self.parent_conn, self.child_conn = Pipe(duplex=True)
 
         self._start_calculation()
 
@@ -64,16 +64,18 @@ class BaseAsyncMetric:
                 results = pool.starmap(self.metric_method, params)
 
                 if len(results) == 1 and type(results[0]) is dict:
-                    self.result_queue.put(results[0])
+                    self.child_conn.send(results[0])
                 else:
-                    self.result_queue.put(float(np.mean(results)))
+                    self.child_conn.send(float(np.mean(results)))
 
                 del results, params, network
                 tf.keras.backend.clear_session()
                 gc.collect()
 
-                while self.result_queue.qsize() > 0:
-                    time.sleep(5)
+                # wait until latest result is fetched
+                self.child_conn.recv()
+                while self.child_conn.poll():
+                    self.child_conn.recv()
 
             except Exception as e:
                 logging.error(f"{type(self)}: Encountered error {e}, continuing anyways")
@@ -83,8 +85,10 @@ class BaseAsyncMetric:
         pass
 
     def get_latest_result(self) -> dict:
-        while self.result_queue.qsize() > 0:
-            self._latest_result = self.result_queue.get()
+        while self.parent_conn.poll():
+            del self._latest_result
+            self._latest_result = self.parent_conn.recv()
+            self.parent_conn.send(True)
 
         if type(self._latest_result) is dict:
             return self._latest_result
@@ -94,7 +98,7 @@ class BaseAsyncMetric:
             }
 
     def poll_till_next_result_available(self, timeout=.1):
-        while self.result_queue.qsize() == 0:
+        while not self.parent_conn.poll():
             time.sleep(timeout)
 
     @abc.abstractmethod

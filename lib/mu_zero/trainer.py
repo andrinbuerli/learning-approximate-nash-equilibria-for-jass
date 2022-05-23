@@ -233,7 +233,8 @@ class MuZeroTrainer:
                 **value_entropies, **reward_entropies, **is_terminal_ces
             })
 
-            del info, absolute_reward_errors, absolute_value_errors, policy_kls, policy_ces
+            del info, absolute_reward_errors, absolute_value_errors, policy_kls, policy_ces, ls_entropies, ft, hand_ces, \
+                player_ces, estimated_policy_entropy, policy_entropy, is_terminal_ces
 
         return training_infos
 

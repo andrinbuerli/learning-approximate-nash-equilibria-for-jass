@@ -12,7 +12,7 @@ from lib.mu_zero.network.network_base import AbstractNetwork
 
 
 def _play_single_game_(i, agent: CppAgent, opponent: CppAgent):
-    arena = Arena(nr_games_to_play=4, cheating_mode=False, check_move_validity=True)
+    arena = Arena(nr_games_to_play=4, cheating_mode=False, check_move_validity=True, reset_agents=True)
 
     first_team = np.random.choice([True, False])
 
@@ -28,7 +28,7 @@ def _play_single_game_(i, agent: CppAgent, opponent: CppAgent):
         points = np.mean(arena.points_team_1 / (arena.points_team_0 + arena.points_team_1))
 
 
-    del arena
+    del arena, agent, opponent
     gc.collect()
 
     return points

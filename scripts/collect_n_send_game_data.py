@@ -86,7 +86,6 @@ if __name__ == "__main__":
         reanalyse_fraction=config.optimization.reanalyse_fraction,
         reanalyse_data_path="/data")
 
-    data_collecting_queue = Queue()
     cancel_receiver, cancel_sender = Pipe(duplex=False)
     games_per_step = int(args.max_parallel_processes)*int(args.max_parallel_threads)
     environment.start_collect_game_data_continuously(games_per_step, data_path, cancel_receiver)

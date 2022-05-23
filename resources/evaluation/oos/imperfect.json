@@ -1,6 +1,6 @@
 {
   "cheating": false,
-  "n_games": 100,
+  "n_games": 250,
   "information": "imperfect",
   "agents": [
     {

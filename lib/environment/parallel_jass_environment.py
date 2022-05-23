@@ -2,11 +2,11 @@ import gc
 import logging
 import multiprocessing as mp
 import os
+import pickle
 import signal
 import time
 import traceback
 from copy import copy
-from multiprocessing import Queue
 from multiprocessing.connection import Connection
 from pathlib import Path
 from random import shuffle
@@ -141,7 +141,7 @@ def reanalyse(dataset, network, pool, worker_config):
 
 def _play_games_multi_threaded_(n_games, continuous):
     pool = _play_games_multi_threaded_.pool
-    queue = _play_games_multi_threaded_.queue
+    data_path = _play_games_multi_threaded_.data_path
     cancel_con = _play_games_multi_threaded_.cancel_con
     worker_config = _play_games_multi_threaded_.worker_config
     network_path = _play_games_multi_threaded_.network_path
@@ -184,8 +184,9 @@ def _play_games_multi_threaded_(n_games, continuous):
                     logging.info(f"finished {n_games} games")
 
                 if continuous:
-                    queue.put(
-                        (np.stack(states), np.stack(actions), np.stack(rewards), np.stack(probs), np.stack(outcomes)))
+                    with open(str(data_path / f"{id(rand)}.pkl"), "wb") as f:
+                        data = (np.stack(states), np.stack(actions), np.stack(rewards), np.stack(probs), np.stack(outcomes))
+                        pickle.dump(data, f)
                 else:
                     return states, actions, rewards, probs, outcomes
 
@@ -199,7 +200,7 @@ def _play_games_multi_threaded_(n_games, continuous):
 
 def _init_process_worker_(function, network_path: str, worker_config: WorkerConfig, check_move_validity: bool,
                           max_parallel_threads: int, reanalyse_fraction: float, reanalyse_data_path: str,
-                          continuous_games_without_reload: int, queue: Queue, cancel_con: Connection):
+                          continuous_games_without_reload: int, data_path: Path, cancel_con: Connection):
     while network_path is not None and not os.path.exists(Path(network_path) / "prediction.pd" / "assets"):
         logging.info(f"waiting for model to be saved at {network_path}")
         time.sleep(1)
@@ -208,7 +209,7 @@ def _init_process_worker_(function, network_path: str, worker_config: WorkerConf
         processes=max_parallel_threads,
         initializer=_init_thread_worker_,
         initargs=(_play_single_game_, worker_config.network.feature_extractor, check_move_validity))
-    function.queue = queue
+    function.data_path = data_path
     function.cancel_con = cancel_con
     function.network_path = network_path
     function.worker_config = worker_config
@@ -242,17 +243,17 @@ class ParallelJassEnvironment:
 
         self.collecting_process: mp.Process = None
 
-    def start_collect_game_data_continuously(self, n_games: int, queue: mp.Queue, cancel_con: Connection):
+    def start_collect_game_data_continuously(self, n_games: int, data_path: Path, cancel_con: Connection):
         logging.info(f"Starting to continuously collect data")
         self.collecting_process = mp.Process(target=self.collect_game_data,
-                                             args=(n_games, True, queue, cancel_con))
+                                             args=(n_games, True, data_path, cancel_con))
         self.collecting_process.start()
 
     def collect_game_data(
             self,
             n_games: int,
             continuous: bool = False,
-            queue: Queue = None,
+            data_path: Path = None,
             cancel_con: Connection = None) -> [np.array, np.array, np.array]:
         """
         Play games in the environment and return corresponding trajectories
@@ -270,7 +271,7 @@ class ParallelJassEnvironment:
                 initializer=_init_process_worker_,
                 initargs=(_play_games_multi_threaded_, self.network_path, self.agent_config, self.check_move_validity,
                           self.max_parallel_threads, self.reanalyse_fraction, self.reanalyse_data_path, self.continuous_games_without_reload,
-                          queue, cancel_con))
+                          data_path, cancel_con))
 
         logging.debug(f"starting {n_games} games with {self.max_parallel_processes} workers...")
 

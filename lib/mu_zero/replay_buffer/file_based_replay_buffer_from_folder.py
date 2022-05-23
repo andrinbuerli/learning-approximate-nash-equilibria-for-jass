@@ -2,10 +2,9 @@ import gc
 import logging
 import pickle
 import shutil
-import traceback
 import uuid
-from multiprocessing import Queue
 from pathlib import Path
+from queue import Queue
 from threading import Thread
 from time import sleep
 

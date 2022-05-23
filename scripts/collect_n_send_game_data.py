@@ -7,7 +7,8 @@ import pickle
 import shutil
 import sys
 import time
-from multiprocessing import Queue, Pipe
+import tracemalloc
+from multiprocessing import Pipe
 from pathlib import Path
 from pprint import pprint
 
@@ -67,6 +68,8 @@ if __name__ == "__main__":
 
     tmp_dir = Path(__file__).parent / "tmp"
     network_path = tmp_dir / str(config.timestamp) / "latest_model.pd"
+    data_path = tmp_dir / str(config.timestamp) / "data_to_send"
+    data_path.mkdir(parents=True, exist_ok=True)
 
     time.sleep(np.random.choice(range(10)))  # if parallel collector containers are started
 
@@ -86,7 +89,7 @@ if __name__ == "__main__":
     data_collecting_queue = Queue()
     cancel_receiver, cancel_sender = Pipe(duplex=False)
     games_per_step = int(args.max_parallel_processes)*int(args.max_parallel_threads)
-    environment.start_collect_game_data_continuously(games_per_step, data_collecting_queue, cancel_receiver)
+    environment.start_collect_game_data_continuously(games_per_step, data_path, cancel_receiver)
 
     from lib.util import set_allow_gpu_memory_growth
     set_allow_gpu_memory_growth(True)
@@ -121,25 +124,36 @@ if __name__ == "__main__":
             if could_not_reach >= 50:
                 break
 
-        while data_collecting_queue.qsize() > 0:
-            data_collecting_queue.put('STOP')
-            for states, actions, rewards, probs, outcomes in iter(data_collecting_queue.get, 'STOP'):
-                all_states.extend(states)
-                all_actions.extend(actions)
-                all_rewards.extend(rewards)
-                all_probs.extend(probs)
-                all_outcomes.extend(outcomes)
+        files = data_path.glob("*.pkl")
+        for file in files:
+            try:
+                with open(str(file), "rb") as f:
+                    states, actions, rewards, probs, outcomes = pickle.load(f)
+            except Exception as e:
+                logging.warning(f"could not read {file} with exception: {e}, continuing anyways...")
+                continue
+            all_states.extend(states)
+            all_actions.extend(actions)
+            all_rewards.extend(rewards)
+            all_probs.extend(probs)
+            all_outcomes.extend(outcomes)
+
+            del states, actions, rewards, probs, outcomes
 
         if len(all_states) > int(args.min_states_to_send):
             logging.info(f"Sending {len(all_states)} episodes..")
             try:
+                stream = pickle.dumps((all_states, all_actions, all_rewards, all_probs, all_outcomes))
                 response = requests.post(
                     url=base_url + "/game_data",
-                    data=pickle.dumps((all_states, all_actions, all_rewards, all_probs, all_outcomes)),
+                    data=stream,
                     headers={
                         "Content-Type": "application"
                     }
                 )
+
+                del stream
+
                 could_not_reach = 0
 
                 logging.info(f"Sending {len(all_states)} episodes successful")

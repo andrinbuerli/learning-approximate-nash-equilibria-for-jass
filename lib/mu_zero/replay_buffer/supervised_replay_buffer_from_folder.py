@@ -1,7 +1,7 @@
 import logging
 import traceback
-from multiprocessing import Queue
 from pathlib import Path
+from queue import Queue
 from random import shuffle
 from threading import Thread
 from time import sleep

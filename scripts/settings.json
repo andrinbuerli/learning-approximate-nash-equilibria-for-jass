@@ -62,8 +62,9 @@
   "store_buffer": true,
   "log_n_steps_ahead": 15,
   "apa_n_games": 1,
-  "log_gradients": true,
-  "log_inputs": true,
+  "log_gradients": false,
+  "log_inputs": false,
+  "log_visualisations": false,
   "restore_buffer_tree_from_file": false
  },
  "network": {

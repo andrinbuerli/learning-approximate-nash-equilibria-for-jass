@@ -173,6 +173,8 @@ def _make_plots_(network: AbstractNetwork, iterator, f_shape, l_shape, features,
     del fig_reward
     clear_all_matplotlib_cache()
 
+    del states, y
+
     plt.show()
     gc.collect()
 

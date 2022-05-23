@@ -108,9 +108,10 @@ if __name__=="__main__":
 
     replay_buffer.restore(tree_from_file=worker_config.optimization.restore_buffer_tree_from_file)
 
-    manager = MetricsManager(
+    metrics = [
         APAO("dmcts", worker_config, str(network_path), parallel_threads=worker_config.optimization.apa_n_games),
-        APAO("dmcts", worker_config, str(network_path), parallel_threads=worker_config.optimization.apa_n_games, only_policy=True),
+        APAO("dmcts", worker_config, str(network_path), parallel_threads=worker_config.optimization.apa_n_games,
+             only_policy=True),
         APAO("dpolicy", worker_config, str(network_path), parallel_threads=worker_config.optimization.apa_n_games),
         APAO("random", worker_config, str(network_path), parallel_threads=worker_config.optimization.apa_n_games),
         SARE(
@@ -149,14 +150,20 @@ if __name__=="__main__":
             worker_config=worker_config,
             network_path=str(network_path),
             n_steps_ahead=worker_config.optimization.log_n_steps_ahead
-        ),
-        GameVisualisation(
-            label_length=LabelSetActionFull.LABEL_LENGTH,
-            worker_config=worker_config,
-            network_path=str(network_path),
-            mdp_value=worker_config.agent.mdp_value
         )
-    )
+    ]
+
+    if worker_config.optimization.log_visualisations:
+        metrics += [
+            GameVisualisation(
+                label_length=LabelSetActionFull.LABEL_LENGTH,
+                worker_config=worker_config,
+                network_path=str(network_path),
+                mdp_value=worker_config.agent.mdp_value
+            )
+        ]
+
+    manager = MetricsManager(*metrics)
 
     if args.log:
         with open("../.wandbkey", "r") as f:

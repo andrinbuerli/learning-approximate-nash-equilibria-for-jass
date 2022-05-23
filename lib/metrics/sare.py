@@ -76,6 +76,8 @@ def _calculate_batched_sare_(network: AbstractNetwork, iterator, n_steps_ahead, 
         maes.append(float(mae))
         prev_points = current_points
 
+    del x, y
+
     return {
         f"SARE/sare_{i+1}_steps_ahead": x for i, x in enumerate(maes)
     }

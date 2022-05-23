@@ -131,6 +131,9 @@ if __name__ == "__main__":
             except Exception as e:
                 logging.warning(f"could not read {file} with exception: {e}, continuing anyways...")
                 continue
+
+            file.unlink()
+
             all_states.extend(states)
             all_actions.extend(actions)
             all_rewards.extend(rewards)

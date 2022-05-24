@@ -42,9 +42,9 @@ def deal_random_hand(known_hands: [[int]]) -> (np.ndarray, float):
 
     assert hands.sum() == 36
 
-    prob = 1 / combinations
+    transition_probability = 1 / combinations
 
-    return hands, prob
+    return hands, transition_probability
 
 
 def copy_state(state: GameStateCpp) -> GameStateCpp:

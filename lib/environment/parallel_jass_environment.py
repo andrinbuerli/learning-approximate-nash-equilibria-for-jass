@@ -228,7 +228,7 @@ class ParallelJassEnvironment:
             network_path,
             check_move_validity=True,
             reanalyse_fraction: float = 0,
-            continuous_games_without_reload: int = 16,
+            continuous_games_without_reload: int = 2,
             reanalyse_data_path="/data"):
         self.continuous_games_without_reload = continuous_games_without_reload
         self.reanalyse_data_path = reanalyse_data_path

@@ -64,6 +64,7 @@ def _play_single_game_(i, agent):
         assert all(outcomes[s] == outcomes[s + 1]) or outcomes[s + 1].sum() == 0, "Outcomes of do not match"
 
     agent.reset()
+    arena.reset()
 
     logging.info(f"finished single game {i}, cached positions: {len(states)}")
 

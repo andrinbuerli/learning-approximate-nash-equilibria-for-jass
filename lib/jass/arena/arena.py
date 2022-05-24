@@ -124,12 +124,24 @@ class Arena:
                 if (hasattr(a, "cheating_mode") and a.cheating_mode) \
                 else self._store_latest_features(jasscpp.observation_from_state(self._game.state, -1))
 
+        self.game_states = None
+        self.actions = None
+        self.rewards = None
+        self.outcomes = None
+        self.teams = None
+        self.latest_features = None
+        self.prev_points = None
+        self.raw_game_states = None
+
         if self.store_trajectory:
-            self.game_states, self.actions, self.rewards, self.outcomes, self.teams = [], [], [], [], []
-            self.latest_features = None
-            self.prev_points = None
-            if self.store_trajectory_inc_raw_game_state:
-                self.raw_game_states = []
+            self.reset()
+
+    def reset(self):
+        self.game_states, self.actions, self.rewards, self.outcomes, self.teams = [], [], [], [], []
+        self.latest_features = None
+        self.prev_points = None
+        if self.store_trajectory_inc_raw_game_state:
+            self.raw_game_states = []
 
     @property
     def nr_games_to_play(self):

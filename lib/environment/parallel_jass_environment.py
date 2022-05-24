@@ -164,6 +164,8 @@ def _play_games_multi_threaded_(n_games, continuous):
                 feature_length=38 * worker_config.network.feature_extractor.FEATURE_LENGTH,
                 label_length=38 * LabelSetActionFull.LABEL_LENGTH)).repeat())
 
+
+    network = get_network(worker_config, network_path=network_path)
     while continuous or first_call:
         try:
             if cancel_con is not None and cancel_con.poll(0.01):
@@ -172,7 +174,7 @@ def _play_games_multi_threaded_(n_games, continuous):
 
             first_call = False
 
-            network = get_network(worker_config, network_path=network_path)
+            network.load(network_path)
 
             for _ in range(continuous_games_without_reload):
                 rand = np.random.uniform(0, 1)
@@ -185,13 +187,17 @@ def _play_games_multi_threaded_(n_games, continuous):
                     logging.info(f"finished {n_games} games")
 
                 if continuous:
+                    data = (np.stack(states), np.stack(actions), np.stack(rewards), np.stack(probs), np.stack(outcomes))
                     with open(str(data_path / f"{id(rand)}.pkl"), "wb") as f:
-                        data = (np.stack(states), np.stack(actions), np.stack(rewards), np.stack(probs), np.stack(outcomes))
                         pickle.dump(data, f)
+                    del data
                 else:
                     return states, actions, rewards, probs, outcomes
 
-            del states, actions, rewards, probs, outcomes, network
+                del states, actions, rewards, probs, outcomes
+                gc.collect()
+
+            del network
             tf.keras.backend.clear_session()
             gc.collect()
 

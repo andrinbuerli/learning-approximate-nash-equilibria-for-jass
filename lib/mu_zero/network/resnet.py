@@ -220,6 +220,7 @@ class MuZeroResidualNetwork(AbstractNetwork):
                     weights = pickle.load(f)
 
             self.set_weights_from_list(weights)
+            del weights
 
         logging.info(f"loaded network from {path}")
 

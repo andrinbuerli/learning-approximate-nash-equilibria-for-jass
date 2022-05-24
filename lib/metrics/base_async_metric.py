@@ -52,9 +52,11 @@ class BaseAsyncMetric:
         if self.init_method is not None:
             init_vars = self.init_method()
 
+        network = get_network(self.worker_config, network_path=self.network_path)
+
         while True:
             try:
-                network = get_network(self.worker_config, network_path=self.network_path)
+                network.load(self.network_path)
 
                 if self.init_method is None:
                     params = [self.get_params(i, network) for i in range(self.parallel_threads)]
@@ -68,8 +70,7 @@ class BaseAsyncMetric:
                 else:
                     self.child_conn.send(float(np.mean(results)))
 
-                del results, params, network
-                tf.keras.backend.clear_session()
+                del results, params
                 gc.collect()
 
                 # wait until latest result is fetched

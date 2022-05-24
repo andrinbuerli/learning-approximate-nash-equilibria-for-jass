@@ -179,7 +179,7 @@ if __name__ == "__main__":
 
                 could_not_reach += 1
 
-                if could_not_reach >= 10:
+                if could_not_reach >= 50:
                     break
                 else:
                     continue

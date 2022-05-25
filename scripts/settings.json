@@ -1,9 +1,8 @@
 {
- "timestamp": 1653054564,
  "log": {
   "projectname": "jass-mu-zero",
   "entity": "andrinburli",
-  "group": "MuZero-MCTS-Experiment-0"
+  "group": "MuZero-MCTS-Experiment-1"
  },
  "agent": {
   "c_1": 1.25,
@@ -13,17 +12,14 @@
   "iterations": 50,
   "mdp_value": true,
   "discount": 1,
-  "n_search_threads": 1,
   "virtual_loss": 1,
-  "port": 9999,
   "temperature": 1.0,
   "type": "mu-zero-mcts"
  },
  "optimization": {
   "reanalyse_fraction": 0.0,
   "optimizer": "adam",
-  "learning_rate": 0.0005,
-  "learning_rate_init": 0.0005,
+  "learning_rate_init": 0.001,
   "adam_beta1": 0.9,
   "adam_beta2": 0.999,
   "adam_epsilon": 1e-07,
@@ -57,7 +53,7 @@
   "min_trajectory_length": 10,
   "target_network_update": 100,
   "updates_per_step": 10,
-  "total_steps": 1000000,
+  "total_steps": 100000,
   "weight_decay": 0.0001,
   "store_buffer": true,
   "log_n_steps_ahead": 15,
@@ -76,7 +72,7 @@
   "fc_policy_layers": [ 512 ],
   "fc_reward_layers": [ 512 ],
   "fc_value_layers": [ 512 ],
-  "feature_extractor": "cnn-full-cheating",
+  "feature_extractor": "cnn-full",
   "num_blocks_representation": 5,
   "fcn_blocks_representation": 0,
   "num_blocks_dynamics": 5,

@@ -12,6 +12,7 @@ services:
             bash -c "cd scripts && python collect_n_send_game_data.py
             --host http://10.180.39.13
             --max_parallel_processes 6
+            --max_parallel_threads 2
             --min_states_to_send 1"
 
 
@@ -28,5 +29,6 @@ services:
             bash -c "cd scripts && python collect_n_send_game_data.py
             --host http://10.180.39.13
             --max_parallel_processes 6
+            --max_parallel_threads 2
             --min_states_to_send 1"
 

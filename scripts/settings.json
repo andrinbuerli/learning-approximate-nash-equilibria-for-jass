@@ -20,7 +20,7 @@
  "optimization": {
   "reanalyse_fraction": 0.0,
   "optimizer": "adam",
-  "learning_rate_init": 0.001,
+  "learning_rate": 0.001,
   "adam_beta1": 0.9,
   "adam_beta2": 0.999,
   "adam_epsilon": 1e-07,

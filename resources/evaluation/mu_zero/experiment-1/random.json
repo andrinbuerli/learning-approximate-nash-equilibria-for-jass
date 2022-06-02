@@ -20,7 +20,9 @@
       "iterations": 50,
       "skip": true,
       "experiment_path": "../../results/1653827576",
-      "greedy": true
+      "greedy": true,
+      "player_func": true,
+      "terminal_func": true
     },
     {
       "type": "mu-zero-mcts",
@@ -28,7 +30,19 @@
       "iterations": 100,
       "skip": true,
       "experiment_path": "../../results/1653827576",
-      "greedy": true
+      "greedy": true,
+      "player_func": true,
+      "terminal_func": true
+    },
+    {
+      "type": "mu-zero-mcts",
+      "note": "MCTS-400",
+      "iterations": 400,
+      "skip": true,
+      "experiment_path": "../../results/1653827576",
+      "greedy": true,
+      "player_func": true,
+      "terminal_func": true
     }
   ]
 }

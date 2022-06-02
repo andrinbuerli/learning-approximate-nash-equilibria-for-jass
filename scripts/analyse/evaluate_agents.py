@@ -60,6 +60,8 @@ def _play_games_threaded_(
         agent1_config: WorkerConfig,
         agent2_config: WorkerConfig,
         results_queue):
+    from lib.util import set_allow_gpu_memory_growth
+    set_allow_gpu_memory_growth(True)
 
     network1 = get_network(agent1_config, agent1_config.agent.network_path) if hasattr(agent1_config.agent, "network_path") else None
     network2 = get_network(agent2_config, agent2_config.agent.network_path) if hasattr(agent2_config.agent, "network_path") else None

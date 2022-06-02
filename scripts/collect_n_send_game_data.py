@@ -49,7 +49,7 @@ if __name__ == "__main__":
     parser.add_argument(f'--max_parallel_threads', default=1)
     parser.add_argument(f'--min_states_to_send', default=-1)
     parser.add_argument(f'--max_states', default=int(1e5))
-    parser.add_argument(f'--continuous_games_without_reload', default=1)
+    parser.add_argument(f'--continuous_games_without_reload', default=1, type=int)
     parser.add_argument(f'--visible_gpu_index', default=0)
     args = parser.parse_args()
 

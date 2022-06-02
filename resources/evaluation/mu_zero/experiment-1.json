@@ -8,6 +8,16 @@
       "skip": false
     },
     {
+      "type": "dpolicy",
+      "note": "DPolicy",
+      "skip": false
+    },
+    {
+      "type": "random",
+      "note": "random",
+      "skip": false
+    },
+    {
       "type": "policy",
       "note": "Policy",
       "skip": true,

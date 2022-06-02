@@ -32,8 +32,10 @@ logging.basicConfig(
 
 
 def _play_games_(n_games_to_play, general_config, agent1_config, agent2_config, network1, network2, queue):
-    agent1 = get_agent(agent1_config, network1)
-    agent2 = get_agent(agent2_config, network2)
+    agent1 = get_agent(agent1_config, network1,
+                       greedy=agent1_config.agent.greedy if hasattr(agent1_config.agent, "greedy") else False)
+    agent2 = get_agent(agent2_config, network2,
+                       greedy=agent2_config.agent.greedy if hasattr(agent2_config.agent, "greedy") else False)
 
     rng = range(n_games_to_play)
     for _ in rng:

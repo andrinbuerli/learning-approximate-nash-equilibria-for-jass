@@ -20,7 +20,7 @@ import itertools
 
 from lib.jass.arena.arena import Arena
 
-from lib.factory import get_agent, get_network
+from lib.factory import get_agent, get_network, get_features
 from lib.environment.networking.worker_config import WorkerConfig
 
 logging.basicConfig(
@@ -61,8 +61,8 @@ def _play_games_threaded_(
         agent2_config: WorkerConfig,
         results_queue):
 
-    network1 = get_network() if agent1_config.agent.network_path != "" else None
-    network2 = get_network() if agent1_config.agent.network_path != "" else None
+    network1 = get_network(agent1_config, agent1_config.agent.network_path) if hasattr(agent1_config.agent, "network_path") else None
+    network2 = get_network(agent2_config, agent2_config.agent.network_path) if hasattr(agent2_config.agent, "network_path") else None
 
     threads = []
     for k in range(max_parallel_threads_per_evaluation_process):
@@ -104,9 +104,24 @@ def _evaluate_(
                  f"game threads each")
 
     worker_config1 = WorkerConfig()
-    worker_config1.agent.__dict__ = {**(worker_config1.agent.__dict__), **agent1_config}
+    if 'experiment_path' in agent1_config:
+        experiment_path = Path(agent1_config['experiment_path'])
+        worker_config1.load_from_json(experiment_path / 'worker_config.json')
+        worker_config1.network.feature_extractor = get_features(worker_config1.network.feature_extractor)
+        worker_config1.agent.__dict__.update(**agent1_config)
+        worker_config1.agent.network_path = experiment_path / "latest_network.pd"
+    else:
+        worker_config1.agent.__dict__ = {**(worker_config1.agent.__dict__), **agent1_config}
+
     worker_config2 = WorkerConfig()
-    worker_config2.agent.__dict__ = {**(worker_config2.agent.__dict__), **agent2_config}
+    if 'experiment_path' in agent2_config:
+        experiment_path = Path(agent2_config['experiment_path'])
+        worker_config2.load_from_json(experiment_path / 'worker_config.json')
+        worker_config2.network.feature_extractor = get_features(worker_config2.network.feature_extractor)
+        worker_config2.agent.__dict__.update(**agent2_config)
+        worker_config2.agent.network_path = experiment_path / "latest_network.pd"
+    else:
+        worker_config2.agent.__dict__ = {**(worker_config2.agent.__dict__), **agent2_config}
 
     queue = mp.Queue()
     processes = []
@@ -173,10 +188,10 @@ def _evaluate_(
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(prog='Evaluate multiple agents')
     parser.add_argument(f'--max_parallel_evaluations', default=1, type=int)
-    parser.add_argument(f'--max_parallel_processes_per_evaluation', default=2, type=int)
-    parser.add_argument(f'--max_parallel_threads_per_evaluation_process', default=2, type=int)
+    parser.add_argument(f'--max_parallel_processes_per_evaluation', default=1, type=int)
+    parser.add_argument(f'--max_parallel_threads_per_evaluation_process', default=1, type=int)
     parser.add_argument(f'--no_skip_on_result_file', default=False, action="store_true")
-    parser.add_argument(f'--file', default="oos/imperfect.json", action="store_true")
+    parser.add_argument(f'--file', default="mu_zero/experiment-1.json")
     parser.add_argument(f'--folder', default="results")
     args = parser.parse_args()
 

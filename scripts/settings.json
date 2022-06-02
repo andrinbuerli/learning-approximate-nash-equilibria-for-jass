@@ -1,9 +1,8 @@
 {
- "timestamp": 1653491509,
  "log": {
   "projectname": "jass-mu-zero",
   "entity": "andrinburli",
-  "group": "MuZero-MCTS-Experiment-1"
+  "group": "MuZero-MCTS-Experiment-2"
  },
  "agent": {
   "c_1": 1.25,
@@ -18,9 +17,9 @@
   "type": "mu-zero-mcts"
  },
  "optimization": {
-  "reanalyse_fraction": 0.0,
+  "reanalyse_fraction": 1.0,
   "optimizer": "adam",
-  "learning_rate": 0.001,
+  "learning_rate_init": 0.001,
   "adam_beta1": 0.9,
   "adam_beta2": 0.999,
   "adam_epsilon": 1e-07,
@@ -41,7 +40,7 @@
   "value_based_per": false,
   "mask_private": false,
   "mask_valid": false,
-  "value_td_5_step": false,
+  "value_td_5_step": true,
   "value_mse": false,
   "reward_mse": false,
   "max_buffer_size": 40000,

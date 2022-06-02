@@ -16,7 +16,7 @@ class AgentByNetwork(Agent):
     A random agent is used as standing player, if the service does not answer within a timeout.
     """
 
-    def __init__(self, url, timeout=10):
+    def __init__(self, url, timeout=60):
         self._logger = logging.getLogger(__name__)
         self._standin_player = AgentRandomSchieber()
         self._base_url = url

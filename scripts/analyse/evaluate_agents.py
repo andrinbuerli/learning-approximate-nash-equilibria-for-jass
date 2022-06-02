@@ -195,33 +195,34 @@ if __name__ == "__main__":
     parser.add_argument(f'--max_parallel_processes_per_evaluation', default=1, type=int)
     parser.add_argument(f'--max_parallel_threads_per_evaluation_process', default=1, type=int)
     parser.add_argument(f'--no_skip_on_result_file', default=False, action="store_true")
-    parser.add_argument(f'--file', default="mu_zero/experiment-1.json")
+    parser.add_argument(f'--files', nargs="+", default=["mu_zero/experiment-1.json"])
     parser.add_argument(f'--folder', default="results")
     args = parser.parse_args()
 
-    path = Path(__file__).resolve().parent.parent.parent / "resources" / "evaluation" / args.file
+    for file in args.files:
+        path = Path(__file__).resolve().parent.parent.parent / "resources" / "evaluation" / args.file
 
-    with open(path, "r") as f:
-        config = json.load(f)
+        with open(path, "r") as f:
+            config = json.load(f)
 
-    (Path(__file__).resolve().parent / "agents_eval_results" / args.folder).mkdir(parents=True, exist_ok=True)
+        (Path(__file__).resolve().parent / "agents_eval_results" / args.folder).mkdir(parents=True, exist_ok=True)
 
-    processes = []
-    for comb in list(itertools.combinations(config["agents"], r=2)):
-        p = Process(target=_evaluate_, args=(
-            config, *comb,
-            not args.no_skip_on_result_file,
-            args.max_parallel_processes_per_evaluation,
-            args.max_parallel_threads_per_evaluation_process,
-            args.folder))
-        processes.append(p)
-        p.start()
+        processes = []
+        for comb in list(itertools.combinations(config["agents"], r=2)):
+            p = Process(target=_evaluate_, args=(
+                config, *comb,
+                not args.no_skip_on_result_file,
+                args.max_parallel_processes_per_evaluation,
+                args.max_parallel_threads_per_evaluation_process,
+                args.folder))
+            processes.append(p)
+            p.start()
 
-        nr_running_processes = len([x for x in processes if x.is_alive()])
-        while 0 < args.max_parallel_evaluations <= nr_running_processes:
-            time.sleep(1)
             nr_running_processes = len([x for x in processes if x.is_alive()])
-            # logging.info(f"{nr_running_processes} running processes, waiting to finish...")
+            while 0 < args.max_parallel_evaluations <= nr_running_processes:
+                time.sleep(1)
+                nr_running_processes = len([x for x in processes if x.is_alive()])
+                # logging.info(f"{nr_running_processes} running processes, waiting to finish...")
 
-    [x.join() for x in processes]
+        [x.join() for x in processes]
 

@@ -3,18 +3,8 @@
   "information": "imperfect",
   "agents": [
     {
-      "type": "dmcts",
-      "note": "DMCTS",
-      "skip": false
-    },
-    {
       "type": "dpolicy",
       "note": "DPolicy",
-      "skip": false
-    },
-    {
-      "type": "random",
-      "note": "random",
       "skip": false
     },
     {

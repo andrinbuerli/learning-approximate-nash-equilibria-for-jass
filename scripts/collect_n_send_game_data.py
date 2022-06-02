@@ -49,6 +49,7 @@ if __name__ == "__main__":
     parser.add_argument(f'--max_parallel_threads', default=1)
     parser.add_argument(f'--min_states_to_send', default=-1)
     parser.add_argument(f'--max_states', default=int(1e5))
+    parser.add_argument(f'--continuous_games_without_reload', default=1)
     parser.add_argument(f'--visible_gpu_index', default=0)
     args = parser.parse_args()
 
@@ -84,6 +85,7 @@ if __name__ == "__main__":
         worker_config=config,
         network_path=network_path,
         reanalyse_fraction=config.optimization.reanalyse_fraction,
+        continuous_games_without_reload=args.continuous_games_without_reload,
         reanalyse_data_path="/data")
 
     cancel_receiver, cancel_sender = Pipe(duplex=False)

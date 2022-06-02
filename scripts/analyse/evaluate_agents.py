@@ -200,7 +200,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     for file in args.files:
-        path = Path(__file__).resolve().parent.parent.parent / "resources" / "evaluation" / args.file
+        path = Path(__file__).resolve().parent.parent.parent / "resources" / "evaluation" / file
 
         with open(path, "r") as f:
             config = json.load(f)

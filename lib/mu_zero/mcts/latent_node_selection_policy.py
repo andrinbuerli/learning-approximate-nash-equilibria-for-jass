@@ -84,10 +84,7 @@ class LatentNodeSelectionPolicy:
 
             # is_terminal_state = child.parent.is_post_terminal is not None and child.is_post_terminal > 0.5
 
-            if self.use_player_function:
-                is_terminal_state = child.is_post_terminal > 0.5 if (self.use_terminal_function and child.is_post_terminal is not None) else False
-            else:
-                is_terminal_state = child.next_player == -1
+            is_terminal_state = self.get_is_terminal_state(child)
 
             with node.lock:
                 with child.lock:
@@ -103,6 +100,14 @@ class LatentNodeSelectionPolicy:
             node = child
 
         return child
+
+    def get_is_terminal_state(self, child):
+        if self.use_player_function:
+            is_terminal_state = child.is_post_terminal > 0.5 if (
+                        self.use_terminal_function and child.is_post_terminal is not None) else False
+        else:
+            is_terminal_state = child.next_player == -1
+        return is_terminal_state
 
     def init_node(self, node: Node, observation: Union[jasscpp.GameStateCpp, jasscpp.GameObservationCpp], observation_feature_format=None):
         if node.is_root():
@@ -164,6 +169,10 @@ class LatentNodeSelectionPolicy:
 
         value_support_size = node.value.shape[-1]
         node.value = support_to_scalar(distribution=node.value, min_value=-value_support_size//2).numpy()
+
+        if self.get_is_terminal_state(node) and self.mdp_value:
+            node.value = np.zeros_like(node.value)
+
         reward_support_size = node.reward.shape[-1]
         node.reward = support_to_scalar(distribution=node.reward, min_value=-reward_support_size//2).numpy()
 

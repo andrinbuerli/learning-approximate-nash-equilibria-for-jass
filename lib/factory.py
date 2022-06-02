@@ -27,6 +27,8 @@ def get_agent(config: WorkerConfig, network, greedy=False, force_local=False) ->
             mdp_value=config.agent.mdp_value,
             virtual_loss=config.agent.virtual_loss,
             n_search_threads=config.agent.n_search_threads,
+            use_player_function=config.agent.player_func,
+            use_terminal_function=config.agent.terminal_func,
         )
     elif config.agent.type == "policy":
         from lib.mu_zero.mcts.agent_policy import AgentPolicy

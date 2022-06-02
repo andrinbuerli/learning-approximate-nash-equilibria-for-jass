@@ -85,7 +85,7 @@ class LatentNodeSelectionPolicy:
             # is_terminal_state = child.parent.is_post_terminal is not None and child.is_post_terminal > 0.5
 
             if self.use_player_function:
-                is_terminal_state = child.is_post_terminal > 0.5 if self.use_terminal_function else False
+                is_terminal_state = child.is_post_terminal > 0.5 if (self.use_terminal_function and child.is_post_terminal is not None) else False
             else:
                 is_terminal_state = child.next_player == -1
 

@@ -87,7 +87,7 @@ def get_agent(config: WorkerConfig, network, greedy=False, force_local=False) ->
         if force_local:
             from lib.jass.agent.agent_determinized_policy_cpp import AgentDeterminizedPolicyCpp
             return AgentDeterminizedPolicyCpp(
-                model_path= str(Path(__file__).parent.parent / "resources" / "az-model-from-supervised-data.pd"),
+                model_path= str(Path(__file__).resolve().parent.parent / "resources" / "az-model-from-supervised-data.pd"),
                 determinizations=25
             )
         else:

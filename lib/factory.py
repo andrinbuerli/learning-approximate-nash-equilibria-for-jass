@@ -172,7 +172,7 @@ def get_opponent(type: str) -> CppAgent:
     if type == "mcts":
         return AgentByNetworkCpp(url="http://baselines:9899/mcts", cheating=True)
     if type == "mcts-large":
-        return AgentByNetworkCpp(url="http://baselines:9899/mcts-large", cheating=True)
+        return AgentByNetworkCpp(url="http://baselines:9893/mcts-large", cheating=True)
     elif type == "random":
         return AgentByNetworkCpp(url="http://baselines:9896/random")
     elif type == "dpolicy":

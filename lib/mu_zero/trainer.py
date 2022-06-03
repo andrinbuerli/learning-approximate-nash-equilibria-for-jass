@@ -160,13 +160,13 @@ class MuZeroTrainer:
 
 
             time_taken_for_iteration = time.time() - start
-            steps_per_s = time_taken_for_iteration / len(batches)
+            steps_per_s = len(batches) / time_taken_for_iteration
             logging.info(f"Iteration {it} done, took: {time_taken_for_iteration}s ({steps_per_s} steps/s)")
 
             while self.max_steps_per_second is not None and steps_per_s > self.max_steps_per_second:
                 time.sleep(1)
                 time_taken_for_iteration = time.time() - start
-                steps_per_s = time_taken_for_iteration / len(batches)
+                steps_per_s = len(batches) / time_taken_for_iteration
                 logging.info(f"Iteration {it} done, waiting.... [took: {time_taken_for_iteration}s ({steps_per_s} steps/s)]")
 
             del training_infos

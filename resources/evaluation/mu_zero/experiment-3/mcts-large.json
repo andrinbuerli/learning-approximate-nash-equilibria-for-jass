@@ -3,7 +3,8 @@
   "information": "imperfect",
   "agents": [
     {
-      "type": "mcts-large",
+      "type": "mcts",
+      "large": true,
       "note": "PMCTS-large",
       "skip": false
     },

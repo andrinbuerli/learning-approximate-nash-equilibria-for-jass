@@ -2,6 +2,7 @@
  "agent": {
   "cheating": true,
   "type": "mcts",
+  "name": "mcts",
   "iterations": 50,
   "port": 9899
  }

@@ -1,6 +1,7 @@
 {
  "agent": {
   "type": "random",
+  "name": "random",
   "port": 9896
  }
 }

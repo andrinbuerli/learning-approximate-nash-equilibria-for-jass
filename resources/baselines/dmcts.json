@@ -1,6 +1,7 @@
 {
  "agent": {
   "type": "dmcts",
+  "name": "dmcts",
   "iterations": 100,
   "nr_determinizations": 25,
   "threads_to_use": 4,

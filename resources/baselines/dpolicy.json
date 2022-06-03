@@ -1,6 +1,7 @@
 {
  "agent": {
   "type": "dpolicy",
+  "name": "dpolicy",
   "nr_determinizations": 25,
   "port": 9897
  }

@@ -67,7 +67,10 @@ def get_agent(config: WorkerConfig, network, greedy=False, force_local=False) ->
                 threads_to_use=config.agent.threads_to_use
             )
         else:
-            return AgentByNetworkCpp(url="http://baselines:9898/dmcts")
+            if hasattr(config.agent, 'large') and config.agent.large:
+                return AgentByNetworkCpp(url="http://baselines:9894/dmcts-large")
+            else:
+                return AgentByNetworkCpp(url="http://baselines:9898/dmcts")
     if config.agent.type == "mcts":
         if force_local:
             import jassmlcpp
@@ -76,7 +79,10 @@ def get_agent(config: WorkerConfig, network, greedy=False, force_local=False) ->
                 exploration=1.5
             )
         else:
-            return AgentByNetworkCpp(url="http://baselines:9899/mcts", cheating=True)
+            if hasattr(config.agent, 'large') and config.agent.large:
+                return AgentByNetworkCpp(url="http://baselines:9893/mcts-large", cheating=True)
+            else:
+                return AgentByNetworkCpp(url="http://baselines:9899/mcts", cheating=True)
     elif config.agent.type == "random":
         if force_local:
             import jassmlcpp
@@ -165,6 +171,8 @@ def get_opponent(type: str) -> CppAgent:
         return AgentByNetworkCpp(url="http://baselines:9894/dmcts-large")
     if type == "mcts":
         return AgentByNetworkCpp(url="http://baselines:9899/mcts", cheating=True)
+    if type == "mcts-large":
+        return AgentByNetworkCpp(url="http://baselines:9899/mcts-large", cheating=True)
     elif type == "random":
         return AgentByNetworkCpp(url="http://baselines:9896/random")
     elif type == "dpolicy":

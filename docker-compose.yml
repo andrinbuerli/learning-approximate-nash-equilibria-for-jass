@@ -48,11 +48,14 @@ services:
           - 9897:9897
           - 9896:9896
           - 9895:9895
+          - 9894:9894
+          - 9894:9894
         volumes:
             - .:/app
         command: bash -c "
                   cd scripts
-                  && python host_agents.py --files mcts.json dmcts.json dpolicy.json random.json dmcts-50.json"
+                  && python host_agents.py --files 
+                  mcts.json dmcts.json dpolicy.json random.json dmcts-50.json dmcts-large.json mcts-large.json"
 
     test:
         build:

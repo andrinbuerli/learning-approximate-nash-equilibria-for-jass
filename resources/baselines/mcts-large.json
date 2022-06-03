@@ -1,0 +1,8 @@
+{
+ "agent": {
+  "cheating": true,
+  "type": "mcts",
+  "iterations": 1000,
+  "port": 9893
+ }
+}

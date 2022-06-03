@@ -206,7 +206,8 @@ if __name__=="__main__":
         reward_mse=worker_config.optimization.reward_mse,
         log_gradients=worker_config.optimization.log_gradients,
         log_inputs=worker_config.optimization.log_inputs,
-        value_td_5_step=worker_config.optimization.value_td_5_step
+        value_td_5_step=worker_config.optimization.value_td_5_step,
+        max_steps_per_second=worker_config.optimization.max_steps_per_second
     )
 
     if not worker_config.optimization.supervised_targets:

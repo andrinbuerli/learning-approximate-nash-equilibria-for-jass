@@ -111,6 +111,7 @@ class OptimizationConfig(BaseConfig):
         self.log_gradients = True
         self.log_inputs = True
         self.restore_buffer_tree_from_file = True
+        self.max_steps_per_second = None
 
 class LogConfig(BaseConfig):
     def __init__(self):

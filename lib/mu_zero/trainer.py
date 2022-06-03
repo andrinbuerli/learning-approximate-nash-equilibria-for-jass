@@ -44,8 +44,10 @@ class MuZeroTrainer:
             value_td_5_step: bool = False,
             reward_mse: bool = False,
             log_gradients: bool = True,
-            log_inputs: bool = True
+            log_inputs: bool = True,
+            max_steps_per_second: float = None
     ):
+        self.max_steps_per_second = max_steps_per_second
         self.log_inputs = log_inputs
         self.value_td_5_step = value_td_5_step
         self.log_gradients = log_gradients
@@ -156,12 +158,21 @@ class MuZeroTrainer:
                 del grad_infos
                 del data
 
+
+            time_taken_for_iteration = time.time() - start
+            steps_per_s = time_taken_for_iteration / len(batches)
+            logging.info(f"Iteration {it} done, took: {time_taken_for_iteration}s ({steps_per_s} steps/s)")
+
+            while self.max_steps_per_second is not None and steps_per_s > self.max_steps_per_second:
+                time.sleep(1)
+                time_taken_for_iteration = time.time() - start
+                steps_per_s = time_taken_for_iteration / len(batches)
+                logging.info(f"Iteration {it} done, waiting.... [took: {time_taken_for_iteration}s ({steps_per_s} steps/s)]")
+
             del training_infos
             del batches
             del custom_metrics
             gc.collect()
-
-            logging.info(f"Iteration {it} done, took: {time.time() - start}s")
 
     def train(self, batches):
         training_infos = list()

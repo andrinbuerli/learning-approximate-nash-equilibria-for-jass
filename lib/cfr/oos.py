@@ -27,7 +27,7 @@ class OOS:
         self.action_space = action_space
         self.epsilon = epsilon
         self.delta = delta
-        self.information_sets = {}  # infostate keys -> [cum. regrets, avg strategy, imm. regrets, valid_actions, s_0]
+        self.information_sets = {}  # infostate keys -> [cum. regrets, avg strategy, imm. regrets, valid_actions, (s_m, s_sum, num)]
         self.rule = RuleSchieberCpp()
 
 
@@ -94,7 +94,6 @@ class OOS:
             if self.log:
                 xs.append(x), ls.append(l), us.append(u), w_Ts.append(w_T)
         if self.log:
-            # imregret = np.nanmean([r.max() for key, (_, _, r) in self.infostates.items()])
             key = self.get_infostate_key_from_obs(m)
             if isinstance(m, GameObservationCpp):
                 valid_actions = np.flatnonzero(self.rule.get_full_valid_actions_from_obs(m))
@@ -108,7 +107,6 @@ class OOS:
                 imregret = [-1 for _ in valid_actions]
 
             immediate_regrets.append(imregret)
-            # logging.info(f"Touched infosets: {len(self.information_sets)}, cards played: {m.nr_played_cards}, Average Regret: {imregret}")
 
     def recurse(
             self,
@@ -159,8 +157,6 @@ class OOS:
             current_strategy = valid_actions / valid_actions.sum()
 
         a, s_1_prime, s_2_prime = self.sample(h, m, current_strategy, valid_actions_list, s_1, s_2, targeted_mode)
-
-        # assert a in valid_actions_list, f"{a} not in {valid_actions}, h: {h}, m: {m}"
 
         if infoset_key not in self.information_sets:
             self.add_information_set(infoset_key, valid_actions)
@@ -273,7 +269,7 @@ class OOS:
 
         w_T_inv = s_0 / s_m
 
-        return w_T_inv # (1 - self.delta) + self.delta * w_T_inv
+        return w_T_inv
 
     def sample_chance_outcome(self, m, targeted_mode):
         known_hands = self.get_known_hands(m)

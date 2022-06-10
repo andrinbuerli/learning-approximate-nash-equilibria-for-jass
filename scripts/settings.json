@@ -9,14 +9,14 @@
   "c_1": 1.25,
   "c_2": 19652,
   "dirichlet_alpha": 0.3,
-  "dirichlet_eps": 0.25,
+  "dirichlet_eps": 0.0,
   "iterations": 50,
   "mdp_value": true,
   "player_func": false,
   "terminal_func": false,
   "discount": 1,
   "virtual_loss": 1,
-  "temperature": 1.0,
+  "temperature": 0.05,
   "type": "mu-zero-mcts"
  },
  "optimization": {

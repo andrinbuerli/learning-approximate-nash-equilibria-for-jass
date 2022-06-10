@@ -1,0 +1,236 @@
+{
+  "cheating": false,
+  "n_games": 1000,
+  "information": "imperfect",
+  "agents": [
+    {
+      "type": "dmcts",
+      "note": "DMCTS",
+      "skip": false
+    },
+    {
+      "type": "oos",
+      "note": "OOS-10",
+      "iterations": 10,
+      "delta": 1.0,
+      "epsilon": 1.0,
+      "skip": true
+    },
+    {
+      "type": "oos",
+      "note": "OOS-100",
+      "iterations": 100,
+      "delta": 1.0,
+      "epsilon": 1.0,
+      "skip": true
+    },
+    {
+      "type": "oos",
+      "note": "OOS-1000",
+      "iterations": 1000,
+      "delta": 1.0,
+      "epsilon": 1.0,
+      "skip": true
+    },
+    {
+      "type": "oos",
+      "note": "OOS-10000",
+      "iterations": 10000,
+      "delta": 1.0,
+      "epsilon": 1.0,
+      "skip": true
+    },
+    {
+      "type": "oos",
+      "note": "OOS-10-v2",
+      "iterations": 10,
+      "delta": 1.0,
+      "epsilon": 0.7,
+      "skip": true
+    },
+    {
+      "type": "oos",
+      "note": "OOS-100-v2",
+      "iterations": 100,
+      "delta": 1.0,
+      "epsilon": 0.7,
+      "skip": true
+    },
+    {
+      "type": "oos",
+      "note": "OOS-1000-v2",
+      "iterations": 1000,
+      "delta": 1.0,
+      "epsilon": 0.7,
+      "skip": true
+    },
+    {
+      "type": "oos",
+      "note": "OOS-10000-v2",
+      "iterations": 10000,
+      "delta": 1.0,
+      "epsilon": 0.7,
+      "skip": true
+    },
+    {
+      "type": "oos",
+      "note": "OOS-10-v3",
+      "iterations": 10,
+      "delta": 1.0,
+      "epsilon": 0.4,
+      "skip": true
+    },
+    {
+      "type": "oos",
+      "note": "OOS-100-v3",
+      "iterations": 100,
+      "delta": 1.0,
+      "epsilon": 0.4,
+      "skip": true
+    },
+    {
+      "type": "oos",
+      "note": "OOS-1000-v3",
+      "iterations": 1000,
+      "delta": 1.0,
+      "epsilon": 0.4,
+      "skip": true
+    },
+    {
+      "type": "oos",
+      "note": "OOS-10000-v3",
+      "iterations": 10000,
+      "delta": 1.0,
+      "epsilon": 0.4,
+      "skip": true
+    },
+    {
+      "type": "oos",
+      "note": "OOS-10-v4",
+      "iterations": 10,
+      "delta": 1.0,
+      "epsilon": 0.1,
+      "skip": true
+    },
+    {
+      "type": "oos",
+      "note": "OOS-100-v4",
+      "iterations": 100,
+      "delta": 1.0,
+      "epsilon": 0.1,
+      "skip": true
+    },
+    {
+      "type": "oos",
+      "note": "OOS-1000-v4",
+      "iterations": 1000,
+      "delta": 1.0,
+      "epsilon": 0.1,
+      "skip": true
+    },
+    {
+      "type": "oos",
+      "note": "OOS-10000-v4",
+      "iterations": 10000,
+      "delta": 1.0,
+      "epsilon": 0.1,
+      "skip": true
+    },
+    {
+      "type": "oos",
+      "note": "OOS-10-v5",
+      "iterations": 10,
+      "delta": 0.7,
+      "epsilon": 0.1,
+      "skip": true
+    },
+    {
+      "type": "oos",
+      "note": "OOS-100-v5",
+      "iterations": 100,
+      "delta": 0.7,
+      "epsilon": 0.1,
+      "skip": true
+    },
+    {
+      "type": "oos",
+      "note": "OOS-1000-v5",
+      "iterations": 1000,
+      "delta": 0.7,
+      "epsilon": 0.1,
+      "skip": true
+    },
+    {
+      "type": "oos",
+      "note": "OOS-10000-v5",
+      "iterations": 10000,
+      "delta": 0.7,
+      "epsilon": 0.1,
+      "skip": true
+    },
+    {
+      "type": "oos",
+      "note": "OOS-10-v6",
+      "iterations": 10,
+      "delta": 0.4,
+      "epsilon": 0.1,
+      "skip": true
+    },
+    {
+      "type": "oos",
+      "note": "OOS-100-v6",
+      "iterations": 100,
+      "delta": 0.4,
+      "epsilon": 0.1,
+      "skip": true
+    },
+    {
+      "type": "oos",
+      "note": "OOS-1000-v6",
+      "iterations": 1000,
+      "delta": 0.4,
+      "epsilon": 0.1,
+      "skip": true
+    },
+    {
+      "type": "oos",
+      "note": "OOS-10000-v6",
+      "iterations": 10000,
+      "delta": 0.4,
+      "epsilon": 0.1,
+      "skip": true
+    },
+    {
+      "type": "oos",
+      "note": "OOS-10-v7",
+      "iterations": 10,
+      "delta": 0.1,
+      "epsilon": 0.1,
+      "skip": true
+    },
+    {
+      "type": "oos",
+      "note": "OOS-100-v7",
+      "iterations": 100,
+      "delta": 0.1,
+      "epsilon": 0.1,
+      "skip": true
+    },
+    {
+      "type": "oos",
+      "note": "OOS-1000-v7",
+      "iterations": 1000,
+      "delta": 0.1,
+      "epsilon": 0.1,
+      "skip": true
+    },
+    {
+      "type": "oos",
+      "note": "OOS-10000-v7",
+      "iterations": 10000,
+      "delta": 0.1,
+      "epsilon": 0.1,
+      "skip": true
+    }
+  ]
+}

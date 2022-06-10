@@ -2,7 +2,7 @@
  "agent": {
   "type": "dmcts",
   "name": "dmcts-large",
-  "iterations": 100,
+  "iterations": 1000,
   "nr_determinizations": 1000,
   "threads_to_use": 10,
   "port": 9894

@@ -10,9 +10,27 @@
       "greedy": true
     },
     {
+      "type": "policy",
+      "note": "Policy-RL",
+      "iterations": 100,
+      "skip": true,
+      "experiment_path": "../../results/2053237674",
+      "greedy": true
+    },
+    {
       "type": "mu-zero-mcts",
       "note": "MCTS-100",
       "iterations": 100,
+      "skip": true,
+      "experiment_path": "../../results/2053237674",
+      "greedy": true,
+      "player_func": true,
+      "terminal_func": true
+    },
+    {
+      "type": "mu-zero-mcts",
+      "note": "MCTS-400",
+      "iterations": 400,
       "skip": true,
       "experiment_path": "../../results/2053237674",
       "greedy": true,

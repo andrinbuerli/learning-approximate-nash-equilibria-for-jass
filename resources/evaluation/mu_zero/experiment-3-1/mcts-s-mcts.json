@@ -18,16 +18,6 @@
       "skip": true,
       "experiment_path": "../../results/1655303752",
       "greedy": true
-    },
-    {
-      "type": "mu-zero-mcts",
-      "note": "MCTS-100",
-      "iterations": 100,
-      "skip": true,
-      "experiment_path": "../../results/1655303752",
-      "greedy": true,
-      "player_func": true,
-      "terminal_func": true
     }
   ]
 }

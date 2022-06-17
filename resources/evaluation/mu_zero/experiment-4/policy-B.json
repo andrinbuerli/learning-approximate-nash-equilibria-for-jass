@@ -4,7 +4,7 @@
   "agents": [
     {
       "type": "policy",
-      "note": "Policy-S",
+      "note": "Policy-B",
       "skip": false,
       "experiment_path": "../../results/1655303752",
       "greedy": true

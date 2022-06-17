@@ -3,10 +3,15 @@
   "information": "imperfect",
   "agents": [
     {
+      "type": "mcts",
+      "note": "PMCTS",
+      "skip": false
+    },
+    {
       "type": "policy",
       "note": "Policy",
-      "skip": false,
-      "experiment_path": "../../results/1653237674",
+      "skip": true,
+      "experiment_path": "../../results/1653827576",
       "greedy": true
     },
     {
@@ -14,7 +19,7 @@
       "note": "MCTS-100",
       "iterations": 100,
       "skip": true,
-      "experiment_path": "../../results/1653237674",
+      "experiment_path": "../../results/1653827576",
       "greedy": true,
       "player_func": true,
       "terminal_func": true

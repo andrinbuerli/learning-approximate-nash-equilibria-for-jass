@@ -71,7 +71,9 @@ def get_agent(config: WorkerConfig, network, greedy=False, force_local=False) ->
                 return AgentByNetworkCpp(url="http://baselines:9894/dmcts-large")
             else:
                 return AgentByNetworkCpp(url="http://baselines:9898/dmcts")
-    if config.agent.type == "mcts":
+    elif config.agent.type == "i-dmcts":
+            return AgentByNetworkCpp(url="http://jass-agent.abiz.ch/theseus")
+    elif config.agent.type == "mcts":
         if force_local:
             import jassmlcpp
             return jassmlcpp.agent.JassAgentMCTSFullCpp(

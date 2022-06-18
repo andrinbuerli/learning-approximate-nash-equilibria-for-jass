@@ -18,8 +18,38 @@
     },
     {
       "type": "mu-zero-mcts",
+      "note": "MCTS-20",
+      "iterations": 20,
+      "skip": true,
+      "experiment_path": "../../results/2053237674",
+      "greedy": true,
+      "player_func": true,
+      "terminal_func": true
+    },
+    {
+      "type": "mu-zero-mcts",
+      "note": "MCTS-50",
+      "iterations": 50,
+      "skip": true,
+      "experiment_path": "../../results/2053237674",
+      "greedy": true,
+      "player_func": true,
+      "terminal_func": true
+    },
+    {
+      "type": "mu-zero-mcts",
       "note": "MCTS-100",
       "iterations": 100,
+      "skip": true,
+      "experiment_path": "../../results/2053237674",
+      "greedy": true,
+      "player_func": true,
+      "terminal_func": true
+    },
+    {
+      "type": "mu-zero-mcts",
+      "note": "MCTS-400",
+      "iterations": 400,
       "skip": true,
       "experiment_path": "../../results/2053237674",
       "greedy": true,

@@ -1,0 +1,28 @@
+{
+  "n_games": 1000,
+  "information": "imperfect",
+  "agents": [
+    {
+      "type": "i-dmcts",
+      "note": "I-DMCTS",
+      "skip": false
+    },
+    {
+      "type": "policy",
+      "note": "Policy",
+      "skip": true,
+      "experiment_path": "../../results/2053237674",
+      "greedy": true
+    },
+    {
+      "type": "mu-zero-mcts",
+      "note": "MCTS-100",
+      "iterations": 100,
+      "skip": true,
+      "experiment_path": "../../results/2053237674",
+      "greedy": true,
+      "player_func": true,
+      "terminal_func": true
+    }
+  ]
+}

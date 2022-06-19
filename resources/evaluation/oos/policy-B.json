@@ -1,0 +1,21 @@
+{
+  "n_games": 1000,
+  "information": "imperfect",
+  "agents": [
+    {
+      "type": "policy",
+      "note": "Policy-B",
+      "skip": false,
+      "experiment_path": "../../results/1655303752",
+      "greedy": true
+    },
+    {
+      "type": "oos",
+      "note": "OOS-10000",
+      "iterations": 10000,
+      "delta": 0.7,
+      "epsilon": 0.4,
+      "skip": true
+    }
+  ]
+}

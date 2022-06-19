@@ -1,0 +1,19 @@
+{
+  "n_games": 1000,
+  "information": "imperfect",
+  "agents": [
+    {
+      "type": "dmcts",
+      "note": "DMCTS",
+      "skip": false
+    },
+    {
+      "type": "oos",
+      "note": "OOS-10000",
+      "iterations": 10000,
+      "delta": 0.7,
+      "epsilon": 0.4,
+      "skip": true
+    }
+  ]
+}

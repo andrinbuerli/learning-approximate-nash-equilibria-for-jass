@@ -3,11 +3,9 @@
   "information": "imperfect",
   "agents": [
     {
-      "type": "policy",
-      "note": "Policy-B",
-      "skip": false,
-      "experiment_path": "../../results/1655303752",
-      "greedy": true
+      "type": "dmcts",
+      "note": "DMCTS",
+      "skip": false
     },
     {
       "type": "policy",

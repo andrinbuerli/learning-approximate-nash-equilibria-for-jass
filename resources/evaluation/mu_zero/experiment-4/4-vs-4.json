@@ -3,8 +3,8 @@
   "information": "imperfect",
   "agents": [
     {
-      "type": "mu-zero-mcts",
-      "note": "MCTS-50",
+      "type": "policy",
+      "note": "Policy-RAW",
       "iterations": 50,
       "skip": false,
       "experiment_path": "../../results/2053237674",

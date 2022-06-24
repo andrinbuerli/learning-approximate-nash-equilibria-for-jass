@@ -11,7 +11,7 @@
       "type": "policy",
       "note": "Policy",
       "skip": true,
-      "experiment_path": "../../results/2053239245",
+      "experiment_path": "../../results/2053237674",
       "greedy": true
     },
     {
@@ -19,7 +19,7 @@
       "note": "MCTS-20",
       "iterations": 20,
       "skip": true,
-      "experiment_path": "../../results/2053239245",
+      "experiment_path": "../../results/2053237674",
       "greedy": true,
       "player_func": true,
       "terminal_func": true
@@ -29,7 +29,7 @@
       "note": "MCTS-50",
       "iterations": 50,
       "skip": true,
-      "experiment_path": "../../results/2053239245",
+      "experiment_path": "../../results/2053237674",
       "greedy": true,
       "player_func": true,
       "terminal_func": true
@@ -39,7 +39,7 @@
       "note": "MCTS-100",
       "iterations": 100,
       "skip": true,
-      "experiment_path": "../../results/2053239245",
+      "experiment_path": "../../results/2053237674",
       "greedy": true,
       "player_func": true,
       "terminal_func": true
@@ -49,7 +49,17 @@
       "note": "MCTS-400",
       "iterations": 400,
       "skip": true,
-      "experiment_path": "../../results/2053239245",
+      "experiment_path": "../../results/2053237674",
+      "greedy": true,
+      "player_func": true,
+      "terminal_func": true
+    },
+    {
+      "type": "mu-zero-mcts",
+      "note": "MCTS-800",
+      "iterations": 800,
+      "skip": true,
+      "experiment_path": "../../results/2053237674",
       "greedy": true,
       "player_func": true,
       "terminal_func": true

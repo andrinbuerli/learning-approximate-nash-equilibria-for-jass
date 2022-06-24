@@ -5,7 +5,6 @@
     {
       "type": "policy",
       "note": "Policy-RAW",
-      "iterations": 50,
       "skip": false,
       "experiment_path": "../../results/1653237674",
       "greedy": true,
@@ -14,7 +13,17 @@
     },
     {
       "type": "mu-zero-mcts",
-      "note": "MCTS-100-3",
+      "note": "MCTS-50",
+      "iterations": 50,
+      "skip": true,
+      "experiment_path": "../../results/1653237674",
+      "greedy": true,
+      "player_func": true,
+      "terminal_func": true
+    },
+    {
+      "type": "mu-zero-mcts",
+      "note": "MCTS-100",
       "iterations": 100,
       "skip": true,
       "experiment_path": "../../results/1653237674",
@@ -24,7 +33,7 @@
     },
     {
       "type": "mu-zero-mcts",
-      "note": "MCTS-400-3",
+      "note": "MCTS-400",
       "iterations": 400,
       "skip": true,
       "experiment_path": "../../results/1653237674",

@@ -1,5 +1,5 @@
 {
-  "n_games": 1000,
+  "n_games": 10000,
   "information": "imperfect",
   "agents": [
     {
@@ -55,6 +55,16 @@
       "type": "mu-zero-mcts",
       "note": "MCTS-800",
       "iterations": 800,
+      "skip": true,
+      "experiment_path": "../../results/2053237674",
+      "greedy": true,
+      "player_func": true,
+      "terminal_func": true
+    },
+    {
+      "type": "mu-zero-mcts",
+      "note": "MCTS-1600",
+      "iterations": 1600,
       "skip": true,
       "experiment_path": "../../results/2053237674",
       "greedy": true,

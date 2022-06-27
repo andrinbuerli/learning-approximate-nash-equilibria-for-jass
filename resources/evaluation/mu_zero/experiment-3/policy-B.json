@@ -1,5 +1,5 @@
 {
-  "n_games": 1000,
+  "n_games": 10000,
   "information": "imperfect",
   "agents": [
     {

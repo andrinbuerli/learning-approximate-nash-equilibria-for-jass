@@ -73,8 +73,12 @@ def get_agent(config: WorkerConfig, network, greedy=False, force_local=False) ->
                 return AgentByNetworkCpp(url="http://baselines:9898/dmcts")
     elif config.agent.type == "i-dmcts":
             return AgentByNetworkCpp(url="http://jass-agent.abiz.ch/theseus")
+    elif config.agent.type == "i-dmcts-2":
+            return AgentByNetworkCpp(url="http://jass-agent2.abiz.ch/theseus")
     elif config.agent.type == "f-i-dmcts":
             return AgentByNetworkCpp(url="http://jass-agent.abiz.ch/tiresias")
+    elif config.agent.type == "f-i-dmcts-2":
+            return AgentByNetworkCpp(url="http://jass-agent2.abiz.ch/tiresias")
     elif config.agent.type == "mcts":
         if force_local:
             import jassmlcpp

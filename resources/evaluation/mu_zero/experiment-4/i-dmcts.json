@@ -3,7 +3,7 @@
   "information": "imperfect",
   "agents": [
     {
-      "type": "i-dmcts",
+      "type": "i-dmcts-2",
       "note": "I-DMCTS",
       "skip": false
     },

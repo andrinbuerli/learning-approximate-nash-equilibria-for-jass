@@ -4,6 +4,12 @@ ARG DEV
 
 WORKDIR /tmp
 
+RUN apt-get install wget -y
+
+RUN apt-key del 7fa2af80
+
+RUN apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/3bf863cc.pub
+
 RUN apt-get update && apt-get install build-essential wget git -y
 
 RUN curl -sSL https://cmake.org/files/v3.5/cmake-3.5.2-Linux-x86_64.tar.gz | tar -xzC /opt\
@@ -45,9 +51,6 @@ RUN git clone --recurse-submodules \
 RUN git clone https://$(cat .github)@github.com/thomas-koller/jass-ml-py.git\
     && cd jass-ml-py && pip install -e . && cd ..
 
-COPY requirements.txt requirements.txt
-COPY requirements-dev.txt requirements-dev.txt
-
 # install latex for plots and dev requirements
 RUN if [[ -z "$DEV" ]];\
     then echo "No DEV mode";\
@@ -57,6 +60,9 @@ RUN if [[ -z "$DEV" ]];\
     && apt-get upgrade -y \
     && apt-get install texlive-full -y \
     && rm -rf /var/lib/apt/lists/*; fi
+
+COPY requirements.txt requirements.txt
+COPY requirements-dev.txt requirements-dev.txt
 
 RUN if [[ -z "$DEV" ]];\
     then echo "No DEV mode";\

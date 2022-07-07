@@ -6,8 +6,6 @@ from jasscpp import GameStateCpp, GameObservationCpp, RuleSchieberCpp, GameSimCp
 
 from lib.cfr.game_util import deal_random_hand
 
-np.seterr(all='raise')
-
 class OOS:
 
     def __init__(

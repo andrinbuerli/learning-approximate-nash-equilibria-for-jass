@@ -14,7 +14,7 @@ from lib.mu_zero.network.network_base import AbstractNetwork
 
 class AgentMuZeroMCTS(RememberingAgent):
     """
-    Agent to play perfect imperfect information Jass with c++ ALPV-MCTS
+    Agent to play jass with ALPV-MCTS
     """
 
     def __init__(self,

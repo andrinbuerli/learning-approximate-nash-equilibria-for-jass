@@ -61,7 +61,6 @@ class LatentNodeSelectionPolicy:
 
             assert len(children) > 0, f'Error no children for valid actions {valid_actions}, {vars(node)}'
 
-            #with node.lock: # ensures that node and children not currently locked, i.e. being expanded
             exploration = np.array([self._exploration_term(x) for x in children])
             exploitation = np.array([self._exploitation_term(x, stats) for x in children])
 

@@ -26,7 +26,7 @@ if __name__=="__main__":
     tf.config.experimental_run_functions_eagerly(True)
     set_allow_gpu_memory_growth(True)
     parser = argparse.ArgumentParser(prog="Start MuZero Training for Jass")
-    parser.add_argument(f'--run', default="1652852939")
+    parser.add_argument(f'--run', default="1653237674")
     parser.add_argument(f'--n_games', default=100, type=int)
     parser.add_argument(f'--n_search_threads', default=1, type=int)
     parser.add_argument(f'--virtual_loss', default=1, type=int)
@@ -35,6 +35,7 @@ if __name__=="__main__":
     parser.add_argument(f'--terminal_func', default=False, action="store_true")
     parser.add_argument(f'--policy', default=False, action="store_true")
     parser.add_argument(f'--value', default=False, action="store_true")
+    parser.add_argument(f'--strong_opponent', default=False, action="store_true")
     args = parser.parse_args()
 
     base_path = Path(__file__).resolve().parent.parent.parent.parent / "results" / args.run
@@ -60,7 +61,10 @@ if __name__=="__main__":
 
     pprint(config.to_json())
 
-    opponent = "dmcts"
+    if args.strong_opponent:
+        opponent = "dmcts-large"
+    else:
+        opponent = "dmcts"
     logging.info(f"Playing against {opponent} opponent")
     opponent = get_opponent(opponent)
 

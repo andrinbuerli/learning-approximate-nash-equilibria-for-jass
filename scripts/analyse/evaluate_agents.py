@@ -195,7 +195,7 @@ if __name__ == "__main__":
     parser.add_argument(f'--max_parallel_processes_per_evaluation', default=1, type=int)
     parser.add_argument(f'--max_parallel_threads_per_evaluation_process', default=1, type=int)
     parser.add_argument(f'--no_skip_on_result_file', default=False, action="store_true")
-    parser.add_argument(f'--files', nargs="+", default=["mu_zero/experiment-1.json"])
+    parser.add_argument(f'--files', nargs="+", default=["mu_zero/experiment-0/dmcts.json"])
     parser.add_argument(f'--folder', default="results")
     args = parser.parse_args()
 

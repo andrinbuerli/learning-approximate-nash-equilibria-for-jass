@@ -1,5 +1,5 @@
 {
- "timestamp": 1649334850,
+ "timestamp": 1652453362,
  "log": {
   "projectname": "jass-muzero",
   "entity": "andrinburli",
@@ -21,9 +21,13 @@
   "virtual_loss": 10
  },
  "optimization": {
+  "reanalyse_fraction": 0.0,
+  "value_td_5_step": false,
+  "target_network_update": 10,
   "adam_beta1": 0.9,
   "adam_beta2": 0.999,
   "adam_epsilon": 1e-07,
+  "learning_rate_init": 0.0001,
   "batch_size": 32,
   "data_folder": "../results",
   "value_loss_weight": 0.25,
@@ -31,16 +35,19 @@
   "policy_loss_weight": 1.0,
   "valid_policy_target": false,
   "dldl": false,
-  "value_mse": true,
+  "value_mse": false,
+  "use_per": false,
+  "value_based_per": false,
+  "supervised_targets": true,
   "learning_rate": 0.0001,
   "max_buffer_size": 1024,
   "min_buffer_size": 4,
   "port": 8080,
   "store_model_weights_after": 5,
-  "max_trajectory_length": 10,
-  "min_trajectory_length": 10,
-  "updates_per_step": 2,
-  "iterations": 10,
+  "max_trajectory_length": 1,
+  "min_trajectory_length": 1,
+  "total_steps": 1000,
+  "updates_per_step": 10,
   "weight_decay": 0.0001
  },
  "network": {
@@ -64,7 +71,7 @@
   "reduced_channels_policy": 64,
   "reduced_channels_reward": 64,
   "reduced_channels_value": 64,
-  "support_size": 157,
+  "support_size": 200,
   "type": "resnet"
  }
 }

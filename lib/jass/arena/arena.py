@@ -337,13 +337,25 @@ class Arena:
         for game_id in pbar:
             self.play_game(dealer=dealer)
             if self.log:
-                total = (self.points_team_0[:self.nr_games_played] + self.points_team_1[:self.nr_games_played])
-                points_0 = (self.points_team_0[:self.nr_games_played]) / total
-                points_1 = (self.points_team_1[:self.nr_games_played]) / total
-                data = {
-                    "t0": points_0.mean(),
-                    "t1": points_1.mean()
-                }
+                full_rounds = self.nr_games_played // 4
+                nr_relevant_games = full_rounds * 4
+                total = (self.points_team_0[:nr_relevant_games] + self.points_team_1[:nr_relevant_games])
+                points_0 = ((self.points_team_0[:nr_relevant_games]) / total).reshape(-1, 4).mean(axis=-1)
+                points_1 = ((self.points_team_1[:nr_relevant_games]) / total).reshape(-1, 4).mean(axis=-1)
+
+                if points_0.shape[0] > 0:
+                    mean0 = points_0.mean()
+                    ste0 = points_0.std() / np.sqrt(points_0.shape[0])
+                    mean1 = points_1.mean()
+                    ste1 = points_1.std() / np.sqrt(points_1.shape[0])
+
+                    data = {
+                        "t0": f"{mean0}+-{ste0}",
+                        "t1": f"{mean1}+-{ste1}"
+                    }
+                else:
+                    data = {}
+
                 if self.log_callback is not None:
                     self.log_callback(data)
                 pbar.set_postfix(data)

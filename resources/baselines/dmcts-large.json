@@ -3,7 +3,7 @@
   "type": "dmcts",
   "name": "dmcts-large",
   "iterations": 1000,
-  "nr_determinizations": 100,
+  "nr_determinizations": 1000,
   "threads_to_use": 10,
   "port": 9894
  }

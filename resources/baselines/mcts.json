@@ -3,7 +3,7 @@
   "cheating": true,
   "type": "mcts",
   "name": "mcts",
-  "iterations": 50,
+  "iterations": 100,
   "port": 9899
  }
 }

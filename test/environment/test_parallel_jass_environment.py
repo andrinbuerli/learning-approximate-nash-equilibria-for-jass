@@ -1,3 +1,5 @@
+import pickle
+import shutil
 import time
 from multiprocessing import Queue
 from pathlib import Path
@@ -158,22 +160,32 @@ def test_collect_more_data_parallel_processes_and_threads():
 def test_collect_data_continuous():
     config = get_test_config()
 
-    config.agent.iterations = 50
+    config.agent.iterations = 1
     config.agent.n_search_threads = 1
 
     path = Path(__file__).parent.parent / "resources" / "imperfect_resnet_random.pd"
     testee = ParallelJassEnvironment(
-        max_parallel_processes=2,
+        max_parallel_processes=10,
         max_parallel_threads=2,
         worker_config=config,
         network_path=path)
 
-    queue = Queue()
-    testee.start_collect_game_data_continuously(n_games=4, queue=queue, cancel_con=None)
+    folder = Path(f"tmp_{id(testee)}")
+    folder.mkdir(parents=True, exist_ok=True)
 
-    for _ in range(2):
+    testee.start_collect_game_data_continuously(n_games=4, data_path=folder, cancel_con=None)
+
+    for _ in range(20):
         start = time.time()
-        states, actions, rewards, probs, outcomes = queue.get()
+
+        while len(list(folder.glob("*"))) == 0:
+            time.sleep(5)
+
+        file = next(folder.glob("*"))
+        with open(str(file), "rb") as f:
+            states, actions, rewards, probs, outcomes = pickle.load(f)
+
+        file.unlink()
 
         print(f"took: {time.time() - start}s")
 
@@ -183,6 +195,7 @@ def test_collect_data_continuous():
         assert states.shape[0] == 2
         assert states.shape[1] == 38
 
+    shutil.rmtree(str(folder))
     del testee
 
 

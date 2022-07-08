@@ -52,7 +52,7 @@ if __name__ == "__main__":
         testee = ALPV_MCTS(
             observation=obs,
             node_selection=tree_policy,
-            reward_calc=LatentValueCalculationPolicy(),
+            value_calc=LatentValueCalculationPolicy(),
             mdp_value=False,
             stats=stats,
             discount=1,
@@ -84,7 +84,7 @@ if __name__ == "__main__":
             testee = ALPV_MCTS(
                 observation=obs,
                 node_selection=tree_policy,
-                reward_calc=LatentValueCalculationPolicy(),
+                value_calc=LatentValueCalculationPolicy(),
                 mdp_value=False,
                 stats=stats,
                 discount=1,
@@ -121,7 +121,7 @@ if __name__ == "__main__":
             testee = ALPV_MCTS(
                 observation=obs,
                 node_selection=tree_policy,
-                reward_calc=LatentValueCalculationPolicy(),
+                value_calc=LatentValueCalculationPolicy(),
                 mdp_value=False,
                 stats=stats,
                 discount=1,

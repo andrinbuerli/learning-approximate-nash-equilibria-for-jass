@@ -21,6 +21,17 @@ class OOS:
             players: int,
             log: bool = False,
             asserts: bool = False):
+        """
+        Initialise the search tree
+        :param delta: Parameter controlling targeting of current subgame
+        :param epsilon: Parameter controlling amount of exploration
+        :param gamma: Parameter to control regret matching
+        :param action_space: Size of action space
+        :param players: Number of players
+        :param log: Controls weather oos details should be returned for logging
+        :param asserts: Controls weather asserts should be executed
+        """
+
         self.asserts = asserts
         self.log = log
         self.players = players
@@ -31,7 +42,6 @@ class OOS:
         self.delta = delta
         self.information_sets = {}  # infostate keys -> [cum. regrets, avg strategy, imm. regrets, valid_actions, (s_m, s_sum, num)]
         self.rule = RuleSchieberCpp()
-
 
     def reset(self):
         self.information_sets = {}

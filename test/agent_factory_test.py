@@ -17,7 +17,8 @@ def test_get_mu_zero_agent():
 
     obs = jasscpp.GameObservationCpp()
     obs.player = 1
-    assert 0 <= agent.action_trump(obs) <= 6
+    action = agent.action_trump(obs)
+    assert 0 <= action <= 5 or action == PUSH
 
 def test_get_opponent_dmcts():
     agent = get_opponent(type="dmcts")
@@ -25,7 +26,8 @@ def test_get_opponent_dmcts():
     game = jasscpp.GameSimCpp()
     game.init_from_cards(hands, SOUTH)
     game.state.hands = game.state.hands.astype(float)
-    assert 0 <= agent.action_play_card(jasscpp.observation_from_state(game.state, -1)) <= 6
+    action = agent.action_trump(jasscpp.observation_from_state(game.state, -1))
+    assert 0 <= action <= 5 or action == PUSH
 
 def test_get_opponent_dpolicy():
     agent = get_opponent(type="dpolicy")
@@ -33,7 +35,8 @@ def test_get_opponent_dpolicy():
     game = jasscpp.GameSimCpp()
     obs = jasscpp.observation_from_state(game.state, 0)
 
-    assert 0 <= agent.action_trump(obs) <= 6
+    action = agent.action_trump(obs)
+    assert 0 <= action <= 5 or action == PUSH
 
 def test_get_opponent_random():
     agent = get_opponent(type="random")

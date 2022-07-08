@@ -240,12 +240,20 @@ def test_collect_data_continuous_reanalyse():
         reanalyse_fraction=1.0,
         reanalyse_data_path="/data")
 
-    queue = Queue()
-    testee.start_collect_game_data_continuously(n_games=4, queue=queue, cancel_con=None)
+    data_path = Path(f"tmp{id(testee)}").resolve()
+    data_path.mkdir(parents=True, exist_ok=True)
+    testee.start_collect_game_data_continuously(n_games=4, data_path=data_path, cancel_con=None)
 
     for _ in range(2):
         start = time.time()
-        states, actions, rewards, probs, outcomes = queue.get()
+
+        files = list(data_path.glob("*.pkl"))
+        while len(files) == 0:
+            time.sleep(1)
+            files = list(data_path.glob("*.pkl"))
+
+        with open(files[0], "rb") as f:
+            states, actions, rewards, probs, outcomes = pickle.load(f)
 
         print(f"took: {time.time() - start}s")
 
@@ -255,4 +263,5 @@ def test_collect_data_continuous_reanalyse():
         assert states.shape[0] == 1
         assert states.shape[1] == 38
 
+    shutil.rmtree(data_path)
     del testee

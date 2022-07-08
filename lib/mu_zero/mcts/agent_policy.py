@@ -5,16 +5,12 @@ from jasscpp import GameObservationCpp
 from lib.jass.agent.remembering_agent import RememberingAgent
 from lib.jass.features.features_cpp_conv_cheating import FeaturesSetCppConvCheating
 from lib.jass.features.features_set_cpp import FeaturesSetCpp
-from lib.mu_zero.mcts.latent_node_selection_policy import LatentNodeSelectionPolicy
-from lib.mu_zero.mcts.latent_value_calc_policy import LatentValueCalculationPolicy
-from lib.mu_zero.mcts.min_max_stats import MinMaxStats
-from lib.mu_zero.mcts.tree_search import ALPV_MCTS
 from lib.mu_zero.network.network_base import AbstractNetwork
 
 
 class AgentPolicy(RememberingAgent):
     """
-    Agent to play perfect imperfect information Jass with c++ ALPV-MCTS
+    Local policy agent to play the Schieber jass
     """
 
     def __init__(self,

@@ -14,7 +14,7 @@ from lib.mu_zero.network.network_base import AbstractNetwork
 
 class AgentMuZeroMCTS(RememberingAgent):
     """
-    Agent to play jass with ALPV-MCTS
+    MuZero agent to play jass with ALPV-MCTS
     """
 
     def __init__(self,
@@ -63,7 +63,7 @@ class AgentMuZeroMCTS(RememberingAgent):
         search = ALPV_MCTS(
             observation=obs,
             node_selection=self.tree_policy,
-            reward_calc=self.reward_calc_policy,
+            value_calc=self.reward_calc_policy,
             mdp_value=self.mdp_value,
             stats=stats,
             discount=self.discount,

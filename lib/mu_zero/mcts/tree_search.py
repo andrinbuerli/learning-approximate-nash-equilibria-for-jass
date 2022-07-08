@@ -12,7 +12,7 @@ from lib.mu_zero.mcts.latent_node_selection_policy import LatentNodeSelectionPol
 class ALPV_MCTS:
     def __init__(self, observation: jasscpp.GameObservationCpp,
                  node_selection: LatentNodeSelectionPolicy,
-                 reward_calc: LatentValueCalculationPolicy,
+                 value_calc: LatentValueCalculationPolicy,
                  stats: MinMaxStats,
                  mdp_value: bool = False,
                  discount: float = 0.9,
@@ -22,16 +22,20 @@ class ALPV_MCTS:
                  observation_feature_format=None):
         """
         Initialize the search tree.
-        Args:
-            observation: the game observation at the start of the mcts search
-            node_selection: the policy used for node selection and expansion
-            reward_calc: the policy to calculate the reward from an expanded node
-            mdp_value: True if the value calculation is n-step bootstrap, else value corresponds to game result estimation
-            discount: Discount factor for n-step bootstrap value calculation
-            n_search_threads: Number of search threads for async simulations
-            virtual_loss: Virtual loss temporary added to nodes in search thread
+
+        :param observation: the game observation at the start of the mcts search
+        :param node_selection: the policy used for node selection and expansion
+        :param value_calc: the policy to calculate the value from an expanded node
+        :param stats: statistics of the tree
+        :param mdp_value: True if the value calculation is n-step bootstrap, else value corresponds to game result estimation
+        :param discount: Discount factor for n-step bootstrap value calculation
+        :param n_search_threads: Number of search threads for async simulations
+        :param virtual_loss: Virtual loss temporary added to nodes in search thread
+        :param store_trajectory_actions: store action sampled during iterations
+        :param observation_feature_format:  format of the observation features,
+                if this parameter not none, then observation is a feature map from a supervised dataset
         """
-        #
+
         self.store_trajectory_actions = store_trajectory_actions
         self.trajectory_actions = []
         self.n_search_threads = n_search_threads
@@ -41,11 +45,8 @@ class ALPV_MCTS:
         self.mdp_value = mdp_value
         self.observation = observation
 
-        # policies
         self.node_selection = node_selection
-        self.reward_calc = reward_calc
-
-        # initialize root node
+        self.reward_calc = value_calc
 
         self.observation_feature_format = observation_feature_format
 
@@ -54,6 +55,7 @@ class ALPV_MCTS:
             root_player = observation.player
             trump = observation.trump
         else:
+            # observation is a feature map from a supervised dataset and needs to be parsed
             reshaped = observation.reshape(observation_feature_format.FEATURE_SHAPE)
             root_player = reshaped[0, 0, observation_feature_format.CH_PLAYER:observation_feature_format.CH_PLAYER + 4].argmax()
             trump_one_hot = reshaped[0, 0, observation_feature_format.CH_TRUMP:observation_feature_format.CH_TRUMP + 6]
@@ -101,8 +103,9 @@ class ALPV_MCTS:
     def run_simulations_sync(self, iterations: int) -> None:
         """
         Run a specified number of simulations.
-        Args:
-            iterations: the number of simulations to run.
+
+        :param iterations: the number of simulations to run.
+        :return:
         """
 
         for _ in range(iterations):
@@ -111,8 +114,8 @@ class ALPV_MCTS:
     def run_simulations_async(self, iterations: int) -> None:
         """
         Run a specified number of parallelized simulations.
-        Args:
-            iterations: the number of simulations to run.
+        :param iterations: the number of simulations to run.
+        :return:
         """
 
         self.pool.map(lambda _: self.run_simulation(), range(iterations))
@@ -123,7 +126,7 @@ class ALPV_MCTS:
         """
 
         # select and possibly expand the tree using the tree policy
-        node = self.node_selection.tree_policy(node=self.root, observation=self.observation,
+        node = self.node_selection.tree_policy(root_node=self.root, observation=self.observation,
                                                virtual_loss=self.virtual_loss,
                                                observation_feature_format=self.observation_feature_format,
                                                stats=self.stats)
@@ -155,8 +158,8 @@ class ALPV_MCTS:
     def get_result(self) -> (np.ndarray, np.ndarray):
         """
         Get the (current) result of the simulations
-        Returns:
-            The probability of each action and the associated, estimated reward.
+
+        :return: The probability of each action and the associated, estimated value.
         """
         prob = np.zeros(43)
         q_value = np.zeros((43, 2))

@@ -1,7 +1,6 @@
 from threading import Lock
 
 import numpy as np
-import math
 
 from lib.mu_zero.mcts.min_max_stats import MinMaxStats
 
@@ -18,13 +17,19 @@ class Node:
                  trump: int = -1,
                  mask_invalid = True):
         """
-        Args:
-                parent: parent of the node, or None if root node
-                action: action leading to the node, or None if root node
-                player: player that played the action leading to the node or None if root node
-                next_player: player that will play the child_actions or None if it is a terminal node
-                nr_players: number of players, used for the reward array
+        A node in the schieber jass game tree
+        :param parent: parent of the node, or None if root node
+        :param action: action leading to the node, or None if root node
+        :param player: player that played the action leading to the node or None if root node
+        :param next_player: player that will play the child_actions or None if it is a terminal node
+        :param nr_players: number of players
+        :param action_space_size:  size of action space
+        :param cards_played: list of already played cards, used to mask invalid actions
+        :param pushed: boolean indicating if someone pushed
+        :param trump: integer indicating the selected trump, -1 if no trump selected yet
+        :param mask_invalid: boolean indicating if the known invalid actions should be masked
         """
+
         self.action_space_size = action_space_size
         self.parent = parent
 
@@ -66,9 +71,6 @@ class Node:
 
         self.trump = trump
         self.pushed = pushed
-
-        self.stats = MinMaxStats() # stats over children
-
         self.cards_played = cards_played
 
         self.valid_actions = np.ones(action_space_size)
@@ -109,9 +111,8 @@ class Node:
     def missing_actions(self, actions=None):
         """
         Get the actions from the given actions that do not appear as children (not even with none)
-        Args:
-            actions: 1 hot encoded array of actions
-        Returns:
+        :param actions:
+        :return: 1 hot encoded array of actions
         """
 
         if actions is None:
@@ -122,17 +123,11 @@ class Node:
     def children_for_action(self, actions):
         """
         Return the child nodes that are compatible with the actions.
-        Args:
-            actions: 1-hot encoded array of actions
-        Returns:
-            list of nodes
+        :param actions: 1-hot encoded array of actions
+        :return:
         """
         return [node for action, node in self.children.items() if actions[action] == 1]
 
     def propagate(self, value, virtual_loss):
         self.visits += (1 - virtual_loss)
         self.value_sum += value
-
-    def ucb(self, exploration: float) -> float:
-        return self.value_sum[self.player] / self.visits + \
-               exploration * (math.sqrt(math.log(self.avail) / self.visits))

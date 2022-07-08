@@ -13,6 +13,9 @@ from lib.mu_zero.network.support_conversion import support_to_scalar
 
 
 class LatentNodeSelectionPolicy:
+    """
+    Node selection policy in a learned latent space
+    """
 
     def __init__(
             self,
@@ -45,10 +48,22 @@ class LatentNodeSelectionPolicy:
     def tree_policy(
             self,
             observation: jasscpp.GameObservationCpp,
-            node: Node,
+            root_node: Node,
             stats: MinMaxStats,
             virtual_loss=0,
             observation_feature_format=None) -> Node:
+        """
+        Select next node for expansion in the latent space
+        :param observation: observation at the root node
+        :param root_node: root node
+        :param stats: statistics of the in memory search tree
+        :param virtual_loss: virtual loss to use
+        :param observation_feature_format: format of the observation features,
+                if this parameter not none, then observation is a feature map from a supervised dataset
+        :return: selected node
+        """
+
+        node = root_node
         while True:
             with node.lock: # ensures that node and children not currently locked, i.e. being expanded
                 node.visits += virtual_loss
@@ -71,7 +86,7 @@ class LatentNodeSelectionPolicy:
             for c in children:
                 c.avail += 1
 
-            is_terminal_state = self.get_is_terminal_state(child)
+            is_terminal_state = self._get_is_terminal_state(child)
 
             with node.lock:
                 with child.lock:
@@ -87,14 +102,6 @@ class LatentNodeSelectionPolicy:
             node = child
 
         return child
-
-    def get_is_terminal_state(self, child):
-        if self.use_player_function:
-            is_terminal_state = child.is_post_terminal > 0.5 if (
-                        self.use_terminal_function and child.is_post_terminal is not None) else False
-        else:
-            is_terminal_state = child.next_player == -1
-        return is_terminal_state
 
     def init_node(self, node: Node, observation: Union[jasscpp.GameStateCpp, jasscpp.GameObservationCpp], observation_feature_format=None):
         if node.is_root():
@@ -147,6 +154,14 @@ class LatentNodeSelectionPolicy:
 
         return q_value
 
+    def _get_is_terminal_state(self, child):
+        if self.use_player_function:
+            is_terminal_state = child.is_post_terminal > 0.5 if (
+                        self.use_terminal_function and child.is_post_terminal is not None) else False
+        else:
+            is_terminal_state = child.next_player == -1
+        return is_terminal_state
+
     def _expand_node(self, node: Node, root_obs: jasscpp.GameObservationCpp, observation_feature_format):
         node.value, node.reward, node.prior, node.predicted_player, node.is_post_terminal = \
             [x.numpy().squeeze() for x in [node.value, node.reward, node.prior, node.predicted_player, node.is_post_terminal]]
@@ -156,7 +171,7 @@ class LatentNodeSelectionPolicy:
         value_support_size = node.value.shape[-1]
         node.value = support_to_scalar(distribution=node.value, min_value=-value_support_size//2).numpy()
 
-        if self.get_is_terminal_state(node) and self.mdp_value:
+        if self._get_is_terminal_state(node) and self.mdp_value:
             node.value = np.zeros_like(node.value)
 
         reward_support_size = node.reward.shape[-1]

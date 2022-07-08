@@ -7,6 +7,10 @@ from jasscpp import GameStateCpp, GameObservationCpp, RuleSchieberCpp, GameSimCp
 from lib.cfr.game_util import deal_random_hand
 
 class OOS:
+    """
+    Online outcome sampling (OOS) implementation for the Schieber jass.
+    Original paper: https://dl.acm.org/doi/abs/10.5555/2772879.2772887
+    """
 
     def __init__(
             self,
@@ -50,28 +54,49 @@ class OOS:
         else:
             return valid_actions / valid_actions.sum()
 
-    def run_iterations(self, m: Tuple[GameStateCpp, GameObservationCpp], iterations: int, targeted_mode_init: bool = None):
+    def run_iterations(self, m: Tuple[GameStateCpp, GameObservationCpp], iterations: int):
+        """
+        Run OOS iterations
+        :param m: The current history
+        :param iterations: number of iterations to run
+        :return: default nothing is returned
+                if logging is enabled the received immediate regrets, x, l, u and w_T values are returned
+        """
+        # only for logging purposes
         immediate_regrets, xs, ls, us, w_Ts = [], [], [], [], []
 
         w_T = self.calculate_weighting_factor(m)
         m_key = self.get_infostate_key_from_obs(m)
 
         # In order for I(m) to be present in information sets dict
-        force_targeted_mode = m_key not in self.information_sets or targeted_mode_init
+        force_targeted_mode = m_key not in self.information_sets
 
         for _ in range(iterations):
-            self.run_iteration(immediate_regrets, ls, m, force_targeted_mode, us, w_T, w_Ts, xs)
+            self.run_iteration(m, w_T, force_targeted_mode, immediate_regrets, ls, us, w_Ts, xs)
             if force_targeted_mode:
-                force_targeted_mode = m_key not in self.information_sets or targeted_mode_init
+                force_targeted_mode = m_key not in self.information_sets
 
         if self.log:
             return immediate_regrets, xs, ls, us, w_Ts
 
-    def run_iteration(self, immediate_regrets, ls, m, targeted_mode_init, us, w_T, w_Ts, xs):
-        if targeted_mode_init is None:
+    def run_iteration(self, m, w_T, force_targeted_mode, immediate_regrets, ls, us, w_Ts, xs):
+        """
+        Run a single OOS iteration
+        :param m: the current history
+        :param w_T: The weighting factor of the current history (see paper page 5)
+        :param force_targeted_mode: boolean indicating if targeted mode should be forced
+        :param immediate_regrets: list to append sampled immediate regrets
+        :param ls: list to append sampled leaf node root reach probabilities
+        :param us: list to append utilities of sampled leaf nodes
+        :param w_Ts: list to append weighing factors of current history
+        :param xs: list to append sampled leaf node reach probabilities from current history
+        :return:
+        """
+
+        if force_targeted_mode is None:
             targeted_mode = bool(np.random.choice([1, 0], p=[self.delta, 1 - self.delta]))
         else:
-            targeted_mode = targeted_mode_init
+            targeted_mode = force_targeted_mode
         hands, prob_targeted, prob_untargeted = self.sample_chance_outcome(m, targeted_mode)
 
         for i_team in range(self.teams):
@@ -117,16 +142,18 @@ class OOS:
             i_team: int,
             targeted_mode: bool):
         """
-
+        Calculate OOS rollout recursively
         :param m: known history in ongoing game
         :param h: history in game sample
         :param pi_i: strategy reach probability for update team
         :param pi_o: strategy reach probability for opposing team
         :param s_1: overall probability that current sample is generated in targeted mode
         :param s_2: overall probability that current sample is generated in untargeted mode
-        :param i_team: update player
+        :param i_team: update team
         :param targeted_mode: update mode
-        :return:
+        :return: sampled leaf node reach probability from current history (x),
+                 sampled leaf node reach probability from root node (l),
+                 utility of sampled leaf node
         """
 
         if self.asserts:
@@ -158,7 +185,7 @@ class OOS:
 
         if infoset_key not in self.information_sets:
             self.add_information_set(infoset_key, valid_actions)
-            x, l, u = self.playout(h, a, current_strategy[a], (self.delta * s_1 + (1 - self.delta) * s_2) / valid_actions.sum())
+            x, l, u = self.random_playout(h, a, current_strategy[a], (self.delta * s_1 + (1 - self.delta) * s_2) / valid_actions.sum())
         else:
             pi_i_prime =  current_strategy[a] * pi_i if team[h.player] == i_team else pi_i
             pi_o_prime = current_strategy[a] * pi_o if team[h.player] != i_team else pi_o
@@ -201,6 +228,12 @@ class OOS:
         return h_prime
 
     def calculate_weighting_factor(self, m):
+        """
+        Calculate the weighing factor of history based on it's in memory samples
+        :param m: current history
+        :return: the weighing factor w_T, inverted when compared to factor in paper on page 5
+        """
+
         m_key = self.get_infostate_key_from_obs(m)
         if m_key not in self.information_sets:
             s_m = 1
@@ -209,6 +242,9 @@ class OOS:
             regret, avg_strategy, imm_regrets, valid_actions, (s_m, s_sum, num) = self.information_sets[m_key]
             s_0 = s_sum / max(num, 1)
             if s_m == 0:
+                # The first time weighting factor is calculated
+                # s_m is calculated as the probability of m being sampled under the current average strategy
+
                 s_untargeted = 1
                 known_hands = self.get_known_hands(m)
 
@@ -289,6 +325,12 @@ class OOS:
         return hands, prob_targeted, prob_untargeted
 
     def add_missing_information_sets(self, hands_targeted, m):
+        """
+        Given a sampled hand distribution and a game history, add all compatible information sets to memory
+        :param hands_targeted: sampled hand distribution as a numpy array with shape (4, 9)
+        :param m: the current history
+        :return:
+        """
         game = GameSimCpp()
         game.state.hands = hands_targeted
         game.state.dealer = m.dealer
@@ -333,6 +375,12 @@ class OOS:
         return avg_strategy, imm_regrets, regret
 
     def get_known_hands(self, m):
+        """
+        Get the known hand distribution from a history as an array
+        :param m: the current history
+        :return: known hand distribution as an array with shape (4, 9)
+        """
+
         if isinstance(m, GameStateCpp):
             known_hands = [np.flatnonzero(x).tolist() for x in m.hands]
         else:
@@ -356,6 +404,17 @@ class OOS:
             s_1: float,
             s_2: float,
             targeted: bool):
+        """
+        Sample next action following the given strategy and targeting mode
+        :param h: the current history in the oos iteration
+        :param m: the current history in the actual game
+        :param current_strategy: The strategy to use to select the next action
+        :param valid_actions_list: list of valid actions
+        :param s_1: probability that current sample is generated in targeted mode
+        :param s_2: probability that current sample is generated in untargeted mode
+        :param targeted: boolean indicating weather the oos iteration is in targeted or untargeted mode
+        :return:
+        """
 
         if targeted:
             p_a_targeted = 1
@@ -373,12 +432,12 @@ class OOS:
                 a = m.tricks.reshape(-1)[h.nr_played_cards]
 
             if a == -1:  # action lies beyond current game history m
-                a, p_a_targeted = self.sample_action(current_strategy, valid_actions_list)
+                a, p_a_targeted = self.sample_valid_action(current_strategy, valid_actions_list)
 
             p_a_untargeted = current_strategy[a]
             return a, s_1 * p_a_targeted, s_2 * p_a_untargeted
         else:
-            a, p_a_untargeted = self.sample_action(current_strategy, valid_actions_list)
+            a, p_a_untargeted = self.sample_valid_action(current_strategy, valid_actions_list)
 
             if h.trump == -1:  # trump phase
                 if h.forehand == -1:
@@ -402,7 +461,8 @@ class OOS:
 
             return a, s_1 * p_a_targeted, s_2 * p_a_untargeted
 
-    def sample_action(self, strategy, valid_actions_list):
+    @staticmethod
+    def sample_valid_action(strategy, valid_actions_list):
         p = strategy[valid_actions_list]
         p /= p.sum()
 
@@ -410,10 +470,22 @@ class OOS:
         p_a = strategy[a]
         return a, p_a
 
-    def playout(self, h, a1, p_a, l):
+    @staticmethod
+    def random_playout(h, selected_action, p_a, l):
+        """
+        Run random playout of subgame rooted at history after selected action was performed
+        :param h: the current history
+        :param selected_action: the selected action to perform
+        :param p_a: probability of sampling the selected action
+        :param l: reach probability of current history from the root
+        :return: reach probability of sampled leaf node from current history (x),
+                 reach probability of sampled leaf node from root (l),
+                 utility of sampled leaf node
+        """
+
         game = GameSimCpp()
         game.state = h
-        game.perform_action_full(a1)
+        game.perform_action_full(selected_action)
 
         x = 1
         while not game.is_done():

@@ -75,7 +75,7 @@ def test_infostate_key_middle():
 
 def test_iteration():
     testee = OOS(
-    delta=0.9,
+    delta=1,
     epsilon=0.2,
     gamma=0.01,
     action_space=43,
@@ -86,7 +86,7 @@ def test_iteration():
         game_nr=0,
         total_nr_games=1))
 
-    testee.run_iterations(jasscpp.observation_from_state(sim.state, -1), 10, targeted_mode_init=True)
+    testee.run_iterations(jasscpp.observation_from_state(sim.state, -1), 10)
 
     assert len(testee.information_sets) > 0
 

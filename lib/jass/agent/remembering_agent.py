@@ -70,10 +70,9 @@ class RememberingAgent(CppAgent):
         """
         Determine the probability distribution over the next possible actions (card or trump).
 
-        Args:
-            obs: the game state
+        :param obs: the game state
 
-        Returns:
+        :return:
             (
                 the probability distribution over the next actions (shape = [43] = [36 + 7]),
                 a value estimate of the current state

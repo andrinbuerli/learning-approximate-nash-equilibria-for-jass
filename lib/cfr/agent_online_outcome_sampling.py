@@ -8,7 +8,7 @@ from lib.jass.agent.remembering_agent import RememberingAgent
 
 class AgentOnlineOutcomeSampling(RememberingAgent):
     """
-    Agent to play perfect imperfect information Jass 
+    OOS Agent to play the Schieber jass
     """
 
     def __init__(self,

@@ -6,10 +6,9 @@ from jasscpp import GameStateCpp
 
 def deal_random_hand(known_hands: [[int]]) -> (np.ndarray, float):
     """
-    Deal random cards for each hand.
-
-    Returns:
-        one hot encoded 4x36 array
+    Deal all not yet known cards and calculate the probability of this exact distribution being true.
+    :param known_hands: two dimensional list with shape (4,9) describing the already known cards per player
+    :return: one hot encoded card distribution as array with shape (4, 36), sampling probability of distribution
     """
     # shuffle card ids
 

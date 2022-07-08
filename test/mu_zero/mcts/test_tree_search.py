@@ -33,7 +33,7 @@ def test_single_simulation():
     testee = ALPV_MCTS(
         observation=obs,
         node_selection=tree_policy,
-        reward_calc=LatentValueCalculationPolicy(),
+        value_calc=LatentValueCalculationPolicy(),
         mdp_value=False,
         stats=stats,
         discount=1
@@ -64,7 +64,7 @@ def test_multiple_simulations():
     testee = ALPV_MCTS(
         observation=obs,
         node_selection=tree_policy,
-        reward_calc=LatentValueCalculationPolicy(),
+        value_calc=LatentValueCalculationPolicy(),
         mdp_value=False,
         stats=stats,
         discount=1
@@ -95,7 +95,7 @@ def test_multiple_simulations_async_single_thread():
     testee = ALPV_MCTS(
         observation=obs,
         node_selection=tree_policy,
-        reward_calc=LatentValueCalculationPolicy(),
+        value_calc=LatentValueCalculationPolicy(),
         mdp_value=False,
         stats=stats,
         discount=1,
@@ -130,7 +130,7 @@ def test_multiple_simulations_async_multi_thread():
     testee = ALPV_MCTS(
         observation=obs,
         node_selection=tree_policy,
-        reward_calc=LatentValueCalculationPolicy(),
+        value_calc=LatentValueCalculationPolicy(),
         mdp_value=False,
         stats=stats,
         discount=1,
@@ -166,7 +166,7 @@ def test_multiple_simulations_async_multi_thread_concurrency_check():
     testee = ALPV_MCTS(
         observation=obs,
         node_selection=tree_policy,
-        reward_calc=LatentValueCalculationPolicy(),
+        value_calc=LatentValueCalculationPolicy(),
         mdp_value=False,
         stats=stats,
         discount=1,
@@ -202,7 +202,7 @@ def test_get_rewards():
     testee = ALPV_MCTS(
         observation=obs,
         node_selection=tree_policy,
-        reward_calc=LatentValueCalculationPolicy(),
+        value_calc=LatentValueCalculationPolicy(),
         mdp_value=False,
         stats=stats,
         discount=1,
@@ -240,7 +240,7 @@ def test_get_rewards_lots_threads():
     testee = ALPV_MCTS(
         observation=obs,
         node_selection=tree_policy,
-        reward_calc=LatentValueCalculationPolicy(),
+        value_calc=LatentValueCalculationPolicy(),
         mdp_value=False,
         stats=stats,
         discount=1,
@@ -277,7 +277,7 @@ def test_sync_consistency():
         testee1 = ALPV_MCTS(
             observation=obs,
             node_selection=tree_policy,
-            reward_calc=LatentValueCalculationPolicy(),
+            value_calc=LatentValueCalculationPolicy(),
             mdp_value=False,
             stats=stats,
             discount=1,
@@ -296,7 +296,7 @@ def test_sync_consistency():
         testee2 = ALPV_MCTS(
             observation=obs,
             node_selection=tree_policy,
-            reward_calc=LatentValueCalculationPolicy(),
+            value_calc=LatentValueCalculationPolicy(),
             mdp_value=False,
             stats=stats,
             discount=1,
@@ -335,7 +335,7 @@ def test_sync_vs_async_consistency():
         testee1 = ALPV_MCTS(
             observation=obs,
             node_selection=tree_policy,
-            reward_calc=LatentValueCalculationPolicy(),
+            value_calc=LatentValueCalculationPolicy(),
             mdp_value=False,
             stats=stats,
             discount=1,
@@ -353,7 +353,7 @@ def test_sync_vs_async_consistency():
         testee2 = ALPV_MCTS(
             observation=obs,
             node_selection=tree_policy,
-            reward_calc=LatentValueCalculationPolicy(),
+            value_calc=LatentValueCalculationPolicy(),
             mdp_value=False,
             stats=stats,
             discount=1
@@ -391,7 +391,7 @@ def test_sync_vs_async_consistency_multi_threads():
         testee1 = ALPV_MCTS(
             observation=obs,
             node_selection=tree_policy,
-            reward_calc=LatentValueCalculationPolicy(),
+            value_calc=LatentValueCalculationPolicy(),
             mdp_value=False,
             stats=stats,
             discount=1,
@@ -410,7 +410,7 @@ def test_sync_vs_async_consistency_multi_threads():
         testee2 = ALPV_MCTS(
             observation=obs,
             node_selection=tree_policy,
-            reward_calc=LatentValueCalculationPolicy(),
+            value_calc=LatentValueCalculationPolicy(),
             mdp_value=False,
             stats=stats,
             discount=1,

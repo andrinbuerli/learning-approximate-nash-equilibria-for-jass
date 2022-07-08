@@ -142,7 +142,6 @@ class LatentNodeSelectionPolicy:
                     if self.mdp_value else q
 
                 q_value = stats.normalize(q_value)
-            #logging.info(q_normed)
         else:
             q_value = 0
 

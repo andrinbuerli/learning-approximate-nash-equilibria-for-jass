@@ -321,11 +321,6 @@ class MuZeroTrainer:
 
             expected_value = support_to_scalar_per_player(value, min_value=-outcome_support_size//2, nr_players=4)
             if self.value_td_5_step:
-                #target_value_5_steps_ahead = self.target_network.initial_inference(states[:, 1 + 5], training=False)[0]
-                #target_value_5_steps_ahead = support_to_scalar_per_player(target_value_5_steps_ahead,
-                #                                                          min_value=-outcome_support_size//2, nr_players=4)
-                # target_value_5_steps_ahead *=  (1 - post_terminal_states[:, None])  # target value after terminal is 0
-
                 target_value_5_steps_ahead = tf.cast(value_targets[:, 5], tf.float32)
                 cum_reward_5_steps_ahead = tf.cast(tf.reduce_sum(rewards_target[:, :5], axis=1, keepdims=False), tf.float32)
                 target_value = cum_reward_5_steps_ahead + target_value_5_steps_ahead
@@ -429,11 +424,6 @@ class MuZeroTrainer:
 
                 expected_value = support_to_scalar_per_player(value, min_value=-outcome_support_size//2, nr_players=4)
                 if self.value_td_5_step:
-                    #target_value_5_steps_ahead = self.target_network.initial_inference(states[:, (i+1)+5], training=False)[0]
-                    #target_value_5_steps_ahead = support_to_scalar_per_player(target_value_5_steps_ahead,
-                    #                                                          min_value=-outcome_support_size//2, nr_players=4)
-                    #target_value_5_steps_ahead *=  (1 - post_terminal_states[:, None])  # target value after terminal is 0
-
                     target_value_5_steps_ahead = tf.cast(value_targets[:, (i + 1) + 5], tf.float32)
 
                     cum_reward_5_steps_ahead = tf.cast(tf.reduce_sum(rewards_target[:, (i+1):(i+1)+5], axis=1, keepdims=False), tf.float32)

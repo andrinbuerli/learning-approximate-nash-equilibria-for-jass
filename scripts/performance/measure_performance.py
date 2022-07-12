@@ -44,10 +44,8 @@ if __name__ == "__main__":
             c_2=19652,
             feature_extractor=FeaturesSetCppConv(),
             network=network,
-            synchronized=True,
             dirichlet_eps=0.25,
             dirichlet_alpha=0.3,
-            stats=stats,
             discount=1)
         testee = ALPV_MCTS(
             observation=obs,
@@ -75,10 +73,8 @@ if __name__ == "__main__":
                 c_2=19652,
                 feature_extractor=FeaturesSetCppConv(),
                 network=network,
-                synchronized=True,
                 dirichlet_eps=0.25,
                 dirichlet_alpha=0.3,
-                stats=stats,
                 discount=1)
 
             testee = ALPV_MCTS(
@@ -115,7 +111,6 @@ if __name__ == "__main__":
                 network=buffered_network,
                 dirichlet_eps=0.25,
                 dirichlet_alpha=0.3,
-                stats=stats,
                 discount=1)
 
             testee = ALPV_MCTS(

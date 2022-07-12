@@ -46,7 +46,6 @@ class AgentMuZeroMCTS(RememberingAgent):
             c_2=c_2,
             feature_extractor=feature_extractor,
             network=network,
-            synchronized=True,
             dirichlet_eps=dirichlet_eps,
             dirichlet_alpha=dirichlet_alpha,
             mdp_value=mdp_value,

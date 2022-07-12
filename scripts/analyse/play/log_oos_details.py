@@ -35,7 +35,7 @@ logging.basicConfig(
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(prog="Start MuZero Training for Jass")
+    parser = argparse.ArgumentParser(prog="Log oos details")
     parser.add_argument(f'--log', default=False, action="store_true")
     parser.add_argument(f'--run', default="1648651789")
     args = parser.parse_args()

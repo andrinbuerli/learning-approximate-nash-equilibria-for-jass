@@ -18,20 +18,12 @@ services:
                   device_ids: ['0']
                   capabilities: [gpu]
 
-    oos:
-        build: .
-        volumes:
-            - .:/app
-        command: >
-            bash -c "cd scripts && python train_oos_strategy.py
-            --log"
-
-    agent_play:
+    evaluate:
       build: .
       volumes:
         - .:/app
       command: >
-        bash -c "cd scripts/analyse && python agent_play.py"
+        bash -c "cd scripts/analyse && python evaluate_agents.py -h"
       deploy:
         resources:
           reservations:

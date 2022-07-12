@@ -21,12 +21,12 @@ And finally start the container hosting the baselines with
 $ docker-compose up -d baselines
 ```
 ## Online outcome sampling
-The counterfactual regret minimising method called Online outcome sampling is designed to be applied directly 
+The counterfactual regret minimising method called online outcome sampling (OOS) is designed to be applied directly 
 to the game in a online setting. This means that the method does not require any offline computations and can therefore
 be directly used to play. The OOS implementation and the respective agent is located at `lib/cfr`.
 
 ## MuZero
-MuZero is a model based reinforcement learning method and therefore requires training.
+MuZero is a model based reinforcement learning method using deep learning and therefore requires training.
 The data is generated either through self-play or reanalysing existing data (tfrecord format as described in [jass-ml-py](https://github.com/thomas-koller/jass-ml-py/tree/master/jass/features) repo.
 All MuZero specific code can be found at `lib/mu_zero`.
 

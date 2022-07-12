@@ -1,7 +1,7 @@
 # VM2: Learning Approximate Nash Equilibria for Jass
 This repository contains the sources of the VM2 titled "_Learning Approximate Nash Equilibria for Jass_".
-The Online outcome sampling (OOS) implementation is located at `lib/cfr` to train an agent to play perfect information jass.
-All MuZero Specific code can be found at `lib/mu_zero`.
+The Online outcome sampling (OOS) implementation is located at `lib/cfr`.
+All MuZero specific code can be found at `lib/mu_zero`.
 
 ## Setup
 Build all the docker image using docker-compose
@@ -38,18 +38,19 @@ $ docker-compose up trainer
 and wait until the flask server started hosting. Then start the data collectors on the respective machines
 
 ```bash
-$ docker-compose -f resources/data_collectors/(gpu03|ws01|ws03).yml up
+$ docker-compose -f resources/data_collectors/(gpu03|e01|...).yml up
 ```
 
 The collectors should then register them on the master container and start to collect data.
 Once the replay buffer has been filled, the optimization procedure will start and the corresponding metrics will
 be logged to wandb.ai at the configured location.
-All settings and hyperparameters can be configured through the file `scripts/settings.json` 
+All settings and hyperparameters can be configured in the file `scripts/settings.json` 
 
 
 ## Evaluate
-To reproduce the evaluation results as shown in the report
+To reproduce the evaluation results as shown in the report run
 ```bash
 $ docker-compose up evaluate
 ```
-which will take quite a long time :)
+which will take quite a long time.
+The evaluation script also offers the option to run only specific evaluations among other arguments.

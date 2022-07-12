@@ -1,7 +1,6 @@
 # VM2: Learning Approximate Nash Equilibria for Jass
 This repository contains the sources of the VM2 titled "_Learning Approximate Nash Equilibria for Jass_".
-The Online outcome sampling (OOS) implementation is located at `lib/cfr`.
-All MuZero specific code can be found at `lib/mu_zero`.
+
 
 ## Setup
 Build all the docker image using docker-compose
@@ -21,8 +20,17 @@ And finally start the container hosting the baselines with
 ```bash
 $ docker-compose up -d baselines
 ```
+## Online outcome sampling
+The counterfactual regret minimising method called Online outcome sampling is designed to be applied directly 
+to the game in a online setting. This means that the method does not require any offline computations and can therefore
+be directly used to play. The OOS implementation and the respective agent is located at `lib/cfr`.
 
-## Training MuZero
+## MuZero
+MuZero is a model based reinforcement learning method and therefore requires training.
+The data is generated either through self-play or reanalysing existing data (tfrecord format as described in [jass-ml-py](https://github.com/thomas-koller/jass-ml-py/tree/master/jass/features) repo.
+All MuZero specific code can be found at `lib/mu_zero`.
+
+### Training
 The MuZero training process is implemented in a distributed manner.
 The docker-compose service `trainer` is the master container which will gather all the data, train the networks
 and evaluate them asynchronously on different metrics.

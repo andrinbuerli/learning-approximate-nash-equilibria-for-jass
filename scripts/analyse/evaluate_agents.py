@@ -191,12 +191,12 @@ def _evaluate_(
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(prog='Evaluate multiple agents')
-    parser.add_argument(f'--max_parallel_evaluations', default=1, type=int)
-    parser.add_argument(f'--max_parallel_processes_per_evaluation', default=1, type=int)
-    parser.add_argument(f'--max_parallel_threads_per_evaluation_process', default=1, type=int)
-    parser.add_argument(f'--no_skip_on_result_file', default=False, action="store_true")
-    parser.add_argument(f'--files', nargs="+", default=["mu_zero/experiment-0/dmcts.json"])
-    parser.add_argument(f'--folder', default="results")
+    parser.add_argument(f'--max_parallel_evaluations', default=1, type=int, help="Number of max parallel evaluations")
+    parser.add_argument(f'--max_parallel_processes_per_evaluation', default=1, type=int, help="Number of max parallel processes per evaluation")
+    parser.add_argument(f'--max_parallel_threads_per_evaluation_process', default=1, type=int, help="Number of max parallel threads per process per evaluation")
+    parser.add_argument(f'--no_skip_on_result_file', default=False, action="store_true", help="Skip evaluation if there exists a corresponding result file")
+    parser.add_argument(f'--files', nargs="+", default=["mu_zero/experiment-0/dmcts.json"], help="Filenames of evaluations to be executed (relative to folder resources/evaluation)")
+    parser.add_argument(f'--folder', default="results", help="Folder to store evaluation results (relative to this script file)")
     args = parser.parse_args()
 
     for file in args.files:

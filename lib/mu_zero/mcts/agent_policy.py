@@ -24,7 +24,7 @@ class AgentPolicy(RememberingAgent):
         self.rule = jasscpp.RuleSchieberCpp()
 
 
-    def get_play_action_probs_and_value(self, obs: GameObservationCpp, feature_format=None) -> np.array:
+    def get_play_action_probs_and_values(self, obs: GameObservationCpp, feature_format=None) -> np.array:
         features = self.feature_extractor.convert_to_features(obs, self.rule)
         value, reward, policy, next_encoded_state = self.network.initial_inference(features[None])
 
@@ -33,4 +33,5 @@ class AgentPolicy(RememberingAgent):
         else:
             policy = policy.numpy().reshape(-1) * self.rule.get_full_valid_actions_from_state(obs)
 
-        return policy, np.ones_like(policy)
+        values = np.ones_like(policy) # using only the local policy does not calculate a value
+        return policy, values

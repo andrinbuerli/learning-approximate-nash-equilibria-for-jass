@@ -26,7 +26,7 @@ class AgentValue(RememberingAgent):
         self.cheating_mode = type(feature_extractor) == FeaturesSetCppConvCheating
         self.rule = jasscpp.RuleSchieberCpp()
 
-    def get_play_action_probs_and_value(self, obs: GameObservationCpp, feature_format=None) -> np.array:
+    def get_play_action_probs_and_values(self, obs: GameObservationCpp, feature_format=None) -> np.array:
         features = self.feature_extractor.convert_to_features(obs, self.rule)
 
         valid_actions = self.rule.get_full_valid_actions_from_obs(obs)
@@ -46,6 +46,6 @@ class AgentValue(RememberingAgent):
         values = np.zeros(43)
         values[actions.reshape(-1)] = (value + reward)[:, obs.player].numpy().reshape(-1)
 
-        values /= values.sum()
+        policy = values / values.sum()
 
-        return values, np.ones_like(values)
+        return policy, values

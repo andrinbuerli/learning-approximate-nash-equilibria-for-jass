@@ -12,7 +12,7 @@ from lib.jass.agent.agent import CppAgent
 class RememberingAgent(CppAgent):
     """
     Player that receives local observation information for determining the
-    action and remembers the probability distributions over time until reset.
+    action and remembers the used policies and estimated values for each timestep until reset.
     """
 
     def __init__(self, temperature: float = 1.0):
@@ -34,7 +34,7 @@ class RememberingAgent(CppAgent):
         return self._state_values
 
     def action_trump(self, obs: GameObservationCpp) -> int:
-        distribution, values = self.get_play_action_probs_and_value(obs)
+        distribution, values = self.get_play_action_probs_and_values(obs)
         self._state_values.append((distribution[:, None] * values).sum(axis=0))
         self._trump_probs.append(distribution)
 
@@ -55,7 +55,7 @@ class RememberingAgent(CppAgent):
         return int(action_trump)
 
     def action_play_card(self, obs: GameObservationCpp) -> int:
-        distribution, values = self.get_play_action_probs_and_value(obs)
+        distribution, values = self.get_play_action_probs_and_values(obs)
         self._state_values.append((distribution[:, None] * values).sum(axis=0))
         self._card_probs.append(distribution)
         card_distribution = self._heat_prob(distribution[:36])
@@ -66,16 +66,15 @@ class RememberingAgent(CppAgent):
         return int(action_card)
 
     @abc.abstractmethod
-    def get_play_action_probs_and_value(self, obs: GameObservationCpp) -> (np.array, np.array):
+    def get_play_action_probs_and_values(self, obs: GameObservationCpp) -> (np.array, np.array):
         """
-        Determine the probability distribution over the next possible actions (card or trump).
+        Determine the probability distribution and values over the next possible actions (card or trump).
 
         :param obs: the game state
-
         :return:
             (
                 the probability distribution over the next actions (shape = [43] = [36 + 7]),
-                a value estimate of the current state
+                a value estimate for each next action (shape = [43] = [36 + 7])
             )
         """
         raise NotImplementedError()

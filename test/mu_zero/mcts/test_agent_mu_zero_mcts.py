@@ -20,7 +20,7 @@ def test_prob_dist():
         iterations=100
     )
 
-    dist, _ = testee.get_play_action_probs_and_value(obs)
+    dist, _ = testee.get_play_action_probs_and_values(obs)
 
     assert dist.shape[0] == 43
 

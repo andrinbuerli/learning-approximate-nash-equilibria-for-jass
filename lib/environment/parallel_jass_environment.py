@@ -22,8 +22,8 @@ from lib.factory import get_agent, get_network
 from lib.jass.arena.arena import Arena
 
 
-def _play_single_game_(i, agent):
-    state_features, check_move_validity = _play_single_game_.feature_extractor, _play_single_game_.check_move_validity
+def _single_self_play_game_(i, agent):
+    state_features, check_move_validity = _single_self_play_game_.feature_extractor, _single_self_play_game_.check_move_validity
 
     arena = Arena(
         nr_games_to_play=1, cheating_mode=False, check_move_validity=check_move_validity,
@@ -82,7 +82,7 @@ def _init_thread_worker_(function, feature_extractor, check_move_validity):
 
 def play_games(n_games, network, pool, worker_config):
     agents = [get_agent(worker_config, network=network, greedy=False) for _ in range(n_games)]
-    results = pool.starmap(_play_single_game_, zip(list(range(n_games)), agents))
+    results = pool.starmap(_single_self_play_game_, zip(list(range(n_games)), agents))
     states = [x[0] for x in results]
     actions = [x[1] for x in results]
     rewards = [x[2] for x in results]
@@ -96,7 +96,7 @@ def play_games(n_games, network, pool, worker_config):
 
 
 def _reanalyse_observation_(observation, agent, feature_format):
-    return agent.get_play_action_probs_and_value(observation[0], feature_format)
+    return agent.get_play_action_probs_and_values(observation[0], feature_format)
 
 def reanalyse(dataset, network, pool, worker_config):
     observations, y = next(dataset)
@@ -180,21 +180,21 @@ def _play_games_multi_threaded_(n_games, continuous):
                 rand = np.random.uniform(0, 1)
 
                 if rand < reanalyse_fraction:
-                    actions, outcomes, probs, rewards, states = reanalyse(ds, network, pool, worker_config)
+                    actions, values, probs, rewards, states = reanalyse(ds, network, pool, worker_config)
                     logging.info(f"reanalysed single game")
                 else:
-                    actions, outcomes, probs, rewards, states = play_games(n_games, network, pool, worker_config)
+                    actions, values, probs, rewards, states = play_games(n_games, network, pool, worker_config)
                     logging.info(f"finished {n_games} games")
 
                 if continuous:
-                    data = (np.stack(states), np.stack(actions), np.stack(rewards), np.stack(probs), np.stack(outcomes))
+                    data = (np.stack(states), np.stack(actions), np.stack(rewards), np.stack(probs), np.stack(values))
                     with open(str(data_path / f"{id(rand)}.pkl"), "wb") as f:
                         pickle.dump(data, f)
                     del data
                 else:
-                    return states, actions, rewards, probs, outcomes
+                    return states, actions, rewards, probs, values
 
-                del states, actions, rewards, probs, outcomes
+                del states, actions, rewards, probs, values
                 gc.collect()
 
 
@@ -212,7 +212,7 @@ def _init_process_worker_(function, network_path: str, worker_config: WorkerConf
     function.pool = mp.pool.ThreadPool(
         processes=max_parallel_threads,
         initializer=_init_thread_worker_,
-        initargs=(_play_single_game_, worker_config.network.feature_extractor, check_move_validity))
+        initargs=(_single_self_play_game_, worker_config.network.feature_extractor, check_move_validity))
     function.data_path = data_path
     function.cancel_con = cancel_con
     function.network_path = network_path
@@ -234,6 +234,21 @@ class ParallelJassEnvironment:
             reanalyse_fraction: float = 0,
             continuous_games_without_reload: int = 1,
             reanalyse_data_path="/data"):
+        """
+        Paralellised environment to play self-play jass games or reanalyse existing games.
+        Does not follow a standard Gym interface (step, reset,...) currently for ease of implementation.
+
+        :param max_parallel_processes: max parallel workers to use
+        :param max_parallel_threads: max parallel threads per worker to use, each thread is used to play a single game\
+                                     or reanalyse a single game state
+        :param worker_config: general training config
+        :param network_path: path from where to load the latest model weights from
+        :param check_move_validity: boolean indicating if move validity should be checked
+        :param reanalyse_fraction: fraction of samples that should be generated from reanalysed data
+        :param continuous_games_without_reload: number of games per worker to play without reloading the model weights
+        :param reanalyse_data_path: path to stored data to reanalyse (tfrecord format)
+        """
+
         self.continuous_games_without_reload = continuous_games_without_reload
         self.reanalyse_data_path = reanalyse_data_path
         self.reanalyse_fraction = reanalyse_fraction
@@ -248,6 +263,19 @@ class ParallelJassEnvironment:
         self.collecting_process: mp.Process = None
 
     def start_collect_game_data_continuously(self, n_games: int, data_path: Path, cancel_con: Connection):
+        """
+        Play games asynchronously in the environment and store corresponding trajectories on the file system
+        as pickle files, each containing the tuple
+                (Game states [n_games x trajectory_length x state_shape],
+                 Selected Actions [n_games x trajectory_length x 1],
+                 Observed rewards [n_games x trajectory_length x 1],
+                 Action probabilities [n_games x trajectory_length x action_space_size],
+                 Estimated values from perspective of current player [n_games x trajectory_length x 1])
+
+        :param n_games: number of games to be played over all workers before storing it
+        :param data_path:  Path at which to store the data
+        :param cancel_con: connection object to cancel data collection
+        """
         logging.info(f"Starting to continuously collect data")
         self.collecting_process = mp.Process(target=self.collect_game_data,
                                              args=(n_games, True, data_path, cancel_con))
@@ -262,11 +290,15 @@ class ParallelJassEnvironment:
         """
         Play games in the environment and return corresponding trajectories
 
-        @param n_games: number of games to be played
-        @return: trajectories of tuples (
-                    Game State [n_games x trajectory_length x state_shape],
-                    Action probabilities [n_games x trajectory_length x action_space_size],
-                    Game outcome from perspective of player at timestep [n_games x trajectory_length x 1])
+        :param n_games: number of games to be played
+        :param continuous: Boolean indicating continuous collection (blocking!)
+        :param data_path: Path at which to store the data for continuous collection
+        :param cancel_con: connection object to cancel continuous data collection
+        :return: trajectories of tuples (Game states [n_games x trajectory_length x state_shape],
+                                         Selected Actions [n_games x trajectory_length x 1],
+                                         Observed rewards [n_games x trajectory_length x 1],
+                                         Action probabilities [n_games x trajectory_length x action_space_size],
+                                         Estimated values from perspective of current player [n_games x trajectory_length x 1])
         """
         if self.pool is None:
             logging.debug(f"initializing process pool..")

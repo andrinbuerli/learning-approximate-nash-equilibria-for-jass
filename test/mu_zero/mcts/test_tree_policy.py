@@ -60,7 +60,7 @@ def test_select():
     obs.player = 1
     testee.init_node(node, obs)
 
-    child = testee.tree_policy(node=node, stats=MinMaxStats(), observation=obs)
+    child = testee.tree_policy(root_node=node, stats=MinMaxStats(), observation=obs)
 
     assert child.parent is node
     assert child.valid_actions.sum() == 36
@@ -143,7 +143,7 @@ def test_select_players_push():
         game.perform_action_full(a)
         child.valid_actions = game.get_valid_actions()
 
-        child = testee.tree_policy(node=node, stats=MinMaxStats(), observation=obs)
+        child = testee.tree_policy(root_node=node, stats=MinMaxStats(), observation=obs)
         assert child.action == a
         assert child.next_player == game.state.player
         node = child
@@ -177,7 +177,7 @@ def test_select_players_not_push():
         game.perform_action_full(a)
         child.valid_actions = game.get_valid_actions()
 
-        child = testee.tree_policy(node=node, stats=MinMaxStats(), observation=obs)
+        child = testee.tree_policy(root_node=node, stats=MinMaxStats(), observation=obs)
         assert child.action == a
         assert child.next_player == game.state.player
         node = child
@@ -219,7 +219,7 @@ def test_select_players_middle_of_game():
         game.perform_action_full(a)
         child.valid_actions = game.get_valid_actions()
 
-        child = testee.tree_policy(node=node, stats=MinMaxStats(), observation=obs)
+        child = testee.tree_policy(root_node=node, stats=MinMaxStats(), observation=obs)
         assert child.action == a
         assert child.next_player == game.state.player
         node = child

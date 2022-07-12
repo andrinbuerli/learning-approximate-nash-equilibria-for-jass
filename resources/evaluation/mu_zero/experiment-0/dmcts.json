@@ -11,7 +11,7 @@
       "type": "policy",
       "note": "Policy",
       "skip": true,
-      "experiment_path": "../results/1655477301",
+      "experiment_path": "../../resources/results/1655477301",
       "greedy": true
     },
     {
@@ -19,7 +19,7 @@
       "note": "MCTS-100",
       "iterations": 100,
       "skip": true,
-      "experiment_path": "../results/1655477301",
+      "experiment_path": "../../resources/results/1655477301",
       "greedy": true,
       "player_func": true,
       "terminal_func": true

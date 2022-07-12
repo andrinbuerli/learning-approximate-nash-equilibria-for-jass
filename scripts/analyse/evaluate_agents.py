@@ -196,16 +196,23 @@ if __name__ == "__main__":
     parser.add_argument(f'--max_parallel_threads_per_evaluation_process', default=1, type=int, help="Number of max parallel threads per process per evaluation")
     parser.add_argument(f'--no_skip_on_result_file', default=False, action="store_true", help="Skip evaluation if there exists a corresponding result file")
     parser.add_argument(f'--files', nargs="+", default=["mu_zero/experiment-0/dmcts.json"], help="Filenames of evaluations to be executed (relative to folder resources/evaluation)")
+    parser.add_argument(f'--all', default=False, action="store_true", help="run all evaluations from resources/evaluation")
     parser.add_argument(f'--folder', default="results", help="Folder to store evaluation results (relative to this script file)")
     args = parser.parse_args()
 
-    for file in args.files:
-        path = Path(__file__).resolve().parent.parent.parent / "resources" / "evaluation" / file
+    base_path = Path(__file__).resolve().parent.parent.parent / "resources" / "evaluation"
 
+    if args.all:
+        files = list(base_path.glob("**/*.json"))
+    else:
+        files = [base_path / file for file in args.files]
+
+
+    for path in files:
         with open(path, "r") as f:
             config = json.load(f)
 
-        (Path(__file__).resolve().parent / "agents_eval_results" / args.folder).mkdir(parents=True, exist_ok=True)
+        (Path(__file__).resolve().parent / args.folder).mkdir(parents=True, exist_ok=True)
 
         processes = []
         for comb in list(itertools.combinations(config["agents"], r=2)):

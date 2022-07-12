@@ -3,7 +3,7 @@
   "information": "imperfect",
   "agents": [
     {
-      "type": "f-i-dmcts-2",
+      "type": "f-i-dmcts",
       "note": "F-I-DMCTS",
       "skip": false
     },
@@ -12,7 +12,7 @@
       "note": "MCTS-100",
       "iterations": 100,
       "skip": true,
-      "experiment_path": "../results/2053237674",
+      "experiment_path": "../../resources/results/2053237674",
       "greedy": true,
       "player_func": true,
       "terminal_func": true
@@ -21,7 +21,7 @@
       "type": "policy",
       "note": "Policy",
       "skip": true,
-      "experiment_path": "../results/2053237674",
+      "experiment_path": "../../resources/results/2053237674",
       "greedy": true
     }
   ]

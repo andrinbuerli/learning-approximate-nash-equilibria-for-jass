@@ -6,14 +6,14 @@
       "type": "policy",
       "note": "Policy-B",
       "skip": false,
-      "experiment_path": "../results/1655303752",
+      "experiment_path": "../../resources/results/1655303752",
       "greedy": true
     },
     {
       "type": "policy",
       "note": "Policy",
       "skip": true,
-      "experiment_path": "../results/1653827576",
+      "experiment_path": "../../resources/results/1653827576",
       "greedy": true
     },
     {
@@ -21,7 +21,7 @@
       "note": "MCTS-100",
       "iterations": 100,
       "skip": true,
-      "experiment_path": "../results/1653827576",
+      "experiment_path": "../../resources/results/1653827576",
       "greedy": true,
       "player_func": true,
       "terminal_func": true

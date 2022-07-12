@@ -14,7 +14,8 @@ from lib.mu_zero.network.support_conversion import support_to_scalar
 
 class LatentNodeSelectionPolicy:
     """
-    Node selection policy in a learned latent space
+    Node selection policy in a learned latent space.
+    Implemented according to paper: https://arxiv.org/abs/1911.08265
     """
 
     def __init__(
@@ -27,19 +28,30 @@ class LatentNodeSelectionPolicy:
             dirichlet_eps: float = 0.25,
             dirichlet_alpha: float = 0.3,
             mdp_value: bool = False,
-            synchronized: bool = False,
             use_player_function: bool = False,
-            use_terminal_function: bool = False,
-            debug: bool = False):
+            use_terminal_function: bool = False):
+        """
+        Initialise the selection policy
+        :param c_1: c_1 parameter of PUCT heuristic
+        :param c_2: c_2 parameter of PUCT heuristic
+        :param feature_extractor: feature extractor compatible with provided network
+        :param network: trained network which can project a game state to the latent space and change adapt it according
+                        to selected actions
+        :param discount: discount to use when bootstrapping the value function
+        :param dirichlet_eps: dirichlet epsilon
+        :param dirichlet_alpha: dirichlet alpha
+        :param mdp_value: boolean indicating if mdp value should be used
+        :param use_player_function: boolean indicating if the estimated player function should be used
+        :param use_terminal_function: boolean indicating if the estimated terminal function should be used
+        """
+
         self.use_terminal_function = use_terminal_function
         self.use_player_function = use_player_function
         self.mdp_value = mdp_value
-        self.synchronized = synchronized
         self.discount = discount
         self.c_2 = c_2
         self.c_1 = c_1
         self.network = network
-        self.debug = debug
         self.dirichlet_alpha = dirichlet_alpha * np.ones(43)
         self.dirichlet_eps = dirichlet_eps
         self.feature_extractor = feature_extractor
@@ -166,8 +178,6 @@ class LatentNodeSelectionPolicy:
         node.value, node.reward, node.prior, node.predicted_player, node.is_post_terminal = \
             [x.numpy().squeeze() for x in [node.value, node.reward, node.prior, node.predicted_player, node.is_post_terminal]]
 
-        #assert node.next_player == node.predicted_player.argmax()
-
         value_support_size = node.value.shape[-1]
         node.value = support_to_scalar(distribution=node.value, min_value=-value_support_size//2).numpy()
 
@@ -176,9 +186,6 @@ class LatentNodeSelectionPolicy:
 
         reward_support_size = node.reward.shape[-1]
         node.reward = support_to_scalar(distribution=node.reward, min_value=-reward_support_size//2).numpy()
-
-        #[node.stats.update(v) for v in node.value]
-        #node.stats.update(node.value[node.parent.predicted_player.argmax()])
 
         # add edges for all children
         for action in node.missing_actions(node.valid_actions):

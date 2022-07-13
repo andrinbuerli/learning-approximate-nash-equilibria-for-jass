@@ -3,7 +3,7 @@ This repository contains the sources of the VM2 titled "_Learning Approximate Na
 
 
 ## Setup
-Build all the docker image using docker-compose
+Build all the docker images using docker-compose
 
 ```bash
 $ docker-compose build

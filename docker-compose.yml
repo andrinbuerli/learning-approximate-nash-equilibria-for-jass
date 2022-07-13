@@ -23,7 +23,7 @@ services:
       volumes:
         - .:/app
       command: >
-        bash -c "cd scripts/analyse && python evaluate_agents.py -h"
+        bash -c "cd scripts/analyse && python evaluate_agents.py --all"
       deploy:
         resources:
           reservations:

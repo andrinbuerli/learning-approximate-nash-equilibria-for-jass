@@ -20,7 +20,7 @@ And finally start the container hosting the baselines with
 ```bash
 $ docker-compose up -d baselines
 ```
-## Online outcome sampling
+## Online Outcome Sampling
 The counterfactual regret minimising method called online outcome sampling (OOS) is designed to be applied directly 
 to the game in a online setting. This means that the method does not require any offline computations and can therefore
 be directly used to play. The OOS implementation and the respective agent is located at `lib/cfr`.
